@@ -1,0 +1,13 @@
+### ARM SPECIFICS #######
+TRAP_PAGE_BA = 0xFFFFE000
+SVC_INSN_ARM   = 0xEF000000
+TRAP_INS_SIZE  = 2
+TRAP_INX_SIZE  = 2
+ALLOC_BA = 0x80000000
+ALLOC_PAGES = 0x10
+mov_pc_lr = 0x0ef0a0e1
+mov_pc_lr_thumb = 0xf746
+### END ARM SPECIFICS ####
+
+
+

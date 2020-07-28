@@ -1,0 +1,43 @@
+Execution:
+
+emu.start()
+
+
+Stubs:
+
+emu.add_null_stub(ea)
+emu.remove_null_stub(ea)
+emu.conf.show_null_stub()
+emu.add_custom_stub(ea,func)
+emu.tag_function(ea,stub_name)
+emu.remove_tag(ea)
+
+
+Memory:
+
+emu.display_page(ea)
+emu.conf.show_user_mapping(displayContent=False)
+
+Configuration:
+
+emu.conf.save(path)
+
+MISC:
+emu.restore_graph_color(purge_db=False) # restore graph color and optionnaly empty the insn db (useful to avoid recoloring previous insns when stepping).  
+
+
+DEBUGGING:
+
+emu.step_in()
+emu.step_n(x)  
+emu.continuee()
+emu.restart(conf=None,n=0) if no argument are provided, will reload the conf and launch the execution until final addr is reached (or an error in encountered...)
+                           optionnaly load a new conf instance and execute n steps
+                  
+
+Between step, emulator values might be modified: 
+emu.helper.reg_{read,write}(r_id[,value]) r_id can be int and/or str depending on the arch
+emu.helper.mem_{read,write}(addr[,value])
+
+
+

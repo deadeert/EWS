@@ -1,0 +1,5 @@
+#1 What to do to add support for a new arch and/or a new engine ?
+
+Find minimal instructions to perform a direct return, to patch plt/iat
+
+
