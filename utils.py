@@ -4,6 +4,7 @@ import ida_segment
 import ida_segregs
 import ida_ida
 import ida_idp
+import ida_ua
 import idc 
 import string
 import json
@@ -137,6 +138,44 @@ class x86Registers(Registers):
     self.ESP = ESP
     self.EBP = EBP
     self.EIP = EIP
+
+
+class x86EFLAGS(Registers):
+  def __init__(self,CF,PF,AF,ZF,SF,TF,EIF,DF,OF):
+    self.CF = CF
+    self.PF = PF 
+    self.AF = AF
+    self.ZF = ZF
+    self.SF = SF
+    self.TF = TF
+    self.EIF = EIF
+    self.DF = DF 
+    self.OF = OF 
+
+  @classmethod 
+  def create(cls,eflags):
+    return x86EFLAGS(CF=(eflags)&0x1,
+                     PF=(eflags&0x4)>>2,
+                     AF=(eflags&0x10)>>4,
+                     ZF=(eflags&0x40)>>6,
+                     SF=(eflags&0x80)>>7,
+                     TF=(eflags&0x100)>>8,
+                     EIF=(eflags&0x200)>>9,
+                     DF=(eflags&0x400)>>10,
+                     OF=(eflags&0x800)>>11)
+
+  def __str__(self):
+    out = '[ZF=%d PF=%d AF=%d ZF=%d SF=%d TF=%d EIF=%d DF=%d OF=%d]'%(self.CF,
+                                                                      self.PF,
+                                                                      self.AF,
+                                                                      self.ZF,
+                                                                      self.SF,
+                                                                      self.TF,
+                                                                      self.EIF,
+                                                                      self.DF,
+                                                                      self.OF)
+    return out
+
 
 
 
@@ -406,6 +445,11 @@ class LogType(Enum):
   WARN = 1
   ERRR = 2
 
+class LoaderType(Enum):
+  ELF = 0 
+  PE  = 1
+
+
 
 class Logger():
   
@@ -496,3 +540,10 @@ def display_mem(mem,ba=None,direction=0):
 
 def is_thumb(addr):
   return True if ida_segregs.get_sreg(addr,ida_idp.str2reg('T')) == 1 else False
+
+
+def get_insn_at(ea):
+   insn = ida_ua.insn_t()
+   ida_ua.decode_insn(insn,ea)
+   return insn
+    

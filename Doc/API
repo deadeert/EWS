@@ -16,6 +16,9 @@ emu.remove_tag(ea)
 Memory:
 
 emu.display_page(ea)
+emu.display_stack()
+emu.display_allocations()
+emu.display_range(start_ea,end_ea)
 emu.conf.show_user_mapping(displayContent=False)
 
 Configuration:
@@ -33,7 +36,9 @@ emu.step_n(x)
 emu.continuee()
 emu.restart(conf=None,n=0) if no argument are provided, will reload the conf and launch the execution until final addr is reached (or an error in encountered...)
                            optionnaly load a new conf instance and execute n steps
-                  
+emu.step_over(): run until next function retruns (call) and for conditionnal jump. 
+emu.add_breakpoint(): add_breakpoint to specified address
+
 
 Between step, emulator values might be modified: 
 emu.helper.reg_{read,write}(r_id[,value]) r_id can be int and/or str depending on the arch

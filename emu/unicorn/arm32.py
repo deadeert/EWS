@@ -65,6 +65,7 @@ class ArmCorn(Emucorn):
     self.custom_stubs = dict()
     if self.conf.s_conf.stub_pltgot_entries:
       self.stubbit(stubs.Stubs.libc_stubs_arm)
+      self.stubs = stubs.Stubs.libc_stubs_arm
       
 
            
@@ -114,6 +115,27 @@ class ArmCorn(Emucorn):
       logger.console(LogType.WARN,warn)
       self.uc.reg_write(UC_ARM_REG_R13,self.conf.stk_ba+stk_p*self.conf.p_size-4)
     self.uc.reg_write(UC_ARM_REG_R14,self.conf.registers.R14)
+
+
+  def reset_regs(self):
+
+    self.uc.reg_write(UC_ARM_REG_R0,0)
+    self.uc.reg_write(UC_ARM_REG_R1,0)
+    self.uc.reg_write(UC_ARM_REG_R2,0)
+    self.uc.reg_write(UC_ARM_REG_R3,0)
+    self.uc.reg_write(UC_ARM_REG_R4,0)
+    self.uc.reg_write(UC_ARM_REG_R5,0)
+    self.uc.reg_write(UC_ARM_REG_R6,0)
+    self.uc.reg_write(UC_ARM_REG_R7,0)
+    self.uc.reg_write(UC_ARM_REG_R8,0)
+    self.uc.reg_write(UC_ARM_REG_R9,0)
+    self.uc.reg_write(UC_ARM_REG_R10,0)
+    self.uc.reg_write(UC_ARM_REG_R11,0)
+    self.uc.reg_write(UC_ARM_REG_R12,0)
+    self.uc.reg_write(UC_ARM_REG_R13,0)
+    self.uc.reg_write(UC_ARM_REG_R14,0)
+    self.uc.reg_write(UC_ARM_REG_R15,0)
+   
 
 
 
@@ -174,22 +196,7 @@ class ArmCorn(Emucorn):
   
 
   
-  def restart(self,conf=None,cnt=0):
-
-    # unmap & remap 
-    for rsta,rsto,rpriv in self.uc.mem_regions():
-      self.uc.mem_unmap(rsta,rsto-rsta+1)
-    stk_p = Emucorn.do_mapping(self.uc,self.conf)
-
-    # reset register and setup 
-    for rid in range(0,16):
-      self.uc.reg_write(ArmCorn.int2reg(rid),0)
-
-    self.setup_regs(stk_p)
-    
-    self.helper.allocator.reset()
-
-    self.start(cnt)
+  
 
 
    
@@ -259,9 +266,11 @@ class ArmCorn(Emucorn):
       try:    fname = ida_funcs.get_func_name(ea)
       except: fname = 'func_%x'%ea
  
-    if fname in stubs.Stubs.libc_stubs_arm.keys():
+#     if fname in stubs.Stubs.libc_stubs_arm.keys():
+    if fname in self.stubs.keys():
       logger.console(LogType.WARN,'[!] %s belongs to libc stub. It is now null stubbed'%fname)
-      stubs.Stubs.libc_stubs_arm[fname] = self.nstub_obj
+#       stubs.Stubs.libc_stubs_arm[fname] = self.nstub_obj
+      self.stubs[fname] = self.nstub_obj 
     else:
       if is_thumb(ea):  
         self.uc.mem_write(f.start_ea,struct.pack('>H' if self.endns == 'little' else '<H',consts_arm.mov_pc_lr_thumb))
@@ -279,12 +288,13 @@ class ArmCorn(Emucorn):
       try:    fname = ida_funcs.get_func_name(ea)
       except: fname = 'func_%x'%ea
 
-    if fname in stubs.Stubs.libc_stubs_arm.keys():
+#     if fname in stubs.Stubs.libc_stubs_arm.keys():
+    if fname in self.stubs.keys():
       # Needs to reinit the stub
       logger.console(LogType.WARN,'Changes will be effective only after save and reloading the conf')
     else:
       # Restore from IDB
-      self.uc.mem_wirte(ea,ida_bytes.get_bytes(ea,4))
+      self.uc.mem_write(ea,ida_bytes.get_bytes(ea,4))
       del self.custom_stubs[ea]
 
     self.conf.remove_null_stub(ea)
@@ -305,7 +315,8 @@ class ArmCorn(Emucorn):
 
 
     aldy_patch = False
-    if fname in stubs.Stubs.libc_stubs_arm.keys():
+#     if fname in stubs.Stubs.libc_stubs_arm.keys():
+    if fname in self.stubs.keys():
       logger.console(LogType.WARN,'Overriding default stub function %s'%fname)
       aldy_patch = True
     elif fname in self.conf.s_conf.nstubs.values():
@@ -332,7 +343,8 @@ class ArmCorn(Emucorn):
     try:    fname = ida_funcs.get_func_name(ea)
     except: fname = 'func_%x'%ea 
 
-    if fname in stubs.Stubs.libc_stubs_arm.keys():
+#     if fname in stubs.Stubs.libc_stubs_arm.keys():
+    if fname in self.stubs.keys():
       logger.console(LogType.WARN,'could not unstub, please reload the conf')
     
     self.uc.mem_write(ea,ida_bytes.get_bytes(ea,4))
@@ -345,11 +357,14 @@ class ArmCorn(Emucorn):
     """ TODO: add to configuration
     """
 
-    if not stubname in stubs.Stubs.libc_stubs_arm.keys():
+#     if not stubname in stubs.Stubs.libc_stubs_arm.keys():
+    if not stubname in self.stubs.keys():
       logger.console(LogType.WARN,'%s is not among default stubs. Aborting'%stubname)
       return
-    stubs.Stubs.libc_stubs_arm[stubname].set_helper(self.helper)
-    self.add_custom_stub(ea,stubs.Stubs.libc_stubs_arm[stubname].do_it)
+#     stubs.Stubs.libc_stubs_arm[stubname].set_helper(self.helper)
+    self.stubs[stubname].set_helper(self.helper)
+#     self.add_custom_stub(ea,stubs.Stubs.libc_stubs_arm[stubname].do_it)
+    self.add_custom_stub(ea,self.stubs[stubname].do_it)
 
 
   def remove_tag(self,ea):

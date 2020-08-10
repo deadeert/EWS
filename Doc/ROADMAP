@@ -1,0 +1,16 @@
+
+
+# Finish X86 for PE and ELF on Unicorn
+  - Custom Stubs
+  - Tag Stubs 
+  - PE Stubs 
+  - Elf Stub 
+
+# Add AARCH64 Support
+  - Use SSTIC 2019 binary
+
+# Add X64 Support 
+
+# Make a Doc (how to use it)
+
+

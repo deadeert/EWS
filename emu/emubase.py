@@ -18,6 +18,7 @@ class Emulator(object):
     """
     self.conf = conf
     self.color_map = dict()
+    self.user_breakpoints = list()
 
   def start(self):
     """ method responsive for execution launch
@@ -31,6 +32,12 @@ class Emulator(object):
           p_base:  page' base address
     """ 
       
+    pass
+
+  def display_range(self,start_ea,end_ea):
+    """ display memory content from 
+        start_ea to end_ea
+    """
     pass
 
   def display_stack(self):
@@ -101,6 +108,12 @@ class Emulator(object):
     """
     pass
 
+
+  def get_alu_info(self,flags):
+    """ return  of ALU flags
+    """
+    pass
+
   @staticmethod
   def check_mapping(conf):
     inf = ida_idaapi.get_inf_structure()
@@ -162,23 +175,38 @@ class Emulator(object):
   def restart(self,conf=None,cnt=0):
     """ restart exec engine and execute cnt insns
     """
+    pass
 
   def step_in(self):
     """ exec one insn   
     """
     pass 
 
-  def step_n(self):
+  def step_n(self,n):
     """ exec n insn 
+        use is_call_insn to set breakpoint to proper ea  
     """ 
     pass
+
+  def add_breakpoint(self,ea):
+    """ setup a breakpoint for insn x 
+    """
+    self.user_breakpoints.append(ea)
+    logger.console(LogType.INFO,'Breakpoint added to %x'%ea)
       
 
+  def del_breakpoint(self,ea):
+    try:
+      self.user_breakpoints.remove(ea)
+    except ValueError:
+      logger.console(LogType.WARN,'no breakpoint at specified address %x'%ea)
+        
+
   def step_over(self):
-    """ TODO, use ida_idp.is_call_insn 
-        then add custom breakpoint to PC+x
+    """ stop at next function return 
+        works also with conditionnal jump  
     """
-    raise NotImplemented 
+    pass 
     
 
   

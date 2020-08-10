@@ -181,12 +181,12 @@ class UnicornX86SEA(UnicornSEA):
      
 
   def set_return(self,value):
-    self.reg_write(0,value)
+    self.reg_write('eax',value)
   
   def get_pc(self):
-    return self.reg_read(15)
+    return self.reg_read('eip')
 
   def get_sp(self):
-    return self.reg_read(13)
+    return self.reg_read('esp')
 
 

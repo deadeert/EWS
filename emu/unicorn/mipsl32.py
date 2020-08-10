@@ -68,9 +68,12 @@ class MipsCorn(Emucorn):
 
     if self.conf.s_conf.stub_pltgot_entries: 
       if pinf['endianness'] == 'little':      
-        self.stubbit(stubs.Stubs.libc_stubs_mipsl)
+        self.stubs = stubs.Stubs.libc_stubs_mipsl
+#         self.stubbit(stubs.Stubs.libc_stubs_mipsl)
       else:
-        self.stubbit(stubs.Stubs.libc_stubs_mipsb)
+#         self.stubbit(stubs.Stubs.libc_stubs_mipsb)
+        self.stubs = stubs.Stubs.libc_stubs_mipsb
+      self.stubbit()
   
     self.uc.hook_add(UC_HOOK_MEM_READ_UNMAPPED,
                      Emucorn.unmp_read,
@@ -94,7 +97,7 @@ class MipsCorn(Emucorn):
                        self.conf)
 
 
-  def stubbit(self,stubs_l):
+  def stubbit(self):
     """ The choice here is to stub all xref 
         of the symbols that belong to extern section 
         plus that are used through call type insn.
@@ -113,10 +116,10 @@ class MipsCorn(Emucorn):
     insn = ida_ua.insn_t()
     while f.start_ea < s.end_ea:
       fname = ida_name.get_ea_name(f.start_ea)
-      if fname in stubs_l.keys():
+      if fname in self.stubs.keys():
         fstubbednb += 1
         # Assign Helper
-        stubs_l[fname].set_helper(self.helper)
+        self.stubs[fname].set_helper(self.helper)
         xref_g = idautils.XrefsTo(f.start_ea)
         try:
           while True:
@@ -161,6 +164,8 @@ class MipsCorn(Emucorn):
     self.uc.reg_write(UC_MIPS_REG_T5, self.conf.registers.t5)
     self.uc.reg_write(UC_MIPS_REG_T6, self.conf.registers.t6)
     self.uc.reg_write(UC_MIPS_REG_T7, self.conf.registers.t7)
+    self.uc.reg_write(UC_MIPS_REG_T7, self.conf.registers.t8)
+    self.uc.reg_write(UC_MIPS_REG_T7, self.conf.registers.t9)
     # division )
     self.uc.reg_write(UC_MIPS_REG_HI, self.conf.registers.hi)
     self.uc.reg_write(UC_MIPS_REG_LO, self.conf.registers.lo)
@@ -181,6 +186,55 @@ class MipsCorn(Emucorn):
     # misc (kernel)
     self.uc.reg_write(UC_MIPS_REG_K0, self.conf.registers.k0)
     self.uc.reg_write(UC_MIPS_REG_K1, self.conf.registers.k1)
+
+
+
+
+  def reset_regs(self):
+    self.uc.reg_write(UC_MIPS_REG_AT, 0)
+    #arguments)
+    self.uc.reg_write(UC_MIPS_REG_A0, 0)
+    self.uc.reg_write(UC_MIPS_REG_A1, 0)
+    self.uc.reg_write(UC_MIPS_REG_A2, 0)
+    self.uc.reg_write(UC_MIPS_REG_A3, 0)
+    # saved)
+    self.uc.reg_write(UC_MIPS_REG_S0, 0)
+    self.uc.reg_write(UC_MIPS_REG_S1, 0)
+    self.uc.reg_write(UC_MIPS_REG_S2, 0)
+    self.uc.reg_write(UC_MIPS_REG_S3, 0)
+    self.uc.reg_write(UC_MIPS_REG_S4, 0)
+    self.uc.reg_write(UC_MIPS_REG_S5, 0)
+    self.uc.reg_write(UC_MIPS_REG_S6, 0)
+    self.uc.reg_write(UC_MIPS_REG_S7, 0)
+    # temporary)
+    self.uc.reg_write(UC_MIPS_REG_T0, 0)
+    self.uc.reg_write(UC_MIPS_REG_T1, 0)
+    self.uc.reg_write(UC_MIPS_REG_T2, 0)
+    self.uc.reg_write(UC_MIPS_REG_T3, 0)
+    self.uc.reg_write(UC_MIPS_REG_T4, 0)
+    self.uc.reg_write(UC_MIPS_REG_T5, 0)
+    self.uc.reg_write(UC_MIPS_REG_T6, 0)
+    self.uc.reg_write(UC_MIPS_REG_T7, 0)
+    # division )
+    self.uc.reg_write(UC_MIPS_REG_HI, 0)
+    self.uc.reg_write(UC_MIPS_REG_LO, 0)
+    # return values)
+    self.uc.reg_write(UC_MIPS_REG_V0, 0)
+    self.uc.reg_write(UC_MIPS_REG_V1, 0)
+    # exec )
+    self.uc.reg_write(UC_MIPS_REG_GP, 0)
+    self.uc.reg_write(UC_MIPS_REG_FP, 0)
+    self.uc.reg_write(UC_MIPS_REG_RA, 0)
+    self.uc.reg_write(UC_MIPS_REG_SP, 0)
+    self.uc.reg_write(UC_MIPS_REG_SP, 0)
+    self.uc.reg_write(UC_MIPS_REG_PC, 0)
+  
+
+    self.uc.reg_write(UC_MIPS_REG_K0, 0)
+    self.uc.reg_write(UC_MIPS_REG_K1, 0)
+
+   
+
 
     
 

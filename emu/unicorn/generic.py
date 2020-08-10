@@ -91,7 +91,7 @@ class Emucorn(Emulator):
     stk_p,r = divmod(conf.stk_size,conf.p_size)
     if r: stk_p+=1 
     uc.mem_map(conf.stk_ba,stk_p*conf.p_size)
-    logger.console(LogType.INFO,' [%s] mapped stack at 0x%.8X '%('ArmCorn',conf.stk_ba))
+    logger.console(LogType.INFO,' [%s] mapped stack at 0x%.8X '%('Emucorn',conf.stk_ba))
   
     return stk_p 
 
@@ -149,6 +149,11 @@ class Emucorn(Emulator):
     mem=self.uc.mem_read(p_base,size)
     display_mem(mem) 
 
+  def display_range(self,start_ea,end_ea):
+    mem=self.uc.mem_read(start_ea,end_ea-start_ea)  
+    display_mem(mem)
+   
+
 
 
   @staticmethod
@@ -197,7 +202,11 @@ class Emucorn(Emulator):
     
       
   def step_n(self,n):
-    self.start(cnt=n,saddr=self.helper.get_pc())
+    if self.helper.get_pc() in self.user_breakpoints:
+      insn = get_insn_at(self.helper.get_pc())
+      self.start(cnt=n,saddr=self.helper.get_pc()+insn.size)
+    else: 
+      self.start(cnt=n,saddr=self.helper.get_pc())
     logger.console(LogType.INFO,'[+] exectution stopped at 0x%x'%self.helper.get_pc())
     
     
@@ -207,6 +216,39 @@ class Emucorn(Emulator):
   def continuee(self):
     self.step_n(0)
 
+  def step_over(self):
+    # TODO could be used directly in emubase class 
+   
+    insn = get_insn_at(self.helper.get_pc()) 
+    if ida_idp.is_call_insn(insn): 
+      self.add_breakpoint(insn.ea+insn.size)
+    # dirty way to assess conditionnal jump, is_conditionnal_jmp would have been appreciated  
+    elif ida_idp.has_insn_feature(insn.itype,ida_idp.CF_USE1):
+      if idc.get_operand_type(insn.ea,0) == ida_ua.o_near: 
+        logger.console(LogType.INFO,'Conditionnal jump detected')
+        self.add_breakpoint(insn.ea+insn.size)
+        self.add_breakpoint(idc.get_operand_value(insn.ea,0))
+    # CF_STOP insn (jump,br,...), indirect jump or simply other insn that does not have cref
+    else:
+      logger.console(LogType.WARN,'Could not step_over this kind of insn')
+    self.continuee()
+    
+
+
+  def restart(self,conf=None,cnt=0):
+    # unmap & remap 
+    for rsta,rsto,rpriv in self.uc.mem_regions():
+      self.uc.mem_unmap(rsta,rsto-rsta+1)
+    stk_p = Emucorn.do_mapping(self.uc,self.conf)
+
+    self.reset_regs() 
+    self.setup_regs(stk_p)
+    
+    self.helper.allocator.reset()
+    
+    logger.console(LogType.INFO,'Restart done. You can start exec (emu.start()/emu.step_{in,...))')
+
+   
 
   def add_mapping(self,addr,mem):
     """ TODO: handle protection
@@ -225,13 +267,17 @@ class Emucorn(Emulator):
 
     if addr in self.breakpoints.keys():
       try:
-        stubs.Stubs.libc_stubs_arm[self.breakpoints[addr]].do_it()
+        self.stubs[self.breakpoints[addr]].do_it()
+#         stubs.Stubs.libc_stubs_arm[self.breakpoints[addr]].do_it()
       except Exception as e:
         logger.console(LogType.WARN,'Error in stub, aborting')
         uc.emu_stop()
         raise e
     elif addr in self.custom_stubs.keys():
       self.custom_stubs[addr]() 
+    elif addr in self.user_breakpoints: 
+      uc.emu_stop() 
+      logger.console(LogType.INFO,'Breakpoint at %x reached.\nType emu.continuee() to pursue execution'%addr)
 
     self.color_map[addr] = get_insn_color(addr) 
     insn = ida_ua.insn_t() 
@@ -262,6 +308,7 @@ class Emucorn(Emulator):
     logger.console(LogType.INFO,strout)
     if self.conf.showRegisters:
       self.print_registers()
+      logger.console(LogType.INFO,str(self.get_alu_info()))
     
 
 
