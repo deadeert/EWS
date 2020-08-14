@@ -65,15 +65,16 @@ class x86Corn(Emucorn):
  
 
 
-    filetype = ida_loader.get_file_type_name()
+    self.filetype = ida_loader.get_file_type_name()
+    
     if self.conf.s_conf.stub_pltgot_entries:
-      if '(PE)' in filetype:
+      if '(PE)' in self.filetype:
         import stubs.PE
         self.nstub_obj = stubs.PE.NullStub('x86')
         self.nstub_obj.set_helper(self.helper) 
         self.loader_type = LoaderType.PE
         self.stubs = dict() 
-      elif 'ELF' in filetype:
+      elif 'ELF' in self.filetype:
         import Stubs.ELF
         self.nstub_obj = stubs.ELF.NullStub('x86')
         self.nstub_obj.set_helper(self.helper) 
@@ -84,11 +85,11 @@ class x86Corn(Emucorn):
 
   
     if self.conf.s_conf.stub_pltgot_entries:
-      if '(PE)' in filetype: 
+      if '(PE)' in self.filetype: 
         self.stub_PE(stubs.PE.winx86_stubs)
         self.stubs = stubs.PE.winx86_stubs 
-      elif 'ELF' in filetype:
-        self.stubbit(stubs.ELF.libc_stubs_arm)
+      elif 'ELF' in self.filetype:
+        self.stub_ELF(stubs.ELF.libc_stubs_arm)
         self.stubs = stubs.ELF.libc_stubs_arm
       else:
         logger.console(LogType.WARN,'Cannot stub : Unsupported file format %s'%filetype)
@@ -178,6 +179,16 @@ class x86Corn(Emucorn):
   
     
 
+
+  def repatch(self):
+    if not self.conf.stub_pltgot_entries:
+      return 
+    if '(PE)' in self.filetype:
+        self.stub_PE(self.stubs)
+    else:
+        self.stub_ELF(self.stubs)
+        
+
   @staticmethod
   def nop_insn(uc,insn):
     for of in range(0,insn.size):
@@ -222,6 +233,12 @@ class x86Corn(Emucorn):
         except StopIteration:
           pass
       cur_ea += 4
+
+
+  def stub_ELF(self,stubs_l):
+    # TODO
+    
+    pass
 
   @staticmethod
   def tail_retn(ea):

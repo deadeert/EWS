@@ -99,33 +99,7 @@ class ArmCorn(Emucorn):
                        Emucorn.hk_read,
                        self.conf)
 
-
-#   def step_n(self,n):
-#     """ Need to overload because of thumb mode
-#     """ 
-#     # TODO BUG ... the next if cond is bypassing the following insn 
-#     # pc = get_pc() 
-#     # emu.del_breakpoint(pc)
-#     # emu.uc.start(count=1)
-#     # emu.add_breakpoint(pc)
-#     # target = get_pc()+insn.siz 
-#     if self.helper.get_pc() in self.user_breakpoints:
-#       pc = self.helper.get_pc()
-#       self.del_breakpoint(pc)
-#       self.start(cnt=1,saddr=pc) 
-#       self.add_breakpoint(pc)
-#       insn = get_insn_at(self.helper.get_pc())
-#       target = pc+insn.size
-#     else: 
-#       target = self.helper.get_pc()
-#     
-# 
-#     if self.isThumb():
-#       target |= 1 
-# 
-#     self.start(cnt=n,saddr=target)
-#     logger.console(LogType.INFO,'[+] exectution stopped at 0x%x'%self.helper.get_pc())
-#  
+  
   def start(self,cnt=0,saddr=None): 
     """ Need to overload because of thumb mode
     """ 
@@ -262,6 +236,18 @@ class ArmCorn(Emucorn):
     
 
    
+
+  def repatch(self):
+    """ when using restart() function from debugger 
+        memory is erased, thus stub instruction has be 
+        to be patch again 
+    """ 
+    if not self.conf.stub_pltgot_entries: 
+      return 
+    
+    self.stubbit(stubs.ELF.libc_stubs_arm)
+
+
 
 
   

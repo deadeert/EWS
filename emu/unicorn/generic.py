@@ -152,7 +152,7 @@ class Emucorn(Emulator):
 
   def display_range(self,start_ea,end_ea):
     mem=self.uc.mem_read(start_ea,end_ea-start_ea)  
-    display_mem(mem)
+    display_mem(mem,ba=start_ea)
    
 
 
@@ -261,6 +261,8 @@ class Emucorn(Emulator):
     self.setup_regs(stk_p)
     
     self.helper.allocator.reset()
+
+    self.repatch()
     
     logger.console(LogType.INFO,'Restart done. You can start exec (emu.start()/emu.step_{in,...))')
 
