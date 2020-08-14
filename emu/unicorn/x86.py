@@ -8,10 +8,7 @@ import ida_loader
 import idc
 import ida_ua
 import ida_funcs
-# import stubs.Arm
-import stubs.Stubs
-#import stubs.PE
-# from stubs.unicstub import UnicornArmSEA
+import idautils
 from stubs.unicstub import UnicornX86SEA
 import struct
 from unicorn.x86_const import * 
@@ -64,26 +61,38 @@ class x86Corn(Emucorn):
       self.helper = UnicornX86SEA(uc=self.uc,
                                   allocator=DumpAllocator(consts_x86.ALLOC_BA,consts_x86.ALLOC_PAGES*conf.p_size),
                                   wsize=4)
-      self.nstub_obj = stubs.Stubs.NullStub('x86')
-      self.nstub_obj.set_helper(self.helper) 
+      
  
 
 
     filetype = ida_loader.get_file_type_name()
     if self.conf.s_conf.stub_pltgot_entries:
       if '(PE)' in filetype:
+        import stubs.PE
+        self.nstub_obj = stubs.PE.NullStub('x86')
+        self.nstub_obj.set_helper(self.helper) 
         self.loader_type = LoaderType.PE
         self.stubs = dict() 
-        #Load PE stubs here
       elif 'ELF' in filetype:
+        import Stubs.ELF
+        self.nstub_obj = stubs.ELF.NullStub('x86')
+        self.nstub_obj.set_helper(self.helper) 
         self.loader_type = LoaderType.ELF 
         self.stubs = dict()
-#         self.stubs = self.stubs 
-        #Load ELF stubs here 
       else:
         logger.console(LogType.WARN,'unsupported file type (%s) for stubs'%filetype) 
 
   
+    if self.conf.s_conf.stub_pltgot_entries:
+      if '(PE)' in filetype: 
+        self.stub_PE(stubs.PE.winx86_stubs)
+        self.stubs = stubs.PE.winx86_stubs 
+      elif 'ELF' in filetype:
+        self.stubbit(stubs.ELF.libc_stubs_arm)
+        self.stubs = stubs.ELF.libc_stubs_arm
+      else:
+        logger.console(LogType.WARN,'Cannot stub : Unsupported file format %s'%filetype)
+     
     self.uc.hook_add(UC_HOOK_CODE,
                      self.hook_code,
                      user_data=self.conf)
@@ -169,9 +178,15 @@ class x86Corn(Emucorn):
   
     
 
-  def stubs_PE(self,stubs_l):
- 
+  @staticmethod
+  def nop_insn(uc,insn):
+    for of in range(0,insn.size):
+      uc.mem_write(insn.ea+of,struct.pack('B',consts_x86.nop))
+    
 
+
+  def stub_PE(self,stubs_l):
+ 
     s = ida_segment.get_segm_by_name('.idata')
     if s == None:
         print('[!] .idata section not found, stubs mechanism not compatible with such binary')
@@ -179,20 +194,31 @@ class x86Corn(Emucorn):
     cur_ea = s.start_ea
     while cur_ea < s.end_ea:
       name = ida_name.get_name(cur_ea)
-      if name in stub_l.keys():
+      if name in stubs_l.keys():
         xref_g = idautils.XrefsTo(cur_ea)
-        stubs_l.set_helper(self.helper)
+        stubs_l[name].set_helper(self.helper)
         try:
           while True:
             xref = next(xref_g)
-            ida_ua.decode_insn(insn,xref.frm)
+            insn = get_insn_at(xref.frm)
             if ida_idp.is_call_insn(insn): 
-              # add breakpoint
               self.breakpoints[xref.frm] = name   
-              # patch reference 
-              for x in range(0,insn.size):
-                self.uc.mem_write(xref.frm+x,struct.pack('B',consts_x86.nop))
-            logger.console(LogType.INFO,'[+] %s is not stubbed at %x',name,xref.frm)
+              x86Corn.nop_insn(self.uc,insn)
+              logger.console(LogType.INFO,'%s is now stubbed at %x'%(name,insn.ea))
+            elif insn.itype in consts_x86.ida_jmp_itype:
+              xref_jmp_g = idautils.XrefsTo(xref.frm) 
+              try: 
+               while True:
+                xref_jmp = next(xref_jmp_g)
+                insn_xrf_jmp = get_insn_at(xref_jmp.frm)
+                if ida_idp.is_call_insn(insn_xrf_jmp):
+                  self.breakpoints[xref_jmp.frm] = name 
+                  x86Corn.nop_insn(self.uc,insn_xrf_jmp)
+                  logger.console(LogType.INFO,'%s is now stubbed at %x'%(name,insn_xrf_jmp.ea))
+                else:
+                  logger.console(LogType.WARN,'To many indirection to stub function %s'%name)
+              except StopIteration:
+                pass
         except StopIteration:
           pass
       cur_ea += 4

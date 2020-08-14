@@ -4,7 +4,7 @@ import consts_mips
 from utils import * 
 from unicorn.mips_const import * 
 from stubs.allocator import *
-import stubs.Stubs
+import stubs.ELF
 import stubs.unicstub
 import ida_ua
 import struct
@@ -68,11 +68,11 @@ class MipsCorn(Emucorn):
 
     if self.conf.s_conf.stub_pltgot_entries: 
       if pinf['endianness'] == 'little':      
-        self.stubs = stubs.Stubs.libc_stubs_mipsl
-#         self.stubbit(stubs.Stubs.libc_stubs_mipsl)
+        self.stubs = stubs.ELF.libc_stubs_mipsl
+#         self.stubbit(stubs.ELF.libc_stubs_mipsl)
       else:
-#         self.stubbit(stubs.Stubs.libc_stubs_mipsb)
-        self.stubs = stubs.Stubs.libc_stubs_mipsb
+#         self.stubbit(stubs.ELF.libc_stubs_mipsb)
+        self.stubs = stubs.ELF.libc_stubs_mipsb
       self.stubbit()
   
     self.uc.hook_add(UC_HOOK_MEM_READ_UNMAPPED,
@@ -388,10 +388,10 @@ class MipsCorn(Emucorn):
         try:
           if unimips.pinf['endianness'] == 'little':
 #             stubs.Arm.libc_stubs_mipsl[index].do_it(unimips.helper)
-            stubs.Stubs.libc_stubs_mipsl[index].do_it()
+            stubs.ELF.libc_stubs_mipsl[index].do_it()
           else: 
 #             stubs.Arm.libc_stubs_mipsb[index].do_it(unimips.helper)
-            stubs.Stubs.libc_stubs_mipsb[index].do_it(unimips.helper)
+            stubs.ELF.libc_stubs_mipsb[index].do_it(unimips.helper)
           uc.mem_map(0,unimips.conf.p_size)
           uc.mem_write(0,'trap'.encode('utf-8')*(unimips.conf.p_size//4))
           return True

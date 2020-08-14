@@ -5,7 +5,7 @@ import consts_arm
 from utils import * 
 from stubs.allocator import *
 # import stubs.Arm
-import stubs.Stubs
+import stubs.ELF
 from stubs.unicstub import UnicornArmSEA
 import struct
 
@@ -21,9 +21,18 @@ class ArmCorn(Emucorn):
     # Init engine 
     pinf = proc_inf('arm',conf.exec_saddr)
     if pinf['endianness'] == 'little':  
-      self.uc = Uc(UC_ARCH_ARM,UC_MODE_THUMB + UC_MODE_LITTLE_ENDIAN if pinf['proc_mode'] == 16  else UC_MODE_ARM +  UC_MODE_LITTLE_ENDIAN) 
+      if pinf['proc_mode'] == 16:
+        self.uc = Uc(UC_ARCH_ARM, UC_MODE_THUMB) 
+        self.conf.exec_saddr = self.conf.exec_saddr | 1
+      elif pinf['proc_mode'] == 32:
+        self.uc = Uc(UC_ARCH_ARM, UC_MODE_ARM) 
     elif pinf['endianness'] == 'big':
-      self.uc = Uc(UC_ARCH_ARM,UC_MODE_THUMB + UC_MODE_BIG_ENDIAN if   pinf['proc_mode'] == 16 else UC_MODE_ARM + UC_MODE_BIG_ENDIAN) 
+      if pinf['proc_mode'] == 16:
+        self.uc = Uc(UC_ARCH_ARM, UC_MODE_THUMB + UC_MODE_BIG_ENDIAN) 
+        self.conf.exec_saddr = self.conf.exec_saddr | 1
+      elif pinf['proc_mode'] == 32:
+        self.uc = Uc(UC_ARCH_ARM, UC_MODE_ARM + UC_MODE_BIG_ENDIAN) 
+
     self.endns = pinf['endianness']
 
     # Map pages 
@@ -38,6 +47,7 @@ class ArmCorn(Emucorn):
       from capstone import Cs, CS_ARCH_ARM, CS_MODE_THUMB, CS_MODE_ARM, CS_MODE_LITTLE_ENDIAN, CS_MODE_BIG_ENDIAN
       if pinf['proc_mode'] == 16:
         self.cs=Cs(CS_ARCH_ARM, CS_MODE_THUMB + CS_MODE_LITTLE_ENDIAN if pinf['endianness'] else CS_MODE_THUMB + CS_MODE_BIG_ENDIAN)
+         
       elif pinf['proc_mode'] == 32:
         self.cs=Cs(CS_ARCH_ARM, CS_MODE_ARM + CS_MODE_LITTLE_ENDIAN if pinf['endianness'] else CS_MODE_ARM + CS_MODE_BIG_ENDIAN)
       self.cs.detail=True
@@ -58,14 +68,14 @@ class ArmCorn(Emucorn):
       self.helper = UnicornArmSEA(uc=self.uc,
                                   allocator=DumpAllocator(consts_arm.ALLOC_BA,consts_arm.ALLOC_PAGES*conf.p_size),
                                   wsize=4)
-      self.nstub_obj = stubs.Stubs.NullStub('arm')
+      self.nstub_obj = stubs.ELF.NullStub('arm')
       self.nstub_obj.set_helper(self.helper) 
  
     self.breakpoints= dict()
     self.custom_stubs = dict()
     if self.conf.s_conf.stub_pltgot_entries:
-      self.stubbit(stubs.Stubs.libc_stubs_arm)
-      self.stubs = stubs.Stubs.libc_stubs_arm
+      self.stubbit(stubs.ELF.libc_stubs_arm)
+      self.stubs = stubs.ELF.libc_stubs_arm
       
 
            
@@ -90,6 +100,50 @@ class ArmCorn(Emucorn):
                        self.conf)
 
 
+#   def step_n(self,n):
+#     """ Need to overload because of thumb mode
+#     """ 
+#     # TODO BUG ... the next if cond is bypassing the following insn 
+#     # pc = get_pc() 
+#     # emu.del_breakpoint(pc)
+#     # emu.uc.start(count=1)
+#     # emu.add_breakpoint(pc)
+#     # target = get_pc()+insn.siz 
+#     if self.helper.get_pc() in self.user_breakpoints:
+#       pc = self.helper.get_pc()
+#       self.del_breakpoint(pc)
+#       self.start(cnt=1,saddr=pc) 
+#       self.add_breakpoint(pc)
+#       insn = get_insn_at(self.helper.get_pc())
+#       target = pc+insn.size
+#     else: 
+#       target = self.helper.get_pc()
+#     
+# 
+#     if self.isThumb():
+#       target |= 1 
+# 
+#     self.start(cnt=n,saddr=target)
+#     logger.console(LogType.INFO,'[+] exectution stopped at 0x%x'%self.helper.get_pc())
+#  
+  def start(self,cnt=0,saddr=None): 
+    """ Need to overload because of thumb mode
+    """ 
+    if not saddr:
+      saddr = self.conf.exec_saddr 
+    if self.isThumb():
+      saddr |= 1
+
+    try:
+      self.uc.emu_start(saddr,self.conf.exec_eaddr,timeout=0,count=cnt)
+    except UcError as e:  
+      logger.console(LogType.ERRR,'Error in unicorn engine')
+      raise e 
+    except Exception as e:
+      logger.console(LogType.WARN,'[!] Exception in program : %s' % e.__str__())
+      raise e
+    if self.conf.color_graph:
+      colorate_graph(self.color_map)
 
 
   def setup_regs(self,stk_p):
@@ -115,6 +169,7 @@ class ArmCorn(Emucorn):
       logger.console(LogType.WARN,warn)
       self.uc.reg_write(UC_ARM_REG_R13,self.conf.stk_ba+stk_p*self.conf.p_size-4)
     self.uc.reg_write(UC_ARM_REG_R14,self.conf.registers.R14)
+    self.uc.reg_write(UC_ARM_REG_R15,self.conf.registers.R15)
 
 
   def reset_regs(self):
@@ -136,6 +191,9 @@ class ArmCorn(Emucorn):
     self.uc.reg_write(UC_ARM_REG_R14,0)
     self.uc.reg_write(UC_ARM_REG_R15,0)
    
+
+  def isThumb(self):
+    return True if self.uc.query(UC_QUERY_MODE) == 0x10 else False 
 
 
 
@@ -197,7 +255,11 @@ class ArmCorn(Emucorn):
 
   
   
+  def get_alu_info(self): 
+    return arm32CPSR.create(self.uc.reg_read(UC_ARM_REG_CPSR))
 
+
+    
 
    
 
@@ -266,10 +328,10 @@ class ArmCorn(Emucorn):
       try:    fname = ida_funcs.get_func_name(ea)
       except: fname = 'func_%x'%ea
  
-#     if fname in stubs.Stubs.libc_stubs_arm.keys():
+#     if fname in stubs.ELF.libc_stubs_arm.keys():
     if fname in self.stubs.keys():
       logger.console(LogType.WARN,'[!] %s belongs to libc stub. It is now null stubbed'%fname)
-#       stubs.Stubs.libc_stubs_arm[fname] = self.nstub_obj
+#       stubs.ELF.libc_stubs_arm[fname] = self.nstub_obj
       self.stubs[fname] = self.nstub_obj 
     else:
       if is_thumb(ea):  
@@ -288,7 +350,7 @@ class ArmCorn(Emucorn):
       try:    fname = ida_funcs.get_func_name(ea)
       except: fname = 'func_%x'%ea
 
-#     if fname in stubs.Stubs.libc_stubs_arm.keys():
+#     if fname in stubs.ELF.libc_stubs_arm.keys():
     if fname in self.stubs.keys():
       # Needs to reinit the stub
       logger.console(LogType.WARN,'Changes will be effective only after save and reloading the conf')
@@ -315,7 +377,7 @@ class ArmCorn(Emucorn):
 
 
     aldy_patch = False
-#     if fname in stubs.Stubs.libc_stubs_arm.keys():
+#     if fname in stubs.ELF.libc_stubs_arm.keys():
     if fname in self.stubs.keys():
       logger.console(LogType.WARN,'Overriding default stub function %s'%fname)
       aldy_patch = True
@@ -330,8 +392,8 @@ class ArmCorn(Emucorn):
         self.uc.mem_write(ea,struct.pack('>I' if self.endns == 'little' else '<I',consts_arm.mov_pc_lr))
      
 
-    stubs.Stubs.StubsARM.itnum_arm+=1
-    new_stub = stubs.Stubs.Stub(stubs.Stubs.StubsARM.itnum_arm,'arm',self.helper)
+    stubs.ELF.StubsARM.itnum_arm+=1
+    new_stub = stubs.ELF.Stub(stubs.ELF.StubsARM.itnum_arm,'arm',self.helper)
     new_stub.do_it = func
     self.custom_stubs[ea] = new_stub.do_it
 
@@ -343,7 +405,7 @@ class ArmCorn(Emucorn):
     try:    fname = ida_funcs.get_func_name(ea)
     except: fname = 'func_%x'%ea 
 
-#     if fname in stubs.Stubs.libc_stubs_arm.keys():
+#     if fname in stubs.ELF.libc_stubs_arm.keys():
     if fname in self.stubs.keys():
       logger.console(LogType.WARN,'could not unstub, please reload the conf')
     
@@ -357,13 +419,13 @@ class ArmCorn(Emucorn):
     """ TODO: add to configuration
     """
 
-#     if not stubname in stubs.Stubs.libc_stubs_arm.keys():
+#     if not stubname in stubs.ELF.libc_stubs_arm.keys():
     if not stubname in self.stubs.keys():
       logger.console(LogType.WARN,'%s is not among default stubs. Aborting'%stubname)
       return
-#     stubs.Stubs.libc_stubs_arm[stubname].set_helper(self.helper)
+#     stubs.ELF.libc_stubs_arm[stubname].set_helper(self.helper)
     self.stubs[stubname].set_helper(self.helper)
-#     self.add_custom_stub(ea,stubs.Stubs.libc_stubs_arm[stubname].do_it)
+#     self.add_custom_stub(ea,stubs.ELF.libc_stubs_arm[stubname].do_it)
     self.add_custom_stub(ea,self.stubs[stubname].do_it)
 
 
@@ -423,7 +485,7 @@ class ArmCorn(Emucorn):
      logger.console(LogType.INFO,"[intr_handler] reloc index=%s (pc=%08X) (lr=%08X)"%(index,pc,lr))
      try:
 #        stubs.Arm.libc_stubs_arm[index].do_it(helper)
-       stubs.Stubs.libc_stubs_arm[index].do_it()
+       stubs.ELF.libc_stubs_arm[index].do_it()
        
      except Exception as e: 
        logger.console(LogType.ERRR,'[intr_handler] error in stubs code')

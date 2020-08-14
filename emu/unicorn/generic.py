@@ -100,6 +100,7 @@ class Emucorn(Emulator):
       saddr = self.conf.exec_saddr 
     try:
       self.uc.emu_start(saddr,self.conf.exec_eaddr,timeout=0,count=cnt)
+      logger.console(LogType.INFO,'End Address specified in configuration reached')
     except UcError as e:  
       logger.console(LogType.ERRR,'Error in unicorn engine')
       raise e 
@@ -176,7 +177,7 @@ class Emucorn(Emulator):
 
   @staticmethod
   def hk_read(uc,access,addr,size,value,user_data):
-    logger.console(LogType.INFO,'[*] Read access to addr 0x%.8X for size %d. Value: '%(addr,size),uc.mem_read(addr,size))
+    logger.console(LogType.INFO,'[*] Read access to addr 0x%.8X for size %d. Value: '%(addr,size),uc.mem_read(addr,size),'\n\n')
 
 
 
@@ -202,7 +203,21 @@ class Emucorn(Emulator):
     
       
   def step_n(self,n):
+    # TODO BUG ... the next if cond is bypassing the following insn 
+    # try this
+    # pc = get_pc() 
+    # emu.del_breakpoint(pc)
+    # emu.uc.start(count=1)
+    # emu.add_breakpoint(pc)
+    # target = get_pc()+insn.siz 
+    pc = self.helper.get_pc()
     if self.helper.get_pc() in self.user_breakpoints:
+      self.del_breakpoint(pc)
+      self.start(cnt=1,saddr=pc) 
+      self.add_breakpoint(pc)
+      insn = get_insn_at(self.helper.get_pc())
+      target = pc+insn.size
+
       insn = get_insn_at(self.helper.get_pc())
       self.start(cnt=n,saddr=self.helper.get_pc()+insn.size)
     else: 
@@ -240,6 +255,7 @@ class Emucorn(Emulator):
     for rsta,rsto,rpriv in self.uc.mem_regions():
       self.uc.mem_unmap(rsta,rsto-rsta+1)
     stk_p = Emucorn.do_mapping(self.uc,self.conf)
+    # TODO BUG: need to patch the program for PLT/PE stubs
 
     self.reset_regs() 
     self.setup_regs(stk_p)
@@ -268,7 +284,6 @@ class Emucorn(Emulator):
     if addr in self.breakpoints.keys():
       try:
         self.stubs[self.breakpoints[addr]].do_it()
-#         stubs.Stubs.libc_stubs_arm[self.breakpoints[addr]].do_it()
       except Exception as e:
         logger.console(LogType.WARN,'Error in stub, aborting')
         uc.emu_stop()
@@ -277,6 +292,7 @@ class Emucorn(Emulator):
       self.custom_stubs[addr]() 
     elif addr in self.user_breakpoints: 
       uc.emu_stop() 
+#       self.step_n(1) 
       logger.console(LogType.INFO,'Breakpoint at %x reached.\nType emu.continuee() to pursue execution'%addr)
 
     self.color_map[addr] = get_insn_color(addr) 
@@ -303,12 +319,13 @@ class Emucorn(Emulator):
       except Exception as e:
         insn_str='[!] Error occured while decoding insn:'+e.__str__()
     
-    strout = '[PC=%.8X]'%uc.reg_read(self.pcid)+' '+insn_str
+    strout = '[PC=%.8X]'%uc.reg_read(self.pcid)+' '+str(self.get_alu_info())+' '+insn_str
     
     logger.console(LogType.INFO,strout)
     if self.conf.showRegisters:
       self.print_registers()
-      logger.console(LogType.INFO,str(self.get_alu_info()))
+
+    return True
     
 
 

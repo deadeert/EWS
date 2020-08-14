@@ -75,7 +75,31 @@ class ArmRegisters(Registers):
     self.R13=R13
     self.R14=R14
     self.R15=R15
-  
+
+class arm32CPSR(Registers):
+  def __init__(self,N,Z,C,V,I,F):
+    self.N = N 
+    self.Z = Z
+    self.C = C 
+    self.V = V 
+    self.I = I 
+    self.F = F
+
+
+  @classmethod 
+  def create(cls,cpsr):
+    return arm32CPSR(N=(cpsr&0x80000000)>>31,
+                     Z=(cpsr&0x40000000)>>30,
+                     C=(cpsr&0x20000000)>>29,
+                     V=(cpsr&0x10000000)>>28,
+                     I=(cpsr&0x8000000)>>27,
+                     F=(cpsr&0x400000)>>26)
+
+  def __str__(self):
+    out = '[N=%d Z=%d C=%d V=%d I=%d F=%d] '%(self.N,self.Z,self.C,self.V,self.I,self.F)
+    return out
+
+
 
 class MipslRegisters(Registers): 
   """ Based on https://en.wikibooks.org/wiki/MIPS_Assembly/Register_File
@@ -413,6 +437,7 @@ def proc_inf(arch,addr):
   ret = dict()
   if arch == 'arm':
       if ida_segregs.get_sreg(addr,ida_idp.str2reg('T')): 
+        logger.console(LogType.INFO,"Thumb mode detected")
         ret['proc_mode']=16
       else:
         ret['proc_mode']=32

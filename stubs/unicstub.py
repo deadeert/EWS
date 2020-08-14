@@ -3,6 +3,7 @@ from emu.unicorn.generic import Emucorn
 import emu.unicorn.arm32 
 import emu.unicorn.mipsl32
 import emu.unicorn.generic 
+import struct 
 
 
 class UnicornSEA(StubEngineAbstractor):
@@ -19,6 +20,9 @@ class UnicornSEA(StubEngineAbstractor):
     raise NotImplemented
   def reg_conv(self,reg_id):
     raise NotImplemented
+  def get_arg(self,arg_num):
+    #NOTE: must return an integer, not bytes   
+    raise NotImplemented 
   def push(self,sp_id,value,endianness='little'):
     sp = self.reg_read(sp_id)
     sp -= self.wsize
@@ -177,8 +181,11 @@ class UnicornX86SEA(UnicornSEA):
 
   def get_arg(self,arg_num):
     esp = self.reg_read('esp')
-    return self.mem_read(esp+arg_num*self.wsize,self.wsize)
-     
+    # TODO warning it may change according the compiler (GCC vs MSVC prolog)
+    # as we patch call insn, the ret@ is not pushed into the stack,
+    # therefore, when we reach a stub, the first argument corresponds to the first stack entry
+    # pointed by esp
+    return struct.unpack('<I',self.mem_read(esp+arg_num*self.wsize,self.wsize))[0] 
 
   def set_return(self,value):
     self.reg_write('eax',value)
@@ -188,5 +195,51 @@ class UnicornX86SEA(UnicornSEA):
 
   def get_sp(self):
     return self.reg_read('esp')
+
+"""             """
+"     X86_64      "
+"""             """
+
+
+#TODO create other instance for GCC compiler
+class UnicornX64SEA(UnicornSEA):
+
+  def __init__(self,uc,allocator,wsize):
+    super().__init__(uc,allocator,wsize)
+
+  def reg_conv(self,r_id):
+    return emu.unicorn.x64.x64Corn.reg_convert(r_id)
+
+  def reg_read(self,reg_id):
+    return Emucorn.reg_read(self.runner,self.reg_conv(reg_id))
+
+  def reg_write(self,reg_id,data):
+    Emucorn.reg_write(self.runner,self.reg_conv(reg_id),data)
+
+  def get_arg(self,arg_num):
+    if arg_num == 0:
+      return self.reg_read('rdi')
+    elif arg_num == 1:
+      return self.reg_read('rsi')
+    elif arg_num == 2:
+      return self.reg_read('rdx')
+    elif arg_num == 3:
+      return self.reg_read('rcx')
+    elif arg_num == 4:
+      return self.reg_read('r8')
+    elif arg_num == 5:
+      return self.reg_read('r9')
+    else:
+      rsp = self.reg_read('rsp')
+      return struct.unpack('<I',self.mem_read(rsp+(1+arg_num)*self.wsize,self.wsize)) # skip saved rbp + @ret
+
+  def set_return(self,value):
+    self.reg_write('rax',value)
+  
+  def get_pc(self):
+    return self.reg_read('rip')
+
+  def get_sp(self):
+    return self.reg_read('rsp')
 
 

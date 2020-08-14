@@ -1,11 +1,3 @@
-###
-#
-# TODO 
-# - XprintY(): use SAE push/pop functions 
-#              to handle more args
-#
-###
-
 from consts_arm import SVC_INSN_ARM 
 from consts_mips import BREAK_INSN_MIPS  
 from stubs import stubs_conf

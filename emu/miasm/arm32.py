@@ -1,5 +1,5 @@
 from emu.miasm.generic import Emuiasm
-import stubs.Stubs 
+import stubs.ELF 
 from stubs.allocator import *
 from stubs.miasm import MiasmArmSEA
 from miasm.analysis.machine import Machine
@@ -57,11 +57,11 @@ class Miarm(Emuiasm):
       logger.console(LogType.WARN,'user stubs no supported yet.')
 
     if self.conf.s_conf.stub_pltgot_entries: 
-      self.stubbit(stubs.Stubs.libc_stubs_arm)
+      self.stubbit(stubs.ELF.libc_stubs_arm)
       logger.console(LogType.INFO,'[%s] add stubbing trap page. plt/got now patched.'%'ArmCorn') 
 
 
-    self.nstub_obj = stubs.Stubs.NullStub('arm')
+    self.nstub_obj = stubs.ELF.NullStub('arm')
     self.nstub_obj.set_helper(self.helper) 
     for ea,fname in self.conf.s_conf.nstubs.items():
       self.add_null_stub(ea,fname)
@@ -205,9 +205,9 @@ class Miarm(Emuiasm):
       try:    fname = ida_funcs.get_func_name(ea)
       except: fname = 'func_%x'%ea
  
-    if fname in stubs.Stubs.libc_stubs_arm.keys():
+    if fname in stubs.ELF.libc_stubs_arm.keys():
       logger.console(LogType.WARN,'[!] %s belongs to libc stub. It is now null stubbed'%fname)
-      stubs.Stubs.libc_stubs_arm[fname] = self.nstub_obj
+      stubs.ELF.libc_stubs_arm[fname] = self.nstub_obj
     else:
       if is_thumb(ea):
         self.jitter.vm.set_mem(ea,struct.pack('>H' if self.endns == 'little' else '<H',consts_arm.mov_pc_lr_thumb))
@@ -226,7 +226,7 @@ class Miarm(Emuiasm):
       try:    fname = ida_funcs.get_func_name(ea)
       except: fname = 'func_%x'%ea
 
-    if fname in stubs.Stubs.libc_stubs_arm.keys():
+    if fname in stubs.ELF.libc_stubs_arm.keys():
       # Needs to reinit the stub
       logger.console(LogType.WARN,'Changes will be effective only after save and reloading the conf')
     else:
@@ -252,7 +252,7 @@ class Miarm(Emuiasm):
     except: fname = 'func_%x'%ea 
     
     aldy_patch = False
-    if fname in stubs.Stubs.libc_stubs_arm.keys():
+    if fname in stubs.ELF.libc_stubs_arm.keys():
       logger.console(LogType.WARN,'Overriding default stub function %s'%fname)
       aldy_patch = True
     elif fname in self.conf.s_conf.nstubs.values():
@@ -265,8 +265,8 @@ class Miarm(Emuiasm):
       else:
         self.jitter.vm.set_mem(ea,struct.pack('>I' if self.endns == 'little' else '<I',consts_arm.mov_pc_lr))
 
-    stubs.Stubs.StubsARM.itnum_arm+=1
-    new_stub = stubs.Stubs.Stub(stubs.Stubs.StubsARM.itnum_arm,'arm',self.helper)
+    stubs.ELF.StubsARM.itnum_arm+=1
+    new_stub = stubs.ELF.Stub(stubs.ELF.StubsARM.itnum_arm,'arm',self.helper)
     new_stub.do_it = func
     self.jitter.add_breakpoint(ea,new_stub.do_it)
 
@@ -279,7 +279,7 @@ class Miarm(Emuiasm):
     try:    fname = ida_funcs.get_func_name(ea)
     except: fname = 'func_%x'%ea 
 
-    if fname in stubs.Stubs.libc_stubs_arm.keys():
+    if fname in stubs.ELF.libc_stubs_arm.keys():
       logger.console(LogType.WARN,'could not unstub, please reload the conf')
     
     self.jitter.vm.set_mem(ea,ida_bytes.get_bytes(ea,4))
@@ -294,11 +294,11 @@ class Miarm(Emuiasm):
     """ TODO: add to configuration
     """
 
-    if not stubname in stubs.Stubs.libc_stubs_arm.keys():
+    if not stubname in stubs.ELF.libc_stubs_arm.keys():
       logger.console(LogType.WARN,'%s is not among default stubs. Aborting'%stubname)
       return
 
-    self.add_custom_stub(ea,stubs.Stubs.libc_stubs_arm[stubname].do_it)
+    self.add_custom_stub(ea,stubs.ELF.libc_stubs_arm[stubname].do_it)
 
 
   def remove_tag(self,ea):
