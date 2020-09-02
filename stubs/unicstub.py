@@ -231,7 +231,7 @@ class UnicornX64SEA(UnicornSEA):
       return self.reg_read('r9')
     else:
       rsp = self.reg_read('rsp')
-      return struct.unpack('<I',self.mem_read(rsp+(1+arg_num)*self.wsize,self.wsize)) # skip saved rbp + @ret
+      return struct.unpack('<Q',self.mem_read(rsp+arg_num*self.wsize,self.wsize)) # call insn is nopped hence ret @ is not pushed on the stack
 
   def set_return(self,value):
     self.reg_write('rax',value)

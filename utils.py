@@ -201,8 +201,66 @@ class x86EFLAGS(Registers):
     return out
 
 
+class x64Registers(Registers):
+  
+  def __init__(self,RAX,RBX,RCX,RDX,RDI,RSI,R8,R9,R10,R11,R12,R13,R14,R15,RBP,RSP,RIP):
+    self.RAX = RAX
+    self.RBX = RBX
+    self.RCX = RCX
+    self.RDX = RDX
+    self.RDI = RDI 
+    self.RSI = RSI
+    self.R8 = R8
+    self.R9 = R9
+    self.R10 = R10
+    self.R11 = R11
+    self.R12 = R12
+    self.R13 = R13
+    self.R14 = R14
+    self.R15 = R15
+    self.RBP = RBP 
+    self.RSP = RSP 
+    self.RIP = RIP 
 
 
+class x64RFLAGS(Registers):
+  def __init__(self,CF,PF,AF,ZF,SF,TF,EIF,DF,OF):
+    self.CF = CF
+    self.PF = PF 
+    self.AF = AF
+    self.ZF = ZF
+    self.SF = SF
+    self.TF = TF
+    self.EIF = EIF
+    self.DF = DF 
+    self.OF = OF 
+
+  @classmethod 
+  def create(cls,eflags):
+    return x64RFLAGS(CF=(eflags)&0x1,
+                     PF=(eflags&0x4)>>2,
+                     AF=(eflags&0x10)>>4,
+                     ZF=(eflags&0x40)>>6,
+                     SF=(eflags&0x80)>>7,
+                     TF=(eflags&0x100)>>8,
+                     EIF=(eflags&0x200)>>9,
+                     DF=(eflags&0x400)>>10,
+                     OF=(eflags&0x800)>>11)
+
+  def __str__(self):
+    out = '[ZF=%d PF=%d AF=%d ZF=%d SF=%d TF=%d EIF=%d DF=%d OF=%d]'%(self.CF,
+                                                                      self.PF,
+                                                                      self.AF,
+                                                                      self.ZF,
+                                                                      self.SF,
+                                                                      self.TF,
+                                                                      self.EIF,
+                                                                      self.DF,
+                                                                      self.OF)
+    return out
+
+
+    
 
 class AdditionnalMapping():
     
@@ -388,6 +446,9 @@ class ConfigDeserializer(json.JSONDecoder): #PASS ClassType for register parsing
 #         regs=MipslRegisters( *[ jdict['registers'][rname] for rname in jdict['registers'].keys()  ])
       elif jdict['arch'] == 'pc':
         regs=x86Registers(**jdict['registers']) 
+      elif jdict['arch'] == 'pc64':
+        print('pc64')
+        regs=x64Registers(**jdict['registers'])
       else:
         raise NotImplemented
           

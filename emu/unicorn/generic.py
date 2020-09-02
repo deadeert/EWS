@@ -203,13 +203,17 @@ class Emucorn(Emulator):
     
       
   def step_n(self,n):
-    # TODO BUG ... the next if cond is bypassing the following insn 
-    # try this
-    # pc = get_pc() 
-    # emu.del_breakpoint(pc)
-    # emu.uc.start(count=1)
-    # emu.add_breakpoint(pc)
-    # target = get_pc()+insn.siz 
+    # TODO idea:
+    # to step n insn, we could use three add variable 
+    # steping_mode = True/False and step_cpt, step_num  
+    # in hook code: check if steping_mode is on, if so increment the step_cpt
+    # until we have reach step_num  in this case the set steping_mode to off
+
+
+
+    # if a breakpoint is set on the current pc 
+    # we need to delete it, run one step and 
+    # add it again. Else, we get stuck on the same insn.
     pc = self.helper.get_pc()
     if self.helper.get_pc() in self.user_breakpoints:
       self.del_breakpoint(pc)
@@ -226,6 +230,9 @@ class Emucorn(Emulator):
     
     
   def step_in(self):
+    if self.helper.get_pc() == self.conf.exec_eaddr: 
+      insn = get_insn_at(self.helper.get_pc())
+      self.conf.exec_eaddr+=insn.size
     self.step_n(1)
 
   def continuee(self):
@@ -233,8 +240,10 @@ class Emucorn(Emulator):
 
   def step_over(self):
     # TODO could be used directly in emubase class 
-   
     insn = get_insn_at(self.helper.get_pc()) 
+
+    if self.helper.get_pc() == self.conf.exec_eaddr: 
+      self.conf.exec_eaddr+=insn.size
     if ida_idp.is_call_insn(insn): 
       self.add_breakpoint(insn.ea+insn.size)
     # dirty way to assess conditionnal jump, is_conditionnal_jmp would have been appreciated  
