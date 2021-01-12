@@ -8,6 +8,8 @@ import ida_ua
 import ida_loader
 import idc 
 import string
+import os
+import lief
 import json
 from enum import Enum
 
@@ -351,18 +353,25 @@ class StubConfiguration():
     cls = StubConfiguration({},False,None,{})
     return cls 
 
-  def __init__(self,nstubs,stub_dynamic_func_tab,dynamic_func_tab_name,custom_stubs_file=None,tags=None):
+  def __init__(self,nstubs,
+               stub_dynamic_func_tab,
+               orig_filepath,
+               custom_stubs_file=None,
+               auto_null_stub=False,
+               tags=None):
     """ nstubs               : null stub dictionnary 
         stub_dynamic_func_tab: stub sections such as plt/iat ...  
-        dynamic_func_tab_name: name of the section that references function offsets 
-        custom_stubs_file: file that specify special behavior for certain function
+        orig_filepath        : name of the original binary
+        custom_stubs_file    : file that specify special behavior for certain function
+        autonull stub        : null stubs symbols that are not currently supported
         tags : mapping ea:stub_name 
     """
     
     self.nstubs = nstubs 
     self.stub_dynamic_func_tab = stub_dynamic_func_tab
-    self.dynamic_func_tab_name = dynamic_func_tab_name 
+    self.orig_filepath = orig_filepath 
     self.custom_stubs_file = custom_stubs_file 
+    self.auto_null_stub = auto_null_stub 
     if tags == None:
       self.tags = dict() 
     else: self.tags = tags
@@ -374,7 +383,12 @@ class StubConfiguration():
   def __add__(self,sconf):
     nstubs = {**self.nstubs, **sconf.nstubs}
     tags = {**self.tags, **sconf.tags} 
-    return StubConfiguration(nstubs,sconf.stub_dynamic_func_tab,sconf.dynamic_func_tab_name,sconf.custom_stubs_file,tags)
+    return StubConfiguration(nstubs,
+                             sconf.stub_dynamic_func_tab,
+                             sconf.orig_filepath,
+                             sconf.custom_stubs_file,
+                             sconf.auto_null_stub,
+                             tags)
   
 
 class Configuration():
@@ -397,6 +411,8 @@ class Configuration():
       showMemAccess   boolean   when activated display all memory accesses on logger
       amap_conf:      [mapping] allow addit. mappings (not belonging to the binary) 
                                 usefull for arguments mapping etc... 
+      filepath:       str       path of the origianl executable (for stubs)
+
   """
   
   def __init__(self,
@@ -508,11 +524,31 @@ class ConfigSerializer(json.JSONEncoder):
       
       
       
-      return {'path':conf.path, 'arch': conf.arch,'emulator':conf.emulator, 'p_size' : conf.p_size, 'stk_ba': conf.stk_ba, 'stk_size' : conf.stk_size, 'autoMap' : conf.autoMap, 'showRegisters': conf.showRegisters, 
-             'useCapstone': conf.useCapstone, 'exec_saddr' : conf.exec_saddr, 'exec_eaddr' : conf.exec_eaddr, 'mapping_saddr' : conf.mapping_saddr, 'mapping_eaddr' : conf.mapping_eaddr,
-             'segms': segs, 'registers': conf.registers.__dict__, 'map_with_segs' : conf.map_with_segs, 'showMemAccess': conf.showMemAccess, 'use_seg_perms': conf.use_seg_perms, 
-             's_conf': {'nstubs' : funcs, 'stub_dynamic_func_tab': conf.s_conf.stub_dynamic_func_tab, 'dynamic_func_tab_name' : conf.s_conf.dynamic_func_tab_name, 'custom_stubs_file' : conf.s_conf.custom_stubs_file,'tags':conf.s_conf.tags}, 
-             'amap_conf': f_amap, 'color_graph': conf.color_graph,'breakpoints':conf.breakpoints}
+      return {'path':conf.path, 
+              'arch': conf.arch,
+              'emulator':conf.emulator, 
+              'p_size' : conf.p_size, 
+              'stk_ba': conf.stk_ba, 
+              'stk_size' : conf.stk_size, 
+              'autoMap' : conf.autoMap, 
+              'showRegisters': conf.showRegisters, 
+              'useCapstone': conf.useCapstone, 
+              'exec_saddr' : conf.exec_saddr, 
+              'exec_eaddr' : conf.exec_eaddr, 
+              'mapping_saddr' : conf.mapping_saddr, 
+              'mapping_eaddr' : conf.mapping_eaddr,
+              'segms': segs, 'registers': conf.registers.__dict__, 
+              'map_with_segs' : conf.map_with_segs,
+              'showMemAccess': conf.showMemAccess, 
+              'use_seg_perms': conf.use_seg_perms, 
+              's_conf': {'nstubs' : funcs, 
+                         'stub_dynamic_func_tab': conf.s_conf.stub_dynamic_func_tab, 
+                         'orig_filepath' : conf.s_conf.orig_filepath, 
+                         'auto_null_stub': conf.s_conf.auto_null_stub,
+                         'custom_stubs_file' : conf.s_conf.custom_stubs_file,
+                         'tags':conf.s_conf.tags}, 
+             'amap_conf': f_amap, 'color_graph': conf.color_graph,
+             'breakpoints':conf.breakpoints}
 
 
 class ConfigDeserializer(json.JSONDecoder): #PASS ClassType for register parsing ? 
@@ -572,13 +608,14 @@ class ConfigDeserializer(json.JSONDecoder): #PASS ClassType for register parsing
                            jdict['useCapstone'],
                            regs,
                            jdict['showMemAccess'],
-                           StubConfiguration(nstubs,jdict['s_conf']['stub_dynamic_func_tab'],jdict['s_conf']['dynamic_func_tab_name'],jdict['s_conf']['custom_stubs_file'],tags_dict),
+                           StubConfiguration(nstubs,jdict['s_conf']['stub_dynamic_func_tab'],
+                                             jdict['s_conf']['orig_filepath'],
+                                             jdict['s_conf']['custom_stubs_file'],
+                                             jdict['s_conf']['auto_null_stub'],
+                                             tags_dict),
                            AdditionnalMapping(amap_dict),
                            jdict['color_graph'],
                            jdict['breakpoints'])
-
-             
-             
      except Exception as e: 
         print('[!] Error deserializing JSON object: %s'%e.__str__()) 
         return None
@@ -756,11 +793,30 @@ def search_executable():
     """ try to locate binary corresponding to the IDB
         to parse dynamic information (PT_DYNAMIC segment) 
     """
-    try:
-        f_path=ida_loader.get_path(PATH_TYPE_CMD).split('.')[0:][0] # remove extension 
-    except: 
-        f_path=""
+
+    f_path_l=ida_loader.get_path(ida_loader.PATH_TYPE_CMD).split('.')[:-1]
+    ntry=1
+    f_path=""
+    while ntry<len(f_path_l):
+        candidate='.'.join(f_path_l[0:ntry]) 
+        if verify_valid_elf(candidate):
+                f_path=candidate 
+                break
+        else:
+            ntry+=1
+
+
+    if f_path == "":
+        logger.console(LogType.WARN,"cannot find suitable executable, please enter manually")
+
+
     return f_path
 
 
+def verify_valid_elf(candidate):
+    if os.path.exists(candidate):
+            if str(lief.ELF.parse(candidate)) != None:
+                    return True
+    return False
+        
 

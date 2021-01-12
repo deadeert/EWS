@@ -197,12 +197,12 @@ class StubForm(ida_kernwin.Form):
 
   def __init__(self):
     self.invert = False
-    self.nstub = dict()
     self.clicked_ns = False
     self.clicked_ds = False
-    self.dyn_func_section = None
+    self.nstub=dict()
     self.custom_stubs_file = None
     self.tags = dict()
+    self.orig_fpath = ""
 
     Form.__init__(self, r"""STARTITEM 
 BUTTON YES Yeah
@@ -210,29 +210,34 @@ BUTTON NO Nope
 BUTTON CANCEL* Nevermind
 Stubbing confiugration
 {cbCallback}
-<##Functions: {cFuncChooser}>
-<##Add selection: {addButton}>
 <##Stub dynamic func tab No:      {sfNo}> <Yes:{sfYes}>{sfC}>
-<##Dynamic function resolution section: {dynFuncSec}>
+<##Original filepath:{origFpath}> <##Apply file: {bFile}>
+<##Auto null stub missing symbols: {asNo}>< Yes:{asYes}>{saC}>
 <##Add custom stubs file: {customStubFile}>
 """,{
-            'addButton': Form.ButtonInput(self.AddButton),
             'sfC': Form.RadGroupControl(("sfNo","sfYes")),
-            'dynFuncSec': Form.EmbeddedChooserControl(Pannel.segment_chooser("Sections")),
             'customStubFile': Form.ButtonInput(self.CustomStubFile),
-            'cFuncChooser': Form.EmbeddedChooserControl(StubForm.function_chooser("NullStubfunction")),
+            'origFpath': Form.FileInput(open=True,save=False),
+            'saC': Form.RadGroupControl(("asNo","asYes")),
+            'bFile': Form.ButtonInput(self.OnbFile),
+
+
             'cbCallback': Form.FormChangeCb(self.cb_callback)
 })
 
   def cb_callback(self,fid):
     if fid == self.sfC.id:
-      self.EnableField(self.dynFuncSec,self.GetControlValue(self.sfC))
-    if fid == self.dynFuncSec.id:
-      if not self.GetControlValue(self.sfC):
-        self.EnableField(self.dynFuncSec,False)
-      self.dyn_func_section  = ida_segment.get_segm_name(get_seg_list()[self.GetControlValue(self.dynFuncSec)[0]])
+        logger.console(LogType.INFO,'Possible file path: %s'%search_executable())
+        self.orig_fpath = search_executable()
+        logger.console(LogType.INFO,'Found potential matching binary path:%s'%self.orig_fpath)
+        self.SetControlValue(self.origFpath,self.orig_fpath)
+    if fid == self.origFpath.id:
+      self.orig_fpath = self.GetControlValue(self.origFpath)
     return 1
-   
+
+
+  def OnbFile(self,code):
+    self.orig_fpath = self.GetControlValue(self.origFpath)
 
 
    
@@ -261,17 +266,16 @@ Stubbing confiugration
       ok = f.Execute()
       if ok:
 
-          if not f.clicked_ns: 
-            logger.console(1,' [%s] no stubs added, please use "Add Selection" button to add selected stubs'%'UI') #WTF IDA does not exports locals()['__name__']
-          if not f.dyn_func_section and f.sfC.value:
-            logger.console(1,' [%s] No dynamic section selected, stubbing won\'t work'%'UI') #WTF IDA does not exports locals()['__name__']
 
+          if not verify_valid_elf(f.orig_fpath):
+              logger.console(LogType.WARN,"Specified original filepath invalid, stubs won't work")
           ret = StubConfiguration(nstubs=f.nstub,
                                 stub_dynamic_func_tab=f.sfC.value,
-                                dynamic_func_tab_name=f.dyn_func_section,
+                                orig_filepath=f.orig_fpath,
                                 custom_stubs_file=f.custom_stubs_file,
+                                auto_null_stub=f.saC.value,
                                 tags=f.tags)
-          print('dyn tab name = %s'%ret.dynamic_func_tab_name)
+          print('orign fpath = %s'%ret.orig_filepath)
           print('custon stub file = ',ret.custom_stubs_file) 
           print('stub dyn func tab = ',ret.stub_dynamic_func_tab)
       f.Free()

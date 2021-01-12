@@ -22,7 +22,15 @@ class Emulator(object):
     self.reloc_map = dict()
     for ea in self.conf.breakpoints:
       self.add_breakpoint(ea,update_conf=False)
+    if  self.conf.s_conf.stub_dynamic_func_tab:
+        if not verify_valid_elf(self.conf.s_conf.orig_filepath):
+            logger.console(LogType.WARN,"Symbol resolution won't work. Could not use stub mechanism")
+        else:
+            self.get_relocs(self.conf.s_conf.orig_filepath)
 
+
+
+    
   def start(self):
     """ method responsive for execution launch
     """
@@ -139,7 +147,6 @@ class Emulator(object):
     """
     pass
 
-  def get_
 
   def add_custom_stub(self,ea,func):
     """ add a custom stub 
@@ -228,6 +235,7 @@ class Emulator(object):
       """ get the relocs for GOT entries (JMP_SLOT)
           for stub purpose
       """
+      pass
 
 
 

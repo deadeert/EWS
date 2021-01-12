@@ -41,8 +41,8 @@ class Aarch64Corn(Emucorn):
         self.pcid = UC_ARM64_REG_PC 
 
 
-        # Init stubs engine 
-        if self.conf.s_conf.stub_dynamic_func_tab: 
+        # Init stubs engine
+        if self.conf.s_conf.stub_dynamic_func_tab:
           self.uc.mem_map(consts_aarch64.ALLOC_BA,
                           conf.p_size*consts_aarch64.ALLOC_PAGES,
                           UC_PROT_READ | UC_PROT_WRITE)
@@ -100,7 +100,7 @@ class Aarch64Corn(Emucorn):
     def nop_insn(self,insn):
         self.uc.mem_write(insn.ea,struct.pack('<I',consts_aarch64.nop))
 
-    def get_retn_insn(self):
+    def get_retn_insn(self,ea):
         return struct.pack('<I',consts_aarch64.ret)
 
     def get_new_stub(self,stub_func):
@@ -152,7 +152,10 @@ class Aarch64Corn(Emucorn):
 
         self.uc.reg_write(UC_ARM64_REG_FP,self.conf.registers.FP)
         self.uc.reg_write(UC_ARM64_REG_LR,self.conf.registers.LR)
-        self.uc.reg_write(UC_ARM64_REG_SP,self.conf.registers.SP)
+        if not self.conf.registers.SP in range(self.conf.stk_ba, self.conf.stk_ba + self.conf.stk_size):
+            self.uc.reg_write(UC_ARM64_REG_SP,self.conf.stk_ba+self.conf.stk_size-8)
+        else:
+            self.uc.reg_write(UC_ARM64_REG_SP,self.conf.registers.SP)
         self.uc.reg_write(UC_ARM64_REG_PC,self.conf.registers.PC)
 
 
@@ -329,7 +332,7 @@ class Aarch64Corn(Emucorn):
                                                              self.uc.reg_read(UC_ARM64_REG_X26),
                                                              self.uc.reg_read(UC_ARM64_REG_X27))
 
-        strout += '[X28=%.8X] [FP=%.8X] [SP =%.8X] [LR =%.8X]\n'%(self.uc.reg_read(UC_ARM64_REG_X28),
+        strout += '[X28=%.8X] [FP=%.8X] [LR =%.8X] [SP =%.8X]\n'%(self.uc.reg_read(UC_ARM64_REG_X28),
                                                                self.uc.reg_read(UC_ARM64_REG_FP),
                                                                self.uc.reg_read(UC_ARM64_REG_LR),
                                                                self.uc.reg_read(UC_ARM64_REG_SP))
@@ -337,14 +340,15 @@ class Aarch64Corn(Emucorn):
 
 
 
-    def get_relocs(self):
-        elf_l = lief.ELF.parse(search_executable())
-        if efl_l == None:
+    def get_relocs(self,fpath):
+        elf_l = lief.ELF.parse(fpath)
+        if str(elf_l) != None:
             # overload get_reloc of emubase
             relocs = elf_l.relocations
             for r in relocs:
-                if r.type == int(ELF.RELOCATION_AARCH64.JUMP_SLOT):
+                if r.type == int(lief.ELF.RELOCATION_AARCH64.JUMP_SLOT):
                     self.reloc_map[r.symbol.name] = r.address
+        print(len(self.reloc_map))
 
 
 

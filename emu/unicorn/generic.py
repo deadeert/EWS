@@ -239,6 +239,7 @@ class Emucorn(Emulator):
       xref = next(xref_g)
       insn = get_insn_at(xref.frm)
       if ida_idp.is_call_insn(insn): 
+        print('stub at '%xref.frm)
         self.stub_breakpoints[xref.frm] = stub_func 
         self.nop_insn(insn)
 #         logger.console(LogType.INFO,'[+] %x nopped '%xref.frm)
@@ -286,29 +287,70 @@ class Emucorn(Emulator):
       if f == None: 
         break
 
-  def stubbit(self):
-    
-    s = ida_segment.get_segm_by_name(self.conf.s_conf.dynamic_func_tab_name)
-    
-    logger.console(LogType.INFO,"enter stubbit: base on section : %s"%self.conf.s_conf.dynamic_func_tab_name)
-    #this is heuristic to know if stub section is function array (.got)
-    #or function declarations (.plt)
-    f = ida_funcs.get_func(s.start_ea)
-    if f == None: 
-      logger.console(LogType.INFO,'Stubbed section is detected as array of function pointers')
-      self.iter_by_name(s.start_ea,s.end_ea) 
-    else: 
-      logger.console(LogType.INFO,"iter_by_func")
-      self.iter_by_func(s.start_ea,s.end_ea) 
 
+
+
+
+  def stubbit(self):
+
+    print('entering stubbit')
+    i=0
+    for k,v in self.reloc_map.items():
+            # enter plt
+            xref_g = idautils.XrefsTo(v)
+            try:
+             while True:
+              xref = next(xref_g)
+              if k in self.stubs.keys(): 
+                print('stub %s at %x'% (k,xref.frm))
+                self.stubs[k].set_helper(self.helper)
+                # stub plt entry
+                self.stub_by_first_insn(xref.frm,self.stubs[k].do_it)
+              else:
+                 #TODO add configuration option to automatically null-stub 
+                 #symbols that are not currently supported 
+                 if self.conf.s_conf.auto_null_stub:
+                    logger.console(LogType.INFO,'%s symbol not found. null-stubbing it'%k)
+                    self.add_null_stub(v)
+              i+=1
+            except StopIteration:
+                if i>1:
+                    logger.console(LogType.WARN,'Weird behavior detected. GOT slot referenced by several xref...\n',
+                                   'Unwanted behavior might occur')
     for s_ea in self.conf.s_conf.nstubs.keys():
         self.add_null_stub(s_ea)
 
     for k,v in self.conf.s_conf.tags.items():
       self.tag_func(k,v)
-      
 
-    #TODO Add user stub
+
+
+
+
+
+#    s = ida_segment.get_segm_by_name(self.conf.s_conf.dynamic_func_tab_name)
+#    
+#    logger.console(LogType.INFO,"enter stubbit: base on section : %s"%self.conf.s_conf.dynamic_func_tab_name)
+#    #this is heuristic to know if stub section is function array (.got)
+#    #or function declarations (.plt)
+#    f = ida_funcs.get_func(s.start_ea)
+#    if f == None: 
+#      logger.console(LogType.INFO,'Stubbed section is detected as array of function pointers')
+#      self.iter_by_name(s.start_ea,s.end_ea) 
+#    else: 
+#      logger.console(LogType.INFO,"iter_by_func")
+#      self.iter_by_func(s.start_ea,s.end_ea) 
+#
+#    for s_ea in self.conf.s_conf.nstubs.keys():
+#        self.add_null_stub(s_ea)
+#
+#    for k,v in self.conf.s_conf.tags.items():
+#      self.tag_func(k,v)
+#
+#
+
+
+  #TODO Add user stub
 
   def add_custom_stub(self,ea,func):
     

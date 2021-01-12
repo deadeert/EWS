@@ -273,6 +273,7 @@ class strlen(Stub):
 
 # -----------------------------------------------------------------------------
 @LibcStub('fopen')
+@LibcStub('.fopen')
 class fopen(Stub):
 
     def __init__(self):
