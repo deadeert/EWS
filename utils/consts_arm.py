@@ -7,6 +7,8 @@ ALLOC_BA = 0x80000000
 ALLOC_PAGES = 0x10
 mov_pc_lr = 0x0ef0a0e1
 mov_pc_lr_thumb = 0xf746
+nop_thumb = 0xB000
+nop=0x00000000
 ### END ARM SPECIFICS ####
 
 

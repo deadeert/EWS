@@ -1,15 +1,14 @@
 import ida_segregs
 from emu.unicorn.generic import * 
 import string
-import consts_x64
-from utils import * 
-from stubs.allocator import *
+from utils.utils import * 
+from stubs.ELF.allocator import *
 import ida_loader
 import idc
 import ida_ua
 import ida_funcs
 import idautils
-from stubs.unicstub import UnicornX64SEA
+from stubs.emu.unicorn.sea import UnicornX64SEA
 import struct
 from unicorn.x86_const import * 
 from keystone import * 
@@ -40,6 +39,8 @@ class x64Corn(Emucorn):
       self.cs=Cs(CS_ARCH_X86, CS_MODE_64)
 
     self.ks = Ks(KS_ARCH_X86,KS_MODE_64) 
+    self.pointer_size = 8 
+
 
        
     # Setup regs 

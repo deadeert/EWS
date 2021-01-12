@@ -5,6 +5,7 @@ import ida_segregs
 import ida_ida
 import ida_idp
 import ida_ua
+import ida_loader
 import idc 
 import string
 import json
@@ -98,6 +99,70 @@ class arm32CPSR(Registers):
   def __str__(self):
     out = '[N=%d Z=%d C=%d V=%d I=%d F=%d] '%(self.N,self.Z,self.C,self.V,self.I,self.F)
     return out
+
+
+class Aarch64Registers(Registers):
+ 
+  def __init__(self,X0,X1,X2,X3,X4,X5,X6,X7,X8,X9,
+                    X10,X11,X12,X13,X14,X15,X16,X17,X18,X19,
+                    X20,X21,X22,X23,X24,X25,X26,X27,X28,FP,LR,SP,PC):
+    self.X0=X0
+    self.X1=X1
+    self.X2=X2
+    self.X3=X3
+    self.X4=X4
+    self.X5=X5
+    self.X6=X6
+    self.X7=X7
+    self.X8=X8
+    self.X9=X9
+    self.X10=X10
+    self.X11=X11
+    self.X12=X12
+    self.X13=X13
+    self.X14=X14
+    self.X15=X15
+    self.X16=X16
+    self.X17=X17
+    self.X18=X18
+    self.X19=X19
+    self.X20=X20
+    self.X21=X21
+    self.X22=X22
+    self.X23=X23
+    self.X24=X24
+    self.X25=X25
+    self.X26=X26
+    self.X27=X27
+    self.X28=X28
+    self.FP=FP
+    self.LR=LR
+    self.SP=SP
+    self.PC=PC
+
+class aarch64CPSR(Registers):
+  def __init__(self,N,Z,C,V,I,F):
+    self.N = N 
+    self.Z = Z
+    self.C = C 
+    self.V = V 
+    self.I = I 
+    self.F = F
+
+
+  @classmethod 
+  def create(cls,cpsr):
+    return aarch64CPSR(N=(cpsr&0x80000000)>>31,
+                     Z=(cpsr&0x40000000)>>30,
+                     C=(cpsr&0x20000000)>>29,
+                     V=(cpsr&0x10000000)>>28,
+                     I=(cpsr&0x8000000)>>27,
+                     F=(cpsr&0x400000)>>26)
+
+  def __str__(self):
+    out = '[N=%d Z=%d C=%d V=%d I=%d F=%d] '%(self.N,self.Z,self.C,self.V,self.I,self.F)
+    return out
+
 
 
 
@@ -280,30 +345,36 @@ class AdditionnalMapping():
       
     
 class StubConfiguration():
-  """ nstubs             : dictionnary indexed by ea referencing function name
-                           indicates null stubs {ea:'funcname'}
-      use_user_stub      : indicate if stubs declared in stubs.User module will 
-                           be used
-      stub_pltgot_entries: will stub pltgot entries using stubs.Stubs module   
-  """
 
   @staticmethod
   def create():
-    cls = StubConfiguration({},False,False)
+    cls = StubConfiguration({},False,None,{})
     return cls 
 
-  def __init__(self,nstubs,use_user_stubs,stub_pltgot_entries):
+  def __init__(self,nstubs,stub_dynamic_func_tab,dynamic_func_tab_name,custom_stubs_file=None,tags=None):
+    """ nstubs               : null stub dictionnary 
+        stub_dynamic_func_tab: stub sections such as plt/iat ...  
+        dynamic_func_tab_name: name of the section that references function offsets 
+        custom_stubs_file: file that specify special behavior for certain function
+        tags : mapping ea:stub_name 
+    """
+    
     self.nstubs = nstubs 
-    self.use_user_stubs = use_user_stubs
-    self.stub_pltgot_entries = stub_pltgot_entries
+    self.stub_dynamic_func_tab = stub_dynamic_func_tab
+    self.dynamic_func_tab_name = dynamic_func_tab_name 
+    self.custom_stubs_file = custom_stubs_file 
+    if tags == None:
+      self.tags = dict() 
+    else: self.tags = tags
 
   def __str__(self):
     return '\n'.join(['{}: {}'.format(x,self.__dict__[x]) for x in self.__dict__])
 
 
   def __add__(self,sconf):
-    ret = {**self.nstubs, **sconf.nstubs}
-    return StubConfiguration(ret,sconf.use_user_stubs,sconf.stub_pltgot_entries)
+    nstubs = {**self.nstubs, **sconf.nstubs}
+    tags = {**self.tags, **sconf.tags} 
+    return StubConfiguration(nstubs,sconf.stub_dynamic_func_tab,sconf.dynamic_func_tab_name,sconf.custom_stubs_file,tags)
   
 
 class Configuration():
@@ -323,16 +394,13 @@ class Configuration():
       useCapstone     boolean   use capstone to generate insn disassembly output
       registers:      [int]     init values of regsiters
       s_conf:
-        stub_pltgot   boolean   use stubs to emulate behaviour of well known function (ELF format only) 
-        stub_iat      boolean   idem with PE
-        use_user_stb  boolean   allow user to stub additionnal function defined on user_stubs.py file
-                                helpfull to modify/simplify behavior of functions accros the binary
       showMemAccess   boolean   when activated display all memory accesses on logger
       amap_conf:      [mapping] allow addit. mappings (not belonging to the binary) 
                                 usefull for arguments mapping etc... 
   """
   
   def __init__(self,
+               path,
                arch,
                emulator,
                p_size,
@@ -352,8 +420,9 @@ class Configuration():
                showMemAccess,
                s_conf,
                amap_conf,
-               color_graph):
- 
+               color_graph,
+               breakpoints):
+    self.path = path 
     self.arch = arch
     self.emulator = emulator
     self.p_size = p_size 
@@ -374,6 +443,7 @@ class Configuration():
     self.s_conf = s_conf
     self.amap_conf = amap_conf
     self.color_graph = color_graph
+    self.breakpoints = breakpoints
 
   def __str__(self):
     return '\n'.join(['{}: {}'.format(x,self.__dict__[x]) for x in self.__dict__])
@@ -397,13 +467,33 @@ class Configuration():
   def remove_null_stub(self,ea):
     del self.s_conf.nstubs[ea]
 
+
+  def add_tag(self,ea,stub_name):
+    self.s_conf.tags[ea] = stub_name
+
+  def remove_tag(self,ea):
+    del self.s_conf.nstubs[ea]
+
+  def show_tags(self):
+    for k,v in self.s_conf.tags.items():
+      logger.console(LogType.INFO,'%x : %s'%(k,v))
+  
   def save(self,path):
     saveconfig(self,path)
+
+  def add_breakpoint(self,ea):
+    self.breakpoints.append(ea)
     
-    
+  def remove_breakpoint(self,ea):
+    self.breakpoints.remove(ea)
+
+  def show_breakpoints(self):
+    for k in self.breakpoints:
+      logger.console(LogType.INFO,'%x'%k)
+
 
 class ConfigSerializer(json.JSONEncoder):
-  
+
   def default(self,conf):
     if isinstance(conf, Configuration):
       segs = [ ida_segment.get_segm_name(seg) for seg in conf.segms ] 
@@ -414,12 +504,15 @@ class ConfigSerializer(json.JSONEncoder):
       for k in conf.amap_conf.mappings.keys():
         il = [ b for b in bytearray(conf.amap_conf.mappings[k]) ]  
         f_amap[k] = il 
+
       
       
-      return {'arch': conf.arch,'emulator':conf.emulator, 'p_size' : conf.p_size, 'stk_ba': conf.stk_ba, 'stk_size' : conf.stk_size, 'autoMap' : conf.autoMap, 'showRegisters': conf.showRegisters, 
+      
+      return {'path':conf.path, 'arch': conf.arch,'emulator':conf.emulator, 'p_size' : conf.p_size, 'stk_ba': conf.stk_ba, 'stk_size' : conf.stk_size, 'autoMap' : conf.autoMap, 'showRegisters': conf.showRegisters, 
              'useCapstone': conf.useCapstone, 'exec_saddr' : conf.exec_saddr, 'exec_eaddr' : conf.exec_eaddr, 'mapping_saddr' : conf.mapping_saddr, 'mapping_eaddr' : conf.mapping_eaddr,
              'segms': segs, 'registers': conf.registers.__dict__, 'map_with_segs' : conf.map_with_segs, 'showMemAccess': conf.showMemAccess, 'use_seg_perms': conf.use_seg_perms, 
-             's_conf': {'nstubs' : funcs, 'use_user_stubs': conf.s_conf.use_user_stubs, 'stub_pltgot_entries' : conf.s_conf.stub_pltgot_entries}, 'amap_conf': f_amap, 'color_graph': conf.color_graph}
+             's_conf': {'nstubs' : funcs, 'stub_dynamic_func_tab': conf.s_conf.stub_dynamic_func_tab, 'dynamic_func_tab_name' : conf.s_conf.dynamic_func_tab_name, 'custom_stubs_file' : conf.s_conf.custom_stubs_file,'tags':conf.s_conf.tags}, 
+             'amap_conf': f_amap, 'color_graph': conf.color_graph,'breakpoints':conf.breakpoints}
 
 
 class ConfigDeserializer(json.JSONDecoder): #PASS ClassType for register parsing ? 
@@ -437,7 +530,12 @@ class ConfigDeserializer(json.JSONDecoder): #PASS ClassType for register parsing
       amap_dict = dict()
       for k in jdict['amap_conf'].keys(): 
         amap_dict[int(k,10)] = bytes(jdict['amap_conf'][k])
+  
+      tags_dict = dict()
+      for k,v in jdict['s_conf']['tags'].items():
+        tags_dict[int(k,10)] = v 
 
+    
       if jdict['arch'] == 'arm':
 #         regs=ArmRegisters( *[ jdict['registers'][rname] for rname in jdict['registers'].keys()  ])
         regs=ArmRegisters(**jdict['registers'])
@@ -449,12 +547,15 @@ class ConfigDeserializer(json.JSONDecoder): #PASS ClassType for register parsing
       elif jdict['arch'] == 'pc64':
         print('pc64')
         regs=x64Registers(**jdict['registers'])
+      elif jdict['arch'] == 'aarch64':
+        regs=Aarch64Registers(**jdict['registers'])
       else:
         raise NotImplemented
           
         
      
-      return Configuration(jdict['arch'],
+      return Configuration(jdict['path'],
+                           jdict['arch'],
                            jdict['emulator'],
                            jdict['p_size'],
                            jdict['stk_ba'],
@@ -471,9 +572,10 @@ class ConfigDeserializer(json.JSONDecoder): #PASS ClassType for register parsing
                            jdict['useCapstone'],
                            regs,
                            jdict['showMemAccess'],
-                           StubConfiguration(nstubs,jdict['s_conf']['use_user_stubs'],jdict['s_conf']['stub_pltgot_entries']),
+                           StubConfiguration(nstubs,jdict['s_conf']['stub_dynamic_func_tab'],jdict['s_conf']['dynamic_func_tab_name'],jdict['s_conf']['custom_stubs_file'],tags_dict),
                            AdditionnalMapping(amap_dict),
-                           jdict['color_graph'])
+                           jdict['color_graph'],
+                           jdict['breakpoints'])
 
              
              
@@ -481,8 +583,9 @@ class ConfigDeserializer(json.JSONDecoder): #PASS ClassType for register parsing
         print('[!] Error deserializing JSON object: %s'%e.__str__()) 
         return None
        
-def saveconfig(conf,conf_apath): 
-
+def saveconfig(conf,conf_apath=None): 
+  if not conf_apath: 
+    conf_apath=conf.path
   out=json.dumps(conf,cls=ConfigSerializer)
   with open(conf_apath,'w+') as fout: 
     fout.write(out)
@@ -633,3 +736,31 @@ def get_insn_at(ea):
    ida_ua.decode_insn(insn,ea)
    return insn
     
+def build_func_name(ea):
+    fn = ida_funcs.get_func_name(ea)
+    if fn == None: fn = 'func_%x'%ea
+    return fn
+
+
+def get_min_ea_idb():
+    return ida_idaapi.get_inf_structure().min_ea
+def get_max_ea_idb():
+    return ida_idaapi.get_inf_structure().max_ea
+
+
+
+
+
+
+def search_executable():
+    """ try to locate binary corresponding to the IDB
+        to parse dynamic information (PT_DYNAMIC segment) 
+    """
+    try:
+        f_path=ida_loader.get_path(PATH_TYPE_CMD).split('.')[0:][0] # remove extension 
+    except: 
+        f_path=""
+    return f_path
+
+
+

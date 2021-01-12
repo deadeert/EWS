@@ -1,4 +1,4 @@
-from stubs.generic import StubEngineAbstractor  
+from stubs.emu.generic import StubEngineAbstractor  
 from emu.unicorn.generic import Emucorn
 import emu.unicorn.arm32 
 import emu.unicorn.mipsl32
@@ -78,6 +78,59 @@ class UnicornArmSEA(UnicornSEA):
 
   def get_sp(self):
     return self.reg_read(13)
+
+"""             """
+"     AARCH64     "
+"""             """
+
+
+class UnicornAarch64SEA(UnicornSEA):
+
+  def __init__(self,uc,allocator,wsize):
+    super().__init__(uc,allocator,wsize)
+
+
+  def reg_conv(self,r_id):
+    return emu.unicorn.aarch64.Aarch64Corn.reg_convert(r_id)
+   
+  def reg_read(self,reg_id):
+    return Emucorn.reg_read(self.runner,self.reg_conv(reg_id))
+
+  def reg_write(self,reg_id,data):
+    Emucorn.reg_write(self.runner,self.reg_conv(reg_id),data)
+
+  def get_arg(self,arg_num):
+    if arg_num == 0:
+      return self.reg_read(0)
+    elif arg_num == 1:
+      return self.reg_read(1)
+    elif arg_num == 2: 
+      return self.reg_read(2)
+    elif arg_num == 3:
+      return self.reg_read(3)
+    elif arg_num == 4:
+      return self.reg_read(4)
+    elif arg_num == 5:
+      return self.reg_read(5)
+    elif arg_num == 6:
+      return self.reg_read(6)
+    elif arg_num == 7:
+      return self.reg_read(7)
+    elif arg_num == 8:
+      return self.reg_read(8)
+    else:
+      return self.pop(31,-1) 
+
+  def set_return(self,value):
+    self.reg_write(0,value)
+  
+  def get_pc(self):
+    return self.reg_read('PC')
+
+  def get_sp(self):
+    return self.reg_read(31)
+
+
 
 """          """
 "     MIPS     "

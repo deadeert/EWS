@@ -1,4 +1,4 @@
-from utils import * 
+from utils.utils import * 
 
 
 
@@ -19,6 +19,9 @@ class Emulator(object):
     self.conf = conf
     self.color_map = dict()
     self.user_breakpoints = list()
+    self.reloc_map = dict()
+    for ea in self.conf.breakpoints:
+      self.add_breakpoint(ea,update_conf=False)
 
   def start(self):
     """ method responsive for execution launch
@@ -136,6 +139,7 @@ class Emulator(object):
     """
     pass
 
+  def get_
 
   def add_custom_stub(self,ea,func):
     """ add a custom stub 
@@ -188,16 +192,19 @@ class Emulator(object):
     """ 
     pass
 
-  def add_breakpoint(self,ea):
+  def add_breakpoint(self,ea,update_conf=True):
     """ setup a breakpoint for insn x 
     """
     self.user_breakpoints.append(ea)
+    if update_conf: self.conf.add_breakpoint(ea)
     logger.console(LogType.INFO,'Breakpoint added to %x'%ea)
+    
       
 
-  def del_breakpoint(self,ea):
+  def del_breakpoint(self,ea,update_conf=True):
     try:
       self.user_breakpoints.remove(ea)
+      if update_conf: self.conf.remove_breakpoint(ea)
     except ValueError:
       logger.console(LogType.WARN,'no breakpoint at specified address %x'%ea)
         
@@ -207,6 +214,25 @@ class Emulator(object):
         works also with conditionnal jump  
     """
     pass 
+
+  def save_config(self,filepath=None):
+    """ save current configuration in selected file. 
+        @params: 
+            filepath: path of the selected file. 
+    """
+
+    saveconfig(self.conf,filepath) 
+
+
+  def get_relocs(self):
+      """ get the relocs for GOT entries (JMP_SLOT)
+          for stub purpose
+      """
+
+
+
+    
+
     
 
   

@@ -1,7 +1,7 @@
 from emu.emubase import Emulator
 from miasm.analysis.machine import Machine
 from miasm.jitter.csts import PAGE_READ, PAGE_WRITE, PAGE_EXEC
-from utils import *
+from utils.utils import *
 import ida_segment
 import ida_ua
 import ida_idaapi

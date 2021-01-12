@@ -1,16 +1,8 @@
-###
-#
-# TODO 
-# - XprintY(): use SAE push/pop functions 
-#              to handle more args
-#
-###
-
-from consts_arm import SVC_INSN_ARM 
-from consts_mips import BREAK_INSN_MIPS  
-from stubs import stubs_conf
-from stubs.stubs_helper import *  
-from utils import *
+#from utils.consts_arm import SVC_INSN_ARM 
+#from utils.consts_mips import BREAK_INSN_MIPS  
+from stubs.ELF import conf
+from stubs.ELF.utils import *  
+from utils.utils import *
 import codecs
 import re
 from enum import Enum
@@ -27,98 +19,36 @@ byte_2l = lambda x: x & 0xFFFF
 byte_h = lambda x: (x >> 16) & 0xFF
 byte_2h = lambda x: (x >> 16) & 0xFFFF
 
-
-def SVC(it):
-  return int.to_bytes(SVC_INSN_ARM|it,4,'little')
-
-def BREAK(it,mode):
-  return int.to_bytes(it<<6|BREAK_INSN_MIPS,4,mode)
-
-def TRAMPOLINE(it,mode):
-  """ bal 0x1008 ; it = 1 """
-  return int.to_bytes(0x0C0004<<8|it*3,4,mode) # 3 <=> TRAMPOLINE_SIZE // 4 
-
-
-
 # -----------------------------------------------------------------------------
 """                 """
 "     STUB OBJECTS    "
 """                 """
 # -----------------------------------------------------------------------------
 class Stub(object):
-  def __init__(self,itnum,arch,helper=None):
-    self.idx_it = itnum
+  def __init__(self,helper=None):
     self.helper = helper
-    if arch == 'arm':
-      self.insn_it = SVC(itnum)
-    elif arch == 'mipsl':
-#       self.insn_it = BREAK(itnum,'little')
-      self.insn_it = TRAMPOLINE(itnum,'little')
-    elif arch == 'mipsb':
-      self.insn_it = TRAMPOLINE(itnum,'big')
-#       self.insn_it = BREAK(itnum,'big')
 
   def set_helper(self,helper):
     self.helper = helper
   
+libc_stubs = dict()
 
-
-libc_stubs_arm = dict()
-libc_stubs_mipsl = dict()
-libc_stubs_mipsb = dict()
-
-
-class StubsARM():
-    itnum_arm = 1
-    arch = 'arm'
+class LibcStub():
     def __init__(self,name):
-        assert name not in libc_stubs_arm
-        self.itnum = StubsARM.itnum_arm
-        StubsARM.itnum_arm+=1
+        assert name not in libc_stubs
         self.name = name
 
     def __call__(self,cls):
-        obj = cls(self.itnum,StubsARM.arch)
-        libc_stubs_arm[self.name] = obj
-        libc_stubs_arm[self.itnum] = obj
-        return cls
-
-class StubsMIPSL():
-    itnum_arm = 1
-    arch = 'mipsl'
-    def __init__(self,name):
-        assert name not in libc_stubs_mipsl
-        self.itnum = StubsMIPSL.itnum_arm
-        StubsMIPSL.itnum_arm+=1
-        self.name = name
-
-    def __call__(self,cls):
-        obj = cls(self.itnum,StubsMIPSL.arch)
-        libc_stubs_mipsl[self.name] = obj
-        libc_stubs_mipsl[self.itnum] = obj
-        return cls
-
-class StubsMIPSB():
-    itnum_arm = 1
-    arch = 'mipsb'
-    def __init__(self,name):
-        assert name not in libc_stubs_mipsb
-        self.itnum = StubsMIPSB.itnum_arm
-        StubsMIPSB.itnum_arm+=1
-        self.name = name
-
-    def __call__(self,cls):
-        obj = cls(self.itnum,StubsMIPSB.arch)
-        libc_stubs_mipsb[self.name] = obj
-        libc_stubs_mipsb[self.itnum] = obj
+        obj = cls()
+        libc_stubs[self.name] = obj
         return cls
 
 
 
 class NullStub(Stub):
 
-    def __init__(self,arch):
-        super().__init__(0,arch)
+    def __init__(self):
+        super().__init__()
       
     def do_it(self,*args):
         logger.console(LogType.INFO,'[stubs] null stub is called')
@@ -131,12 +61,12 @@ class NullStub(Stub):
 "   STUBBED FUNCTIONS   "
 """                   """
 # -----------------------------------------------------------------------------
-@StubsARM('memset')
-@StubsMIPSB('memset')
+@LibcStub('memset')
+@LibcStub('.memset')
 class memset(Stub):
 
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
         
     def do_it(self,*args):
         dst = self.helper.get_arg(0)
@@ -148,11 +78,11 @@ class memset(Stub):
 
 
 # -----------------------------------------------------------------------------
-@StubsARM('malloc')
+@LibcStub('malloc')
 class malloc(Stub):
 
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
         
 
     def do_it(self,*args):
@@ -169,11 +99,11 @@ class malloc(Stub):
 # 
 
 # -----------------------------------------------------------------------------
-@StubsARM('free')
+@LibcStub('free')
 class free(Stub):
 
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
         
 
     def do_it(self,*args):
@@ -183,11 +113,11 @@ class free(Stub):
         return True
 
 # -----------------------------------------------------------------------------
-@StubsARM('calloc')
+@LibcStub('calloc')
 class calloc(Stub):
 
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
         
 
     def do_it(self,*args):
@@ -199,11 +129,11 @@ class calloc(Stub):
         return True
 
 # -----------------------------------------------------------------------------
-@StubsARM('__libc_start_main')
+@LibcStub('__libc_start_main')
 class libc_start_main(Stub):
 
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
         
 
     def do_it(self,*args):
@@ -215,11 +145,11 @@ class libc_start_main(Stub):
 
 
 # -----------------------------------------------------------------------------
-@StubsARM('puts')
+@LibcStub('puts')
 class puts(Stub):
 
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
         
 
     def do_it(self,*args):
@@ -229,11 +159,11 @@ class puts(Stub):
         self.helper.set_return( 0)
         return True
 # -----------------------------------------------------------------------------
-@StubsARM('strncpy')
+@LibcStub('strncpy')
 class strncpy(Stub):
 
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
         
 
     def do_it(self,*args):
@@ -251,11 +181,11 @@ class strncpy(Stub):
         return True
 
 # -----------------------------------------------------------------------------
-@StubsARM('strcpy')
+@LibcStub('strcpy')
 class strcpy(Stub):
 
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
 
     def do_it(self,*args):
         logger.console(LogType.INFO,'[strcpy] called at 0x%.8X'%self.helper.get_pc())
@@ -266,12 +196,11 @@ class strcpy(Stub):
         return True
 
 # -----------------------------------------------------------------------------
-@StubsARM('printf')
-@StubsMIPSL('.printf')
+@LibcStub('printf')
 class printf(Stub):
 
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
         
 
     def do_it(self,*args):
@@ -291,7 +220,8 @@ class printf(Stub):
         chain_addr = self.helper.get_arg(0)
         chain = deref_string(self.helper,chain_addr)
         reformat = [i for i in p.findall(chain.strip().decode('utf-8')) if i != '']
-        deref_list = f(self.helper,reformat)
+#         deref_list = f(self.helper,reformat)
+        deref_list = deref_format(self.helper,reformat,1) 
         deref_list.reverse()
         out=b''
         for x in p2.split(chain.strip().decode('utf-8')):
@@ -305,13 +235,12 @@ class printf(Stub):
         return True
 
 # -----------------------------------------------------------------------------
-@StubsMIPSB('memcpy')
-@StubsARM('memcpy')
-@StubsARM('__aeabi_memcpy')
+@LibcStub('memcpy')
+@LibcStub('__aeabi_memcpy')
 class memcpy(Stub):
 
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
         
 
     def do_it(self,*args):
@@ -327,13 +256,11 @@ class memcpy(Stub):
         return True
 
 # -----------------------------------------------------------------------------
-@StubsARM('strlen')
-@StubsMIPSL('.strlen')
-@StubsMIPSL('strlen')
+@LibcStub('strlen')
 class strlen(Stub):
 
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
         
 
     def do_it(self,*args):
@@ -345,11 +272,11 @@ class strlen(Stub):
         return True
 
 # -----------------------------------------------------------------------------
-@StubsARM('fopen')
+@LibcStub('fopen')
 class fopen(Stub):
 
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
         
 
     def do_it(self,*args):
@@ -370,11 +297,11 @@ class fopen(Stub):
         self.helper.set_return(fd.fileno())
         return True
 # -----------------------------------------------------------------------------
-@StubsARM('fwrite')
+@LibcStub('fwrite')
 class fwrite(Stub):
 
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
         
 
     def do_it(self,*args):
@@ -395,11 +322,11 @@ class fwrite(Stub):
         return True
 
 # -----------------------------------------------------------------------------
-@StubsARM('fclose')
+@LibcStub('fclose')
 class fclose(Stub):
 
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
         
 
     def do_it(self,*args):
@@ -415,10 +342,10 @@ class fclose(Stub):
             raise StubExcept('[fclose] error closing file with fd %d'%fd)
 
 # -----------------------------------------------------------------------------
-@StubsARM('fread')
+@LibcStub('fread')
 class fread(Stub):
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
         
 
     def do_it(self,*args):
@@ -441,10 +368,10 @@ class fread(Stub):
         return True
 
 # -----------------------------------------------------------------------------
-@StubsARM('fflush')
+@LibcStub('fflush')
 class fflush(Stub):
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
         
 
     def do_it(self,*args):
@@ -458,11 +385,11 @@ class fflush(Stub):
         return True
 
 # -----------------------------------------------------------------------------
-@StubsARM('fseek')
+@LibcStub('fseek')
 class fseek(Stub):
 
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
         
 
     def do_it(self,*args):
@@ -481,10 +408,10 @@ class fseek(Stub):
         return True
 
 # -----------------------------------------------------------------------------
-@StubsARM('fgetc')
+@LibcStub('fgetc')
 class fgetc(Stub):
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
         
 
     def do_it(self,*args):
@@ -492,7 +419,7 @@ class fgetc(Stub):
                                                self.helper.get_arg(0)))
         fd = self.helper.get_arg(0)
         if fd == STDIN:
-          self.helper.set_return(stubs_conf.default_stdin[:1].encode('utf-8'))
+          self.helper.set_return(conf.default_stdin[:1].encode('utf-8'))
           return    
         if not fd in fd_list:
             raise(Exception('[fgetc] file descriptor not in the list'))
@@ -500,11 +427,10 @@ class fgetc(Stub):
         return True
 
 # -----------------------------------------------------------------------------
-@StubsARM('fgets')
-@StubsMIPSL('.fgets')
+@LibcStub('fgets')
 class fgets(Stub):
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
         
 
     def do_it(self,*args):
@@ -518,7 +444,7 @@ class fgets(Stub):
         if not fd in fd_list and not fd == STDIN:
             raise(Exception('[fgets] file descriptor not in the list'))
         # according to man, read size-1 chars maximum to let room for '\0' terminating char
-        if fd == STDIN: line = stubs_conf.default_stdin.encode('utf-8')
+        if fd == STDIN: line = conf.default_stdin.encode('utf-8')
         else:           line= fd_list[fd].readline()
         if len(line)>size:
             logger.console(LogType.INFO,'[fgets] warning line is longer than the limit size. Rewinding is not implemented, unpredictable behiavor may occur')
@@ -541,25 +467,28 @@ class fgets(Stub):
 
 # -----------------------------------------------------------------------------
 #CAUTION : Does not handle space between format
-@StubsARM('fprintf')
+@LibcStub('_fprintf')
+@LibcStub('.fprintf')
+@LibcStub('fprintf')
 class fprintf(Stub):
 
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
         
 
     def do_it(self,*args):
         logger.console(LogType.INFO,'[fprintf] called at 0x%.8X, fd : %d'%(self.helper.get_pc(),
                                                  self.helper.get_arg(0)))
         fd = self.helper.get_arg(0)
-        if not fd in fd_list:
+        if not fd in fd_list and fd > 2:
             raise Exception('[fprintf] file descriptor not found')
         chain_addr = self.helper.get_arg(1)
         chain = deref_string(self.helper,chain_addr)
         p  = re.compile('%+[l]{0,1}[dpsx]')
         p2  = re.compile('(%+[l]{0,1}[dpsx])')
         reformat = [i for i in p.findall(chain.strip().decode('utf-8')) if i != '']
-        deref_list = g(self.helper,reformat)
+#         deref_list = g(self.helper,reformat)
+        deref_list = deref_format(self.helper,reformat,2)
         deref_list.reverse()
         out=b''
         for x in p2.split(chain.strip().decode('utf-8')):
@@ -569,20 +498,29 @@ class fprintf(Stub):
             elif x == '%x' : out+=bytes('%x'%deref_list.pop(),'utf-8')
             elif x == '%p' : out+=bytes('%x'%deref_list.pop(),'utf-8')
             elif x != ''   : out+=bytes(x,'utf-8')
-        logger.console(LogType.INFO,'[fprintf] outputs: ',out)
-        fd_list[fd].write(bytes(out))
+        if fd > 2: 
+          fd_list[fd].write(bytes(out))
+          logger.console(LogType.INFO,'[fprintf] on fd %d outputs: '%fd,out)
+        elif fd == 2:
+          logger.console(LogType.INFO,'[fprintf@strderr] outputs:', out)
+        elif fd == 1: 
+          logger.console(LogType.INFO,'[fprintf@stdout] outputs:', out)
+        else:
+          logger.console(LogType.INFO,'[fprintf@stdin] outputs:', out)
+
+
         self.helper.set_return(len(out))
         return True
 
 # -----------------------------------------------------------------------------
-@StubsARM('snprintf')
+@LibcStub('snprintf')
 class snprintf(Stub):
     """
     To reflect as maximum as possible C implmentation, we use byte representation of string.
     Hence it is not possible to use Python' string functions self.helper
     """
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
         
 
     def do_it(self,*args):
@@ -595,7 +533,8 @@ class snprintf(Stub):
         p  = re.compile('%+[l]{0,1}[dpsx]')
         p2  = re.compile('(%+[l]{0,1}[dpsx])')
         reformat = [i for i in p.findall(chain.strip().decode('utf-8')) if i != '']
-        deref_list = h(self.helper,reformat)
+#         deref_list = h(self.helper,reformat)
+        deref_list = deref_format(self.helper,reformat,3)
         deref_list.reverse()
         out=b''
         for x in p2.split(chain.strip().decode('utf-8')):
@@ -620,11 +559,11 @@ class snprintf(Stub):
         return True
 
 # -----------------------------------------------------------------------------
-@StubsARM('strcmp')
+@LibcStub('strcmp')
 class strcmp(Stub):
 
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
         
 
     def do_it(self,*args):
@@ -634,7 +573,7 @@ class strcmp(Stub):
         ret=0
         s1=deref_until(self.helper,s1_addr,b'\0')
         s2=deref_until(self.helper,s2_addr,b'\0')
-        logger.console(LogType.INFO,'comparing string\n%s\nvs%s'%(s1,s2))
+        logger.console(LogType.INFO,'comparing string\n%s\nvs\n%s'%(s1,s2))
         mlen = min(len(s1),len(s2))
         if mlen == 0 and len(s1)==0:
             for e in s2: ret+=e
@@ -650,11 +589,11 @@ class strcmp(Stub):
         return True
 
 # -----------------------------------------------------------------------------
-@StubsARM('strncmp')
+@LibcStub('strncmp')
 class strncmp(Stub):
 
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
         
 
     def do_it(self,*args):
@@ -687,11 +626,11 @@ class strncmp(Stub):
         return True
 
 # -----------------------------------------------------------------------------
-@StubsARM('strcat')
+@LibcStub('strcat')
 class strncat(Stub):
 
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
         
 
     def do_it(self,*args):
@@ -707,11 +646,11 @@ class strncat(Stub):
 
 # -----------------------------------------------------------------------------
 
-@StubsARM('strncat')
+@LibcStub('strncat')
 class strncat(Stub):
 
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
         
 
     def do_it(self,*args):
@@ -728,11 +667,11 @@ class strncat(Stub):
         return True
 
 # -----------------------------------------------------------------------------
-@StubsARM('scandir')
+@LibcStub('scandir')
 class scandir(Stub):
     
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
         
 
     def do_it(self,*args):
@@ -748,7 +687,7 @@ class scandir(Stub):
 #         dirent_ret = libc_stubs['malloc'].do_it(self.helper,fromStub=True,size=len(entries)*4)
         dirent_ret = self.helper.malloc(len(entries)*4)
         nb_entry = 0
-        dirent_struct_len = stubs_conf.dirent_struct_len
+        dirent_struct_len = conf.dirent_struct_len
         for entry in entries:
             #TODO launch search & filter functions 
 #             e_addr = libc_stubs['malloc'].do_it(self.helper,fromStub=True,size=(dirent_struct_len+len(entry)+1))
@@ -765,38 +704,38 @@ class scandir(Stub):
 
 
 # -----------------------------------------------------------------------------
-@StubsARM('getpid')
+@LibcStub('getpid')
 class getpid(Stub):
 
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
         
 
     def do_it(self,*args):
-        logger.console(LogType.INFO,'[getpid]    returning %X'%stubs_conf.pid)
-        self.helper.set_return(stubs_conf.pid) #
+        logger.console(LogType.INFO,'[getpid]    returning %X'%conf.pid)
+        self.helper.set_return(conf.pid) #
         return True
 
 # -----------------------------------------------------------------------------
-@StubsARM('__errno_location')
+@LibcStub('__errno_location')
 class __errno_location(Stub):
 
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
         
 
     def do_it(self,*args):
-        logger.console(LogType.INFO,'[__errno_location] returning : %x'%stubs_conf.errno_location)
-        self.helper.set_return(stubs_confs.errno_location)
+        logger.console(LogType.INFO,'[__errno_location] returning : %x'%conf.errno_location)
+        self.helper.set_return(confs.errno_location)
         return True
 
 # -----------------------------------------------------------------------------
 strtok_tokens = []
 strtok_acu = 0
-@StubsARM('strtok')
+@LibcStub('strtok')
 class strtok(Stub):
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
 
     def do_it(self,*args):
         """
@@ -837,11 +776,11 @@ class strtok(Stub):
 
 
 # -----------------------------------------------------------------------------
-@StubsARM('index')
+@LibcStub('index')
 class index(Stub):
 
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
 
     def do_it(self,*args):
 
@@ -859,27 +798,13 @@ class index(Stub):
         return True
         
                                           
-#         logger.console(LogType.INFO,'[index] search (0x%.2X) %s in %s'%(c,chr(c),s))
-#         found = False
-#         for i in range(0,len(s)):
-#             if s[i] == c:
-#                 found=True
-#                 break
-#         if found:
-#             self.helper.set_return(s_addr+i)
-#             logger.console(LogType.INFO,'[index] returns : %d'%i)
-#         else:
-#             self.helper.set_return(0)
-#             logger.console(LogType.INFO,'[index] not found! returns 0')
-
-
 # -----------------------------------------------------------------------------
 
-@StubsARM('strchr')
+@LibcStub('strchr')
 class strchr(Stub):
 
-  def __init__(self,itnum,arch):
-    super().__init__(itnum,arch)
+  def __init__(self):
+    super().__init__()
   def do_it(self,*args):
     s_addr = self.helper.get_arg(0)
     c_in = self.helper.get_arg(1)
@@ -897,12 +822,12 @@ class strchr(Stub):
     
 # -----------------------------------------------------------------------------
 
-@StubsARM('strstr')
+@LibcStub('strstr')
 class strstr(Stub):
 
-  def __init__(self,itnum,arch):
+  def __init__(self):
 
-    super().__init__(itnum,arch)
+    super().__init__()
   def do_it(self,*args):
     haystack_addr = self.helper.get_arg(0)
     needle_addr = self.helper.get_arg(1)
@@ -923,11 +848,11 @@ class strstr(Stub):
 
 # -----------------------------------------------------------------------------
 
-@StubsARM('strfry')
+@LibcStub('strfry')
 class strfry(Stub):
 
-  def __init__(self,itnum,arch):
-    super().__init__(itnum,arch)
+  def __init__(self):
+    super().__init__()
   def do_it(self,*args):
     s = self.helper.get_arg(0)
     hs = deref_string(self.helper,s).decode('utf-8')
@@ -937,14 +862,15 @@ class strfry(Stub):
     return True
     
       
+# -----------------------------------------------------------------------------
 
-@StubsARM('strdup')
-@StubsARM('_strdup')
-@StubsARM('__strdup')
+@LibcStub('strdup')
+@LibcStub('_strdup')
+@LibcStub('__strdup')
 class strdup(Stub):
 
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
 
     def do_it(self,*args):
         str_addr=self.helper.get_arg(0)
@@ -962,12 +888,12 @@ class strdup(Stub):
        
 
 # -----------------------------------------------------------------------------
-@StubsARM('strndup')
-@StubsARM('_strndup')
-@StubsARM('__strndup')
+@LibcStub('strndup')
+@LibcStub('_strndup')
+@LibcStub('__strndup')
 class strdup(Stub):
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
 
     def do_it(self,*args):
         str_addr=self.helper.get_arg(0)
@@ -985,10 +911,10 @@ class strdup(Stub):
 
         return True
 # -----------------------------------------------------------------------------
-@StubsARM('strtol')
+@LibcStub('strtol')
 class strtol(Stub):
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
 
     def do_it(self,*args):
         nptr = self.helper.get_arg(0)
@@ -1042,11 +968,11 @@ class strtol(Stub):
 
 
 # -----------------------------------------------------------------------------
-@StubsARM('socket')
+@LibcStub('socket')
 class socket(Stub):
 
-  def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+  def __init__(self):
+        super().__init__()
 
 
   def do_it(self,*args):
@@ -1057,11 +983,12 @@ class socket(Stub):
     return True
     
 
-@StubsARM('recv')
+# -----------------------------------------------------------------------------
+@LibcStub('recv')
 class recv(Stub):
 
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
 
 
     def do_it(self,*args):
@@ -1083,11 +1010,12 @@ class recv(Stub):
       return True
 
 
-@StubsARM('send')
+# -----------------------------------------------------------------------------
+@LibcStub('send')
 class send(Stub):
 
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
 
 
     def do_it(self,*args):
@@ -1110,49 +1038,17 @@ class send(Stub):
       return True
 
 
- 
-
-
-
-
-
-
-# -----------------------------------------------------------------------------
-@StubsARM('dlt_user_log_write_start')
-class dlt_user_log_write_start(Stub):
-
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
-
-    def do_it(self,*args):
-        logger.console(LogType.INFO,'[dlt_user_log_write_start_arm] called, returning 0')
-        self.helper.set_return(0) # returns 0
-        return True
-
-@StubsMIPSL('puts')
-@StubsMIPSL('.puts')
-class dlt_user_log_write_start(Stub):
-
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
-
-    def do_it(self,*args):
-        addr = self.helper.get_arg(0)
-        out = deref_until(self.helper,addr,b'\0')        
-        logger.console(LogType.INFO,'[puts] %s'%out.decode('utf-8'))
-        return True
-
 
 
 # -----------------------------------------------------------------------------
 #TODO : remove specific content
 #FOR ATL LIB
 #result is expected to be writted back in addr hold by R2
-@StubsARM('g_file_get_contents')
+@LibcStub('g_file_get_contents')
 class g_file_get_contents(Stub):
 
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
 
     def do_it(self,*args):
         logger.console(LogType.INFO,'[g_file_get_contents] called, returning 0x34')
@@ -1160,48 +1056,18 @@ class g_file_get_contents(Stub):
         self.helper.set_return(0x34) # returns 0
         return True
 
-@StubsARM('strerror')
+# -----------------------------------------------------------------------------
+@LibcStub('strerror')
 class strerror(Stub):
 
-    def __init__(self,itnum,arch):
-        super().__init__(itnum,arch)
+    def __init__(self):
+        super().__init__()
 
     def do_it(self,*args):
         r0 = self.helper.get_arg(0)
         logger.console(LogType.INFO,'[strerror] 0x%2X'%r0)
-        self.helper.set_return(stubs_conf.errno_location)
+        self.helper.set_return(conf.errno_location)
         return True
 
        
-#-----------------------------------------------------------------------------
-
-@StubsARM('dlt_user_log_write_string')
-class dlt_user_log_write_string_arm(NullStub):
-    def __init__(self,itnum,arch):
-        super().__init__(arch)
-
-# -----------------------------------------------------------------------------
-@StubsARM('dlt_user_log_write_finish')
-class dlt_user_log_write_finish_arm(NullStub):
-    def __init__(self,itnum,arch):
-        super().__init__(arch)
-
-# -----------------------------------------------------------------------------
-@StubsARM('dlt_register_context')
-class dlt_register_context_arm(NullStub):
-    def __init__(self,itnum,arch):
-        super().__init__(arch)
-
-# -----------------------------------------------------------------------------
-@StubsARM('g_hash_table_new_full')
-class g_hash_table_new_full_arm(NullStub):
-    def __init__(self,itnum,arch):
-        super().__init__(arch)
-
-# -----------------------------------------------------------------------------
-@StubsARM('mosquitto_lib_init')
-class g_hash_table_new_full_arm(NullStub):
-    def __init__(self,itnum,arch):
-        super().__init__(arch)
-
 

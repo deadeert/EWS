@@ -1,0 +1,7 @@
+# Ajouter la possibilité dans IDA PRO de nopper des branchements (de fonctions ou même de BB) avec un shortcut. 
+
+# Ajouter une UI à la feature TAG function. Raccourci X vient tagguer la fonction visée par le branchement de l'instruction courante par une fonction disponible dans la liste.
+
+# Ajouter une view qui résume breakpoints, tags, stubs, memory mapping (standarts et utilisateurs), avec des callbacks qui permettent de supprimer.
+
+# Ajouter une fonction qui permet de faire de l'exécution symbolique sur un basic bloc.  

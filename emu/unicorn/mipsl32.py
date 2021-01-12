@@ -1,11 +1,10 @@
 from emu.unicorn.generic import * 
 import string
-import consts_mips 
-from utils import * 
-from unicorn.mips_const import * 
-from stubs.allocator import *
-import stubs.ELF
-import stubs.unicstub
+from utils.utils import * 
+# from unicorn.mips_const import * 
+from stubs.ELF.allocator import *
+from stubs.ELF import ELF
+import stubs.emu.unicorn.sea 
 import ida_ua
 import struct
 
@@ -26,6 +25,7 @@ class MipsCorn(Emucorn):
     elif pinf['endianness'] == 'big':
       self.uc = Uc(UC_ARCH_MIPS,UC_MODE_MIPS32+UC_MODE_BIG_ENDIAN)  
     self.endns = pinf['endianness']
+    self.pointer_size = 4 
 
 
     r,d = divmod(self.conf.p_size,0x1000)
@@ -51,11 +51,11 @@ class MipsCorn(Emucorn):
     if self.conf.s_conf.use_user_stubs or self.conf.s_conf.stub_pltgot_entries: 
       self.uc.mem_map(consts_mips.ALLOC_BA,conf.p_size*consts_mips.ALLOC_PAGES,UC_PROT_READ | UC_PROT_WRITE)
       if pinf['endianness'] == 'little':
-        self.helper = stubs.unicstub.UnicornMipslSEA(uc=self.uc,
+        self.helper = stubs.emu.unicorn.sea.UnicornMipslSEA(uc=self.uc,
                                     allocator=DumpAllocator(consts_mips.ALLOC_BA,consts_mips.ALLOC_PAGES*conf.p_size),
                                     wsize=4)
       else:
-        self.helper = stubs.unicstub.UnicornMipsbSEA(uc=self.uc,
+        self.helper = stubs.emu.unicorn.sea.UnicornMipsbSEA(uc=self.uc,
                                     allocator=DumpAllocator(consts_mips.ALLOC_BA,consts_mips.ALLOC_PAGES*conf.p_size),
                                     wsize=4)
                                   
@@ -68,11 +68,9 @@ class MipsCorn(Emucorn):
 
     if self.conf.s_conf.stub_pltgot_entries: 
       if pinf['endianness'] == 'little':      
-        self.stubs = stubs.ELF.libc_stubs_mipsl
-#         self.stubbit(stubs.ELF.libc_stubs_mipsl)
+        self.stubs = ELF.libc_stubs_mipsl
       else:
-#         self.stubbit(stubs.ELF.libc_stubs_mipsb)
-        self.stubs = stubs.ELF.libc_stubs_mipsb
+        self.stubs = ELF.libc_stubs_mipsb
       self.stubbit()
   
     self.uc.hook_add(UC_HOOK_MEM_READ_UNMAPPED,
@@ -388,10 +386,10 @@ class MipsCorn(Emucorn):
         try:
           if unimips.pinf['endianness'] == 'little':
 #             stubs.Arm.libc_stubs_mipsl[index].do_it(unimips.helper)
-            stubs.ELF.libc_stubs_mipsl[index].do_it()
+            ELF.libc_stubs_mipsl[index].do_it()
           else: 
 #             stubs.Arm.libc_stubs_mipsb[index].do_it(unimips.helper)
-            stubs.ELF.libc_stubs_mipsb[index].do_it(unimips.helper)
+            ELF.libc_stubs_mipsb[index].do_it(unimips.helper)
           uc.mem_map(0,unimips.conf.p_size)
           uc.mem_write(0,'trap'.encode('utf-8')*(unimips.conf.p_size//4))
           return True
@@ -430,7 +428,7 @@ class MipsCorn(Emucorn):
 
 
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
 
     #""" PCSX SSTIC Challenge """ 
 #   conf=                    Configuration(p_size=0x100,
@@ -452,26 +450,26 @@ if __name__ == '__main__':
 #                            s_conf=StubConfiguration({},False,False),
 #                            amap_conf=AdditionnalMapping({}))
 # 
-  conf=                    Configuration(p_size=0x1000,
-                           stk_ba=0x80000000,
-                           stk_size=0x1000,
-                           autoMap=True,
-                           showRegisters=True,
-                           exec_saddr=402500,
-                           exec_eaddr=402530,
-                           mapping_saddr=0x400000,
-                           mapping_eaddr=0x42A600,
-                           segms=[],
-                           map_with_segs=False,
-                           use_seg_perms=True,
-                           useCapstone=True,
-                           registers=MipslRegisters(at=0,a0=0,a1=0,a2=0,a3=0,s0=0,s1=0,s2=0,s3=0,s4=0,s5=0,s6=0,s7=0,k0=0,k1=0,t9=0,
-                                                    t0=0,t1=0,t2=0,t3=0,t4=0,t5=0,t6=0,t7=0,v0=0,v1=0,hi=0,lo=0,sp=0,fp=0,gp=0,ra=0),
-                           showMemAccess=True,
-                           s_conf=StubConfiguration({},False,False),
-                           amap_conf=AdditionnalMapping({}))
-
-  emu = MipsCorn(conf)
-  
-
-  emu.start()
+#   conf=                    Configuration(p_size=0x1000,
+#                            stk_ba=0x80000000,
+#                            stk_size=0x1000,
+#                            autoMap=True,
+#                            showRegisters=True,
+#                            exec_saddr=402500,
+#                            exec_eaddr=402530,
+#                            mapping_saddr=0x400000,
+#                            mapping_eaddr=0x42A600,
+#                            segms=[],
+#                            map_with_segs=False,
+#                            use_seg_perms=True,
+#                            useCapstone=True,
+#                            registers=MipslRegisters(at=0,a0=0,a1=0,a2=0,a3=0,s0=0,s1=0,s2=0,s3=0,s4=0,s5=0,s6=0,s7=0,k0=0,k1=0,t9=0,
+#                                                     t0=0,t1=0,t2=0,t3=0,t4=0,t5=0,t6=0,t7=0,v0=0,v1=0,hi=0,lo=0,sp=0,fp=0,gp=0,ra=0),
+#                            showMemAccess=True,
+#                            s_conf=StubConfiguration({},False,False),
+#                            amap_conf=AdditionnalMapping({}))
+# 
+#   emu = MipsCorn(conf)
+#   
+# 
+#   emu.start()

@@ -1,16 +1,46 @@
+# Finish X86 for PE and ELF on Unicorn -> OK
+  - Custom Stubs Ok 
+  - Tag Stubs Ok 
+  - PE Stubs Ok 
+  - Elf Stub Ok 
 
+# Harmonized sub system -> OK 
+  - Done, but NEED TESTING (see testing harness)
 
-# Finish X86 for PE and ELF on Unicorn
-  - Custom Stubs
-  - Tag Stubs 
-  - PE Stubs 
-  - Elf Stub 
-
-# Add AARCH64 Support
+# Add AARCH64 Support -> OK
   - Use SSTIC 2019 binary
 
-# Add X64 Support 
+# Add X64 Support -> OK 
+  Done 
 
 # Make a Doc (how to use it)
+  TODO
+
+# Make a testing harness 
+  - For each architecture with several examples :
+     - x86 PE & ELF (test stub mechanisms [tag,null,standart])
+     - x64 PE & ELF (test stub mechanisms [idem])
+     - ARM (find other binary than isoinit) + ARM Thumb (QB chall) (test stubs)
+     - MIPS32L MIPS32B (test stubs)
+    
+# Rethink color system 
+  - Current implem in buggy 
+  - Store insn color in conf, and automatically restore from it ? 
+
+
+# Add idc shortcut binding for debugging 
+  - Step in 
+
+# Add parsing PT_DYNAMIC segment functionnality 
+   - Purpose is to autostub all imports (with null stub)
+
+# Ease the use of the app. 
+   ideas:
+      - get func prototype and generate a default conf
+      arguments, start/end exec addr  
+      - add right-click submenu to create mem map
+
+
+
 
 

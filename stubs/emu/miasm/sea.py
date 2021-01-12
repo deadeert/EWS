@@ -1,4 +1,4 @@
-from stubs.generic import StubEngineAbstractor
+from stubs.emu.generic import StubEngineAbstractor
 import emu
 
 

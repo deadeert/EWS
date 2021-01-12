@@ -38,17 +38,20 @@
 
 
 from ui.arm32 import Arm32Pannel
-from ui.mipsl32 import Mipsl32Pannel 
-from ui.x86 import x86Pannel 
-from ui.x64 import x64Pannel 
+from ui.mipsl32 import Mipsl32Pannel
+from ui.x86 import x86Pannel
+from ui.x64 import x64Pannel
+from ui.aarch64_simplified import Aarch64Pannel
+#from ui.aarch64 import Aarch64Pannel
 from emu.unicorn.arm32 import ArmCorn
+from emu.unicorn.aarch64 import Aarch64Corn
 from emu.unicorn.mipsl32 import MipsCorn
 from emu.unicorn.x86 import x86Corn
 from emu.unicorn.x64 import x64Corn
 from emu.miasm.arm32 import Miarm
-from ida_idp import get_idp_name 
-import idc 
-from utils import logger,LogType
+from ida_idp import get_idp_name
+import idc
+from utils.utils import logger,LogType
 
 """
 Emulation Wrapper Solution
@@ -59,30 +62,33 @@ if __name__ == '__main__':
 
   procname = get_idp_name()
   if procname == 'arm':
-    conf = Arm32Pannel.fillconfig() 
-    if conf: 
-      emu = ArmCorn(conf)
+    if idc.__EA64__:
+        conf = Aarch64Pannel.fillconfig() 
+        if conf:
+            emu = Aarch64Corn(conf)
+    else:
+        conf = Arm32Pannel.fillconfig()
+        if conf: 
+          emu = ArmCorn(conf)
 #       emu = Miarm(conf)
   elif procname == 'mips':
     conf = Mipsl32Pannel.fillconfig()
     if conf:
       emu = MipsCorn(conf)
-  elif procname == 'pc': 
+  elif procname == 'pc':
    if idc.__EA64__: # assess if ida is running in 64bits
     conf = x64Pannel.fillconfig()
     if conf:
       emu = x64Corn(conf)
    else:
       conf = x86Pannel.fillconfig()
-      if conf: 
+      if conf:
         emu = x86Corn(conf)
-    
+
 
   logger.console(LogType.INFO,'[+] Ready to start, type emu.start() to launch')
 #   emu.start()
 
 
-  
-  
 
 

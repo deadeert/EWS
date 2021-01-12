@@ -7,11 +7,12 @@ Stubs:
 
 emu.add_null_stub(ea)
 emu.remove_null_stub(ea)
-emu.conf.show_null_stub()
 emu.add_custom_stub(ea,func)
-emu.tag_function(ea,stub_name)
+emu.remove_custom_stub(ea)
+emu.tag_func(ea,stub_name)
 emu.remove_tag(ea)
-
+emu.conf.show_nullstub()
+emu.conf.show_tags()
 
 Memory:
 
@@ -23,10 +24,10 @@ emu.conf.show_user_mapping(displayContent=False)
 
 Configuration:
 
-emu.conf.save(path)
-
 MISC:
 emu.restore_graph_color(purge_db=False) # restore graph color and optionnaly empty the insn db (useful to avoid recoloring previous insns when stepping).  
+emu.save_config([path]): save configuration to specified file or to current file 
+
 
 
 DEBUGGING:

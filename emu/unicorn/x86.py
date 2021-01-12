@@ -1,24 +1,20 @@
 import ida_segregs
 from emu.unicorn.generic import * 
 import string
-import consts_x86
-from utils import * 
-from stubs.allocator import *
+from utils.utils import * 
+from utils import consts_x86
+from stubs.ELF.allocator import *
 import ida_loader
 import idc
 import ida_ua
 import ida_funcs
 import idautils
-from stubs.unicstub import UnicornX86SEA
+from stubs.emu.unicorn.sea import UnicornX86SEA
 import struct
 from unicorn.x86_const import * 
 from keystone import * 
-
-
-
-
-
-
+from stubs.ELF import ELF
+from stubs import PE
 
 
 class x86Corn(Emucorn): 
@@ -41,59 +37,37 @@ class x86Corn(Emucorn):
 
     self.ks = Ks(KS_ARCH_X86,KS_MODE_32) 
 
+    self.ida_jmp_itype = consts_x86.ida_jmp_itype 
+    self.pointer_size = 4 
        
     # Setup regs 
     self.setup_regs(stk_p)
     self.pcid = UC_X86_REG_EIP 
   
-
-    self.breakpoints = dict()
-    self.custom_stubs = dict()
-
-
-    for s_ea in conf.s_conf.nstubs.keys():
-      self.add_null_stub(s_ea)
-   
-    # Init stubs engine 
-    if self.conf.s_conf.use_user_stubs or self.conf.s_conf.use_user_stubs: 
+        # Init stubs engine 
+    if self.conf.s_conf.stub_dynamic_func_tab:
       self.uc.mem_map(consts_x86.ALLOC_BA,conf.p_size*consts_x86.ALLOC_PAGES,UC_PROT_READ | UC_PROT_WRITE)
 
       self.helper = UnicornX86SEA(uc=self.uc,
                                   allocator=DumpAllocator(consts_x86.ALLOC_BA,consts_x86.ALLOC_PAGES*conf.p_size),
                                   wsize=4)
       
- 
-
 
     self.filetype = ida_loader.get_file_type_name()
-    
-    if self.conf.s_conf.stub_pltgot_entries:
+    if self.conf.s_conf.stub_dynamic_func_tab:
       if '(PE)' in self.filetype:
-        import stubs.PE
-        self.nstub_obj = stubs.PE.NullStub('x86')
-        self.nstub_obj.set_helper(self.helper) 
+        self.stubs = PE.winx86_stubs
+        self.nstub_obj = PE.NullStub() 
         self.loader_type = LoaderType.PE
-        self.stubs = dict() 
-      elif 'ELF' in self.filetype:
-        import Stubs.ELF
-        self.nstub_obj = stubs.ELF.NullStub('x86')
-        self.nstub_obj.set_helper(self.helper) 
+        self.nstub_obj.set_helper(self.helper)
+      elif 'ELF' in self.filetype: 
+        self.stubs = ELF.libc_stubs 
+        self.nstub_obj = ELF.NullStub()
         self.loader_type = LoaderType.ELF 
-        self.stubs = dict()
-      else:
-        logger.console(LogType.WARN,'unsupported file type (%s) for stubs'%filetype) 
+        self.nstub_obj.set_helper(self.helper)
 
-  
-    if self.conf.s_conf.stub_pltgot_entries:
-      if '(PE)' in self.filetype: 
-        self.stub_PE(stubs.PE.winx86_stubs)
-        self.stubs = stubs.PE.winx86_stubs 
-      elif 'ELF' in self.filetype:
-        self.stub_ELF(stubs.ELF.libc_stubs_arm)
-        self.stubs = stubs.ELF.libc_stubs_arm
-      else:
-        logger.console(LogType.WARN,'Cannot stub : Unsupported file format %s'%filetype)
-     
+      self.stubbit()
+
     self.uc.hook_add(UC_HOOK_CODE,
                      self.hook_code,
                      user_data=self.conf)
@@ -115,6 +89,82 @@ class x86Corn(Emucorn):
                        self.conf)
 
 
+  def repatch(self):
+    if not self.conf.s_conf.stub_dynamic_func_tab:
+      return 
+    self.stubbit()
+    
+        
+
+  """ Instructions specifics functions 
+  """
+#---------------------------------------------------------------------------------------------
+  def nop_insn(self,insn):
+    for of in range(0,insn.size):
+      self.uc.mem_write(insn.ea+of,struct.pack('B',consts_x86.nop))
+    
+
+  @staticmethod
+  def tail_retn(ea):
+    """ returns operand of retn <op>
+        this is heuristic, should be used carefully.
+    """
+
+    f = ida_funcs.get_func(ea)
+    insn = get_insn_at(f.end_ea)# somehow end_ea does not point to the last insn...
+    if insn.itype == consts_x86.ida_retn_itype: # or use ida_idp.is_ret_insn...
+      print('found directly retn')
+      if not len(insn.__get_ops__()) > 0:
+        return 0 
+      else:
+        return idc.get_operand_value(insn.ea,0)
+    # in case, last insn of the funcs is not a retn X, we need
+    # to decode insn one by one until find the "good one" 
+    else:
+      ea = f.start_ea 
+      while ea < f.end_ea:
+         insn = get_insn_at(ea)
+         if insn.itype == consts_x86.ida_retn_itype:  
+          if idc.get_operand_type(ea,0) == idc.o_void:  
+            return idc.o_void 
+          else:
+            return idc.get_operand_value(insn.ea,0)
+         elif insn.itype in consts_x86.ida_jmp_itype: 
+            return idc.o_void
+         ea += insn.size
+          
+    return -1 
+   
+  def get_retn_insn(self,ea):
+    f = ida_funcs.get_func(ea)
+    n = x86Corn.tail_retn(f.start_ea)
+    if n > 0: 
+      try: retn = self.ks.asm('ret %d'%n,as_bytes=True)[0]
+      except: logger.console(LogType.WARN,'could not compile retn insn'); return -1
+    elif n == 0: 
+      retn = struct.pack('B',consts_x86.ret)
+
+    return retn
+
+
+  def get_new_stub(self,stub_func):
+    if 'ELF' in self.filetype:
+      stub = ELF.Stub(self.helper)
+      stub.do_it = stub_func
+    elif 'PE' in self.filetype:
+      stub = PE.Stub(self.helper)
+      stub.do_it = stub_func
+    return stub
+
+
+  """  Register specific functions 
+  """
+#---------------------------------------------------------------------------------------------
+
+
+  def get_alu_info(self):
+    
+    return x86EFLAGS.create(self.uc.reg_read(UC_X86_REG_EFLAGS))
 
   def setup_regs(self,stk_p):
 
@@ -175,154 +225,4 @@ class x86Corn(Emucorn):
                                                          self.uc.reg_read(UC_X86_REG_EBP),
                                                          self.uc.reg_read(UC_X86_REG_ESP))
     logger.console(LogType.INFO,strout)
-
-  
-    
-
-
-  def repatch(self):
-    if not self.conf.stub_pltgot_entries:
-      return 
-    if '(PE)' in self.filetype:
-        self.stub_PE(self.stubs)
-    else:
-        self.stub_ELF(self.stubs)
-        
-
-  @staticmethod
-  def nop_insn(uc,insn):
-    for of in range(0,insn.size):
-      uc.mem_write(insn.ea+of,struct.pack('B',consts_x86.nop))
-    
-
-
-  def stub_PE(self,stubs_l):
- 
-    s = ida_segment.get_segm_by_name('.idata')
-    if s == None:
-        print('[!] .idata section not found, stubs mechanism not compatible with such binary')
-        return
-    cur_ea = s.start_ea
-    while cur_ea < s.end_ea:
-      name = ida_name.get_name(cur_ea)
-      if name in stubs_l.keys():
-        xref_g = idautils.XrefsTo(cur_ea)
-        stubs_l[name].set_helper(self.helper)
-        try:
-          while True:
-            xref = next(xref_g)
-            insn = get_insn_at(xref.frm)
-            if ida_idp.is_call_insn(insn): 
-              self.breakpoints[xref.frm] = name   
-              x86Corn.nop_insn(self.uc,insn)
-              logger.console(LogType.INFO,'%s is now stubbed at %x'%(name,insn.ea))
-            elif insn.itype in consts_x86.ida_jmp_itype:
-              xref_jmp_g = idautils.XrefsTo(xref.frm) 
-              try: 
-               while True:
-                xref_jmp = next(xref_jmp_g)
-                insn_xrf_jmp = get_insn_at(xref_jmp.frm)
-                if ida_idp.is_call_insn(insn_xrf_jmp):
-                  self.breakpoints[xref_jmp.frm] = name 
-                  x86Corn.nop_insn(self.uc,insn_xrf_jmp)
-                  logger.console(LogType.INFO,'%s is now stubbed at %x'%(name,insn_xrf_jmp.ea))
-                else:
-                  logger.console(LogType.WARN,'To many indirection to stub function %s'%name)
-              except StopIteration:
-                pass
-        except StopIteration:
-          pass
-      cur_ea += 4
-
-
-  def stub_ELF(self,stubs_l):
-    # TODO
-    
-    pass
-
-  @staticmethod
-  def tail_retn(ea):
-    """ returns operand of retn <op>
-    """
-
-    f = ida_funcs.get_func(ea)
-    insn = get_insn_at(f.end_ea)# somehow end_ea does not point to the last insn...
-    print('%x'%f.end_ea)
-    if insn.itype == consts_x86.ida_retn_itype: # or use ida_idp.is_ret_insn...
-      print('found directly retn')
-      if not len(insn.__get_ops__()) > 0:
-        return 0 
-      else:
-        return idc.get_operand_value(insn.ea,0)
-    # in case, last insn of the funcs is not a retn X, we need
-    # to decode insn one by one until find the "good one" 
-    else:
-      ea = f.start_ea 
-      while ea < f.end_ea:
-         insn = get_insn_at(ea)
-         if insn.itype == consts_x86.ida_retn_itype:  
-          if idc.get_operand_type(ea,0) == idc.o_void:  
-            return idc.o_void 
-          else:
-            return idc.get_operand_value(insn.ea,0)
-         ea += insn.size
-          
-    return -1 
-   
-    
-  def add_null_stub(self,ea,fname=None):
-    """ TODO can be factorised with add_custom_stub
-        with func=None
-    """
-    if not fname:
-      try:    fname = ida_funcs.get_func_name(ea)
-      except: fname = 'func_%x'%ea
- 
-    f = ida_funcs.get_func(ea)
-    if f == None:
-      logger.console(LogType.WARN,'Could not patch ea %x, please create function before'%ea)
-      return
-    if f.start_ea != ea: 
-      logger.console(LogType.WARN,'%x is not function beginning, using %x instead'%(ea,f.start_ea))
-    if fname in self.stubs.keys():
-      logger.console(LogType.WARN,'[!] %s belongs to libc stub. It is now null stubbed'%fname)
-      self.stubs[fname] = self.nstub_obj 
-    # patch @ with retn and lets the call insn 
-    else:
-      n = x86Corn.tail_retn(f.start_ea)
-      if n > 0: 
-        try: retn = self.ks.asm('ret %d'%n,as_bytes=True)[0]
-        except: logger.console(LogType.WARN,'Could not add null stub, keystone error'); return -1
-      elif n == 0: 
-        retn = struct.pack('B',consts_x86.ret)
-      else:
-        logger.console(LogType.WARN,'could not add null stub, tail insn not found or incompatible')
-        return 
-      self.uc.mem_write(f.start_ea,retn)
-      self.custom_stubs[ea] = self.nstub_obj.do_it
-
-      logger.console(LogType.INFO,'[%x] [%s] is null stubbed'%(f.start_ea,fname))
-
-    self.conf.add_null_stub(ea)
-
-  def remove_null_stub(self,ea,fname=None):
-  
-    if not fname:
-      try:    fname = ida_funcs.get_func_name(ea)
-      except: fname = 'func_%x'%ea
-
-    if fname in self.stubs.keys():
-      # Needs to reinit the stub
-      logger.console(LogType.WARN,'Changes will be effective only after save and reloading the conf')
-    else:
-      # Restore from IDB
-      self.uc.mem_write(ea,ida_bytes.get_bytes(ea,3))
-      del self.custom_stubs[ea]
-
-
-
-  def get_alu_info(self):
-    
-    return x86EFLAGS.create(self.uc.reg_read(UC_X86_REG_EFLAGS))
-
 

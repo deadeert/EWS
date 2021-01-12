@@ -1,12 +1,11 @@
 import ida_segregs
 from emu.unicorn.generic import * 
 import string
-import consts_arm
-from utils import * 
-from stubs.allocator import *
-# import stubs.Arm
-import stubs.ELF
-from stubs.unicstub import UnicornArmSEA
+from utils.utils import * 
+from utils import consts_arm
+from stubs.ELF.allocator import *
+from stubs.ELF import ELF
+from stubs.emu.unicorn.sea import UnicornAarch64SEA
 import struct
 
 
@@ -34,6 +33,7 @@ class ArmCorn(Emucorn):
         self.uc = Uc(UC_ARCH_ARM, UC_MODE_ARM + UC_MODE_BIG_ENDIAN) 
 
     self.endns = pinf['endianness']
+    self.pointer_size = 4 
 
     # Map pages 
     d,r = divmod(self.conf.p_size,0x400) 
@@ -57,26 +57,26 @@ class ArmCorn(Emucorn):
     self.pcid = UC_ARM_REG_PC 
 
 
-    # Add null stubs 
-    for s_ea in conf.s_conf.nstubs.keys():
-      self.add_null_stub(s_ea)
-   
+#     # Add null stubs 
+#     for s_ea in conf.s_conf.nstubs.keys():
+#       self.add_null_stub(s_ea)
+#    
     # Init stubs engine 
-    if self.conf.s_conf.use_user_stubs or self.conf.s_conf.use_user_stubs: 
+    if self.conf.s_conf.stub_dynamic_func_tab: 
       self.uc.mem_map(consts_arm.ALLOC_BA,conf.p_size*consts_arm.ALLOC_PAGES,UC_PROT_READ | UC_PROT_WRITE)
 
       self.helper = UnicornArmSEA(uc=self.uc,
                                   allocator=DumpAllocator(consts_arm.ALLOC_BA,consts_arm.ALLOC_PAGES*conf.p_size),
                                   wsize=4)
-      self.nstub_obj = stubs.ELF.NullStub('arm')
+      self.nstub_obj = ELF.NullStub()
       self.nstub_obj.set_helper(self.helper) 
  
-    self.breakpoints= dict()
-    self.custom_stubs = dict()
-    if self.conf.s_conf.stub_pltgot_entries:
-      self.stubbit(stubs.ELF.libc_stubs_arm)
-      self.stubs = stubs.ELF.libc_stubs_arm
-      
+#     self.breakpoints= dict()
+#     self.custom_stubs = dict()
+    if self.conf.s_conf.stub_dynamic_func_tab:
+      self.stubs = ELF.libc_stubs 
+      self.stubbit()
+     
 
            
     self.uc.hook_add(UC_HOOK_CODE,
@@ -120,6 +120,58 @@ class ArmCorn(Emucorn):
       colorate_graph(self.color_map)
 
 
+  """ Instructions specifics functions 
+  """
+#---------------------------------------------------------------------------------------------
+
+  def nop_insn(self,insn):
+    i = get_insn_at(insn.ea) 
+    if i.size == 2:
+      if self.endns == 'little':
+        self.uc.mem_write(insn.ea,struct.pack('<H',consts_arm.nop_thumb))
+      else:
+        self.uc.mem_write(insn.ea,struct.pack('>H',consts_arm.nop_thumb))
+    elif i.size == 4: 
+      if self.endns == 'little':
+        self.uc.mem_write(insn.ea,struct.pack('<I',consts_arm.nop))
+      else:
+        self.uc.mem_write(insn.ea,struct.pack('>I',consts_arm.nop))
+    else:
+      logger.console(LogType.ERRR,'Invalid insn size')
+
+
+  def get_retn_insn(self,ea):
+    f = ida_funcs.get_func(ea)
+    if f == None:
+      logger.console(LogType.WARN,'cannot decode function at specified address %x'%ea)
+      return 
+    i = get_insn_at(f.start_ea) 
+    if i.size == 2:
+      if self.endns == 'little':
+        retn = struct.pack('<H',consts_arm.mov_pc_lr_thumb)
+      else:
+        retn = struct.pack('>H',consts_arm.mov_pc_lr_thumb)
+    elif i.size == 4:
+      if self.endns == 'little':
+        retn = struct.pack('<I',consts_arm.mov_pc_lr)
+      else:
+        retn = struct.pack('>I',consts_arm.mov_pc_lr)
+    else:
+      logger.console(LogType.ERRR,'Invalid insn size')
+    return retn
+
+  def get_new_stub(self,stub_func):
+    stub = ELF.Stub(self.helper)
+    stub.do_it = stub_func
+    return stub
+
+
+
+
+
+  """  Register specific functions 
+  """
+#---------------------------------------------------------------------------------------------
   def setup_regs(self,stk_p):
 
     self.uc.reg_write(UC_ARM_REG_R0,self.conf.registers.R0)
@@ -225,7 +277,7 @@ class ArmCorn(Emucorn):
     elif r_str == 'R15':
       return UC_ARM_REG_R15 
       
-  
+ 
 
   
   
@@ -245,7 +297,7 @@ class ArmCorn(Emucorn):
     if not self.conf.stub_pltgot_entries: 
       return 
     
-    self.stubbit(stubs.ELF.libc_stubs_arm)
+    self.stubbit(ELF.libc_stubs_arm)
 
 
 
@@ -269,231 +321,6 @@ class ArmCorn(Emucorn):
                                                            self.uc.reg_read(UC_ARM_REG_R13),
                                                            self.uc.reg_read(UC_ARM_REG_R14))
     logger.console(LogType.INFO,strout)
-
-
-
-  def stubbit(self,stubs_l):
-    """ The strategy is to use ida elf loader and crossreferences 
-        to directly stub .plt stubs.  
-        We patch first insn in ordr to comeback in caller function. 
-        We add "breakpoint" which is catch by hook_code() function.
-    """ 
-
-
-    s = ida_segment.get_segm_by_name('.plt') 
-    if s == None:
-      logger.console(LogType.WARN,'[!] plt section not found, stubs mechanism not compatible with such binary')
-      logger.console(LogType.WARN,'[!] TODO use PT_DYNAMIC->RELRA instead')
-      
-      return
-    fstubbednb = 0
-    f = ida_funcs.get_next_func(s.start_ea)
-    insn = ida_ua.insn_t()
-    while f.start_ea < s.end_ea:
-      fname = ida_name.get_ea_name(f.start_ea)
-      if fname in stubs_l.keys():
-        fstubbednb += 1
-        if is_thumb(f.start_ea):
-          self.uc.mem_write(f.start_ea,struct.pack('>H' if self.endns == 'little' else '<H',consts_arm.mov_pc_lr_thumb))
-        else:
-          self.uc.mem_write(f.start_ea,struct.pack('>I' if self.endns == 'little' else '<I',consts_arm.mov_pc_lr))
-        stubs_l[fname].set_helper(self.helper)
-        self.breakpoints[f.start_ea] = fname
-      f = ida_funcs.get_next_func(f.start_ea)
-      if f == None: 
-        break
-
-    return fstubbednb 
- 
-
-  def add_null_stub(self,ea,fname=None):
-    """ TODO can be factorised with add_custom_stub
-        with func=None
-    """
-    if not fname:
-      try:    fname = ida_funcs.get_func_name(ea)
-      except: fname = 'func_%x'%ea
- 
-#     if fname in stubs.ELF.libc_stubs_arm.keys():
-    if fname in self.stubs.keys():
-      logger.console(LogType.WARN,'[!] %s belongs to libc stub. It is now null stubbed'%fname)
-#       stubs.ELF.libc_stubs_arm[fname] = self.nstub_obj
-      self.stubs[fname] = self.nstub_obj 
-    else:
-      if is_thumb(ea):  
-        self.uc.mem_write(f.start_ea,struct.pack('>H' if self.endns == 'little' else '<H',consts_arm.mov_pc_lr_thumb))
-      else:
-        self.uc.mem_write(ea,struct.pack('>I' if self.endns == 'little' else '<I',consts_arm.mov_pc_lr))
-      self.custom_stubs[ea] = self.nstub_obj.do_it
-
-      logger.console(LogType.INFO,'[%x] [%s] is null stubbed'%(ea,fname))
-
-    self.conf.add_null_stub(ea)
-
-  def remove_null_stub(self,ea,fname=None):
-  
-    if not fname:
-      try:    fname = ida_funcs.get_func_name(ea)
-      except: fname = 'func_%x'%ea
-
-#     if fname in stubs.ELF.libc_stubs_arm.keys():
-    if fname in self.stubs.keys():
-      # Needs to reinit the stub
-      logger.console(LogType.WARN,'Changes will be effective only after save and reloading the conf')
-    else:
-      # Restore from IDB
-      self.uc.mem_write(ea,ida_bytes.get_bytes(ea,4))
-      del self.custom_stubs[ea]
-
-    self.conf.remove_null_stub(ea)
-
-  def add_custom_stub(self,ea,func):
-    """ function must return True to continue execution
-        how to use:
-        def custom_stub():
-          r0 = emu.helper.get_arg(0)
-          emu.helper.set_return(r0+1)
-          return True
-        emu.add_custom_stub(0xadde,custom_stub)
-    """
-
-
-    try:    fname = ida_funcs.get_func_name(ea)
-    except: fname = 'func_%x'%ea 
-
-
-    aldy_patch = False
-#     if fname in stubs.ELF.libc_stubs_arm.keys():
-    if fname in self.stubs.keys():
-      logger.console(LogType.WARN,'Overriding default stub function %s'%fname)
-      aldy_patch = True
-    elif fname in self.conf.s_conf.nstubs.values():
-      logger.console(LogType.WARN,'Overriding null stubbed function %s'%fname)
-      self.remove_null_stub(ea)
-
-    if not aldy_patch:
-      if is_thumb(ea):  
-        self.uc.mem_write(f.start_ea,struct.pack('>H' if self.endns == 'little' else '<H',consts_arm.mov_pc_lr_thumb))
-      else: 
-        self.uc.mem_write(ea,struct.pack('>I' if self.endns == 'little' else '<I',consts_arm.mov_pc_lr))
-     
-
-    stubs.ELF.StubsARM.itnum_arm+=1
-    new_stub = stubs.ELF.Stub(stubs.ELF.StubsARM.itnum_arm,'arm',self.helper)
-    new_stub.do_it = func
-    self.custom_stubs[ea] = new_stub.do_it
-
-    logger.console(LogType.INFO,'%s is no stubbed with %s'%(fname,func.__name__))
-
-  def remove_custom_stub(self,ea):
-
-
-    try:    fname = ida_funcs.get_func_name(ea)
-    except: fname = 'func_%x'%ea 
-
-#     if fname in stubs.ELF.libc_stubs_arm.keys():
-    if fname in self.stubs.keys():
-      logger.console(LogType.WARN,'could not unstub, please reload the conf')
-    
-    self.uc.mem_write(ea,ida_bytes.get_bytes(ea,4))
-    del self.custom_stubs[ea]
-
-    
-    logger.console(LogType.INFO,'%s function is now unstubbed'%fname)
-
-  def tag_function(self,ea,stubname):
-    """ TODO: add to configuration
-    """
-
-#     if not stubname in stubs.ELF.libc_stubs_arm.keys():
-    if not stubname in self.stubs.keys():
-      logger.console(LogType.WARN,'%s is not among default stubs. Aborting'%stubname)
-      return
-#     stubs.ELF.libc_stubs_arm[stubname].set_helper(self.helper)
-    self.stubs[stubname].set_helper(self.helper)
-#     self.add_custom_stub(ea,stubs.ELF.libc_stubs_arm[stubname].do_it)
-    self.add_custom_stub(ea,self.stubs[stubname].do_it)
-
-
-  def remove_tag(self,ea):
-    self.remove_custom_stub(ea)
-    
-
-
-######
-#
-# Legacy functions for old stubs mechanism 
-#
-#####
-
-
-  def patch_plt(self,stubs_l):
-    """ this mechanism stubs .plt stub.
-        it replaces got queries by svc #itnum 
-        which is catch by intr_handler() function. 
-       
-    """
-    s = ida_segment.get_segm_by_name('.plt') 
-    f = ida_funcs.get_next_func(s.start_ea)
-    idx = 0  
-    while f.start_ea < s.end_ea:
-      fname = ida_name.get_ea_name(f.start_ea)
-      if fname in stubs_l.keys():
-        
-        print('writting %x'%f.start_ea)
-#         self.uc.mem_write(f.start_ea,stubs.Arm.libc_stubs_arm[fname].insn_it)
-        self.uc.mem_write(f.start_ea,stubs_l[fname].insn_it)
-        stubs_l[fname].set_helper(self.helper)
-        idx += 4 
-        logger.console(LogType.INFO,'[+] %s is not stubbed at '%(fname))
-      
-      f = ida_funcs.get_next_func(f.start_ea)
-
-
-
- 
-  @staticmethod
-  def intr_handler(uc,intno,user_data):
-     """ This function is used to catch svc #itnum 
-        It calls the stub routine identified by itnum and 
-        changes PC to continues execution
-        In unicorn, only arm, aarch64 are compatible with
-        such behavior. Indeed registers cannot be modified 
-        in mips, x86, x86_64. 
-        This is why HOOK_CODE has been used instead at the cost   
-        of performance (HOOK_CODE is executed at each insn).
-     """
-     helper = user_data
-     pc = uc.reg_read(UC_ARM_REG_PC)-4
-     insn = int.from_bytes(uc.mem_read(pc,4),'little')
-     index = insn&0xffff
-     lr = uc.reg_read(arm_const.UC_ARM_REG_LR)
-     logger.console(LogType.INFO,"[intr_handler] reloc index=%s (pc=%08X) (lr=%08X)"%(index,pc,lr))
-     try:
-#        stubs.Arm.libc_stubs_arm[index].do_it(helper)
-       stubs.ELF.libc_stubs_arm[index].do_it()
-       
-     except Exception as e: 
-       logger.console(LogType.ERRR,'[intr_handler] error in stubs code')
-       raise e
-     uc.reg_write(UC_ARM_REG_PC,lr)
-     logger.console(LogType.INFO,'[intr_handler] exiting. Restauring PC to %08X'%uc.reg_read(UC_ARM_REG_PC))
-
-
-  def add_nullstub(self,addr,blx=False,pop_pc=False):
-    is_thumb = ida_segregs.get_sreg(addr,ida_idp.str2reg('T')) 
-    if blx:
-      pass
-    elif pop_pc:
-      pass
-    else:
-      if is_thumb:
-        self.uc.mem_write(addr,int.to_bytes(0x00B5,4,'big',signed=False)) #push {LR}
-        self.uc.mem_write(addr+4,int.to_bytes(0x00BD,4,'big',signed=False)) #pop {PC} 
-      else:
-        self.uc.mem_write(addr,int.to_bytes(0x2DE9F04D,4,'big',signed=False)) #push R4-48,R10,R11,LR
-        self.uc.mem_write(addr+4,int.to_bytes(0xBDE8F08D,4,'big',signed=False)) #pop R4-48,R10,R11,PC
-
 
 
 

@@ -2,8 +2,8 @@ from ui.generic import *
 
 class x64Pannel(Pannel):
 
-  def __init__(self):
-    print(self.__dir__)
+  def __init__(self,conf):
+    super().__init__(conf)
     self.invert = False
     self.segs = [] 
     self.s_conf = StubConfiguration.create() 
@@ -76,7 +76,7 @@ Display Configuration
 
 
   def onSaveButton(self,code):
-    conf = Configuration(arch=ida_idp.get_idp_name()+'64',
+    conf = Configuration(path='',arch=ida_idp.get_idp_name()+'64',
                               emulator='unicorn',
                               p_size=self.GetControlValue(self.iPageSize),
                               stk_ba=self.GetControlValue(self.iStkBA),
@@ -111,13 +111,15 @@ Display Configuration
                               showMemAccess=self.GetControlValue(self.maGrp),
                               s_conf=self.s_conf,
                               amap_conf=self.amap_conf,
-                              color_graph=self.GetControlValue(self.cgGrp))
+                              color_graph=self.GetControlValue(self.cgGrp),
+                              breakpoints=self.breakpoints)
 
 
     f_path = FileSelector.fillconfig()
     if f_path.strip() == '':
       f_path = '/tmp/idaemu_conf_'+time.ctime().replace(' ','_')
       logger.console(0,'[Config Save] invalid filepath , use default: %s'%f_path)
+    conf.path = f_path
     saveconfig(conf,f_path)
 
 
@@ -182,6 +184,7 @@ Display Configuration
       self.SetControlValue(self.maGrp,conf.showMemAccess)
       self.s_conf = conf.s_conf 
       self.amap_conf = conf.amap_conf 
+      self.breakpoints = conf.breakpoints
       self.SetControlValue(self.cgGrp,conf.color_graph)
 
 
@@ -206,14 +209,14 @@ Display Configuration
     return 1 
 
   @staticmethod
-  def fillconfig():
-      f = x64Pannel()
+  def fillconfig(conf=None):
+      f = x64Pannel(conf)
       f.Compile()
       
       ok = f.Execute()
       if ok:
       
-          ret = Configuration(arch=ida_idp.get_idp_name(),
+          ret = Configuration(path=f.conf_path, arch=ida_idp.get_idp_name(),
                               emulator='unicorn',
                               p_size=f.iPageSize.value,
                               stk_ba=f.iStkBA.value,
@@ -233,7 +236,8 @@ Display Configuration
                               showMemAccess=f.maGrp.value,
                               s_conf=f.s_conf,
                               amap_conf=f.amap_conf,
-                              color_graph=f.cgGrp.value)
+                              color_graph=f.cgGrp.value,
+                              breakpoints=f.breakpoints)
     
       else:
         logger.console(2,'[Form.execute()] error, aborting...\n please contact maintainer')

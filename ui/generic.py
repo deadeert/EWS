@@ -4,15 +4,16 @@ import ida_segment
 import ida_idaapi
 import ida_funcs
 import ida_idp
+import time
 import os 
-
-from utils import *
+from utils.utils import *
 
 """                   """
 "         GENERIC       "
 """                   """
 
 
+#----------------------------------------------------------------------------------------------
 
 class Pannel(ida_kernwin.Form):
   
@@ -44,13 +45,15 @@ class Pannel(ida_kernwin.Form):
             return n
 
 
-  def __init__(self):
-    pass
+  def __init__(self,conf):
+    self.breakpoints = [] 
+    self.conf_path = ''
+    self.conf = conf # For refresh purpose. When the windows is re-opened after the first time,
+                     # value might be refreshed using the conf object 
 
   def onStubButton(self,code):
      
-    s_conf = StubForm.fillconfig(self.s_conf.use_user_stubs,
-                                 self.s_conf.stub_pltgot_entries)
+    s_conf = StubForm.fillconfig()
     self.s_conf += s_conf
 
   def onaMapButton(self,code):
@@ -68,6 +71,10 @@ class Pannel(ida_kernwin.Form):
     """ For configuration purpose
     """
     pass
+
+
+
+#----------------------------------------------------------------------------------------------
 
 class FileSelector(ida_kernwin.Form):
   def __init__(self):
@@ -98,6 +105,8 @@ Select a file
       return f.f_path 
      
   
+
+#----------------------------------------------------------------------------------------------
 
 class AddMapping(ida_kernwin.Form):
   def __init__(self):
@@ -156,12 +165,11 @@ Additionnal Mapping
       return ret 
 
 
+#----------------------------------------------------------------------------------------------
+
 class StubForm(ida_kernwin.Form):
 
   class function_chooser(ida_kernwin.Choose):
-        """
-        A simple chooser to be used as an embedded chooser
-        """
         def __init__(self, title, nb=5, flags=ida_kernwin.Choose.CH_MULTI):
             ida_kernwin.Choose.__init__(
                 self,
@@ -187,60 +195,85 @@ class StubForm(ida_kernwin.Form):
             return n
 
 
-  def __init__(self,splt=False,usrstub=False):
+  def __init__(self):
     self.invert = False
     self.nstub = dict()
-    self.clicked = False
+    self.clicked_ns = False
+    self.clicked_ds = False
+    self.dyn_func_section = None
+    self.custom_stubs_file = None
+    self.tags = dict()
+
     Form.__init__(self, r"""STARTITEM 
 BUTTON YES Yeah
 BUTTON NO Nope
 BUTTON CANCEL* Nevermind
 Stubbing confiugration
+{cbCallback}
 <##Functions: {cFuncChooser}>
 <##Add selection: {addButton}>
-<##Use user stubs No:{sfNo}> <Yes:{sfYes}>{sfC}>
-<##Stub plt/got entries (if available) No:{spgNo}> <Yes:{spgYes}>{spgC}> 
+<##Stub dynamic func tab No:      {sfNo}> <Yes:{sfYes}>{sfC}>
+<##Dynamic function resolution section: {dynFuncSec}>
+<##Add custom stubs file: {customStubFile}>
 """,{
             'addButton': Form.ButtonInput(self.AddButton),
             'sfC': Form.RadGroupControl(("sfNo","sfYes")),
-            'spgC': Form.RadGroupControl(("spgNo","spgYes")),
-            'cFuncChooser': Form.EmbeddedChooserControl(StubForm.function_chooser("NullStubfunction"))
+            'dynFuncSec': Form.EmbeddedChooserControl(Pannel.segment_chooser("Sections")),
+            'customStubFile': Form.ButtonInput(self.CustomStubFile),
+            'cFuncChooser': Form.EmbeddedChooserControl(StubForm.function_chooser("NullStubfunction")),
+            'cbCallback': Form.FormChangeCb(self.cb_callback)
 })
 
-    self.use_user_stubs = usrstub
-    self.stub_pltgot_entries = splt 
+  def cb_callback(self,fid):
+    if fid == self.sfC.id:
+      self.EnableField(self.dynFuncSec,self.GetControlValue(self.sfC))
+    if fid == self.dynFuncSec.id:
+      if not self.GetControlValue(self.sfC):
+        self.EnableField(self.dynFuncSec,False)
+      self.dyn_func_section  = ida_segment.get_segm_name(get_seg_list()[self.GetControlValue(self.dynFuncSec)[0]])
+    return 1
+   
 
 
+   
+  def CustomStubFile(self,code):
 
-
-  def refresh(self):
-    pass
+    f_path =  FileSelector.fillconfig()
+    if f_path == '' or not os.path.exists(f_path) or os.path.isdir(f_path): 
+        logger.console(2,' [Custom Stub File] Invalid file path')
+        return 
+    self.custom_stubs_file = f_path 
+    return 
+    
   
-#     self.SetControlValue(self.sfC,self.use_user_stubs)
-#     self.SetControlValue(self.splgC,self.stub_pltgot_entries)
-# 
-  
-
-
 
   def AddButton(self,code):
         for x in self.GetControlValue(self.cFuncChooser):
           f = get_func_list()[x]
           self.nstub[f.start_ea] = ida_funcs.get_func_name(f.start_ea)
-        self.clicked = True
-          
+        self.clicked_ns = True
 
   @staticmethod 
-  def fillconfig(splg,usrstub):
-      f = StubForm(splg,usrstub)
+  def fillconfig():
+      f = StubForm()
       f.Compile()
 
       ok = f.Execute()
       if ok:
 
-          if not f.clicked: 
+          if not f.clicked_ns: 
             logger.console(1,' [%s] no stubs added, please use "Add Selection" button to add selected stubs'%'UI') #WTF IDA does not exports locals()['__name__']
-          ret = StubConfiguration(f.nstub,f.sfC.value,f.spgC.value)
+          if not f.dyn_func_section and f.sfC.value:
+            logger.console(1,' [%s] No dynamic section selected, stubbing won\'t work'%'UI') #WTF IDA does not exports locals()['__name__']
+
+          ret = StubConfiguration(nstubs=f.nstub,
+                                stub_dynamic_func_tab=f.sfC.value,
+                                dynamic_func_tab_name=f.dyn_func_section,
+                                custom_stubs_file=f.custom_stubs_file,
+                                tags=f.tags)
+          print('dyn tab name = %s'%ret.dynamic_func_tab_name)
+          print('custon stub file = ',ret.custom_stubs_file) 
+          print('stub dyn func tab = ',ret.stub_dynamic_func_tab)
       f.Free()
       return ret 
 

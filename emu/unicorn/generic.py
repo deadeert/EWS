@@ -7,14 +7,16 @@ import ida_segregs
 import ida_idp 
 import ida_name
 import ida_segment
+import idautils
 import os
 import string
 from unicorn import * 
 from unicorn.arm_const import * 
 from unicorn.mips_const import * 
+from unicorn.arm64_const import * 
  
 
-from utils import *
+from utils.utils import *
 from emu.emubase import Emulator
 
 
@@ -22,23 +24,11 @@ class Emucorn(Emulator):
 
   def __init__(self,conf):
     super().__init__(conf)
+    self.stub_breakpoints = dict()
 
-#   def start(self):
-#     pass
-# 
-#   def add_mapping(self,pages):
-#     pass
-  
-#   @staticmethod
-#   def reg_convert(r_id): 
-#     """ match int r_id to corresponding register values in emulator solution. 
-#         usefull for Stubs abstraction mechanism
-#     """ 
-#     pass
-# 
-  def patch_plt(self,stubs_l):
-    pass  
-
+  """Emulator configuration 
+  """
+#---------------------------------------------------------------------------------------------
   @staticmethod
   def do_required_mappng(uc,s_ea,e_ea,p_size,perms):
     """ Use this function to avoid page mappings
@@ -57,6 +47,18 @@ class Emucorn(Emulator):
         logger.console(LogType.INFO,'[%s] map page %8X'%('Emucorn',b_page))
         uc.mem_map(b_page,p_size,perms)
       b_page += p_size
+
+  def add_mapping(self,addr,mem):
+    """ TODO: handle protection
+    """
+    for rsta,rsto,rpriv in self.uc.mem_regions():
+      if addr in range(rsta,rsto):
+        logger.console(LogType.WARN,'0x%x is already map, please use another addr or change mapping using emu.helper.mem_write()'%addr)
+        return 
+     
+    Emucorn.do_required_mappng(self.uc,addr,addr+len(mem),self.conf.p_size,UC_PROT_ALL)
+    self.uc.mem_write(addr,mem) 
+    logger.console(LogType.INFO,'[%s] Additionnal mapping for data at 0x%x'%('Emucorn',addr)) 
 
 
 
@@ -95,20 +97,11 @@ class Emucorn(Emulator):
   
     return stk_p 
 
-  def start(self,cnt=0,saddr=None): 
-    if not saddr:
-      saddr = self.conf.exec_saddr 
-    try:
-      self.uc.emu_start(saddr,self.conf.exec_eaddr,timeout=0,count=cnt)
-      logger.console(LogType.INFO,'End Address specified in configuration reached')
-    except UcError as e:  
-      logger.console(LogType.ERRR,'Error in unicorn engine')
-      raise e 
-    except Exception as e:
-      logger.console(LogType.WARN,'[!] Exception in program : %s' % e.__str__())
-      raise e
-    if self.conf.color_graph:
-      colorate_graph(self.color_map)
+
+  """ Emulator reg/mem accesses 
+  """
+#---------------------------------------------------------------------------------------------
+
 
   @staticmethod
   def mem_read(uc,addr,size):
@@ -144,18 +137,10 @@ class Emucorn(Emulator):
     return False
 
 
-  def display_page(self,p_base,size=None):
-    if not size:
-      size = self.conf.p_size 
-    mem=self.uc.mem_read(p_base,size)
-    display_mem(mem) 
-
-  def display_range(self,start_ea,end_ea):
-    mem=self.uc.mem_read(start_ea,end_ea-start_ea)  
-    display_mem(mem,ba=start_ea)
-   
-
-
+  
+  """ Hooking event functions  
+  """
+#---------------------------------------------------------------------------------------------
 
   @staticmethod
   def unmp_write(uc,access,addr,size,value,user_data):
@@ -185,23 +170,203 @@ class Emucorn(Emulator):
   def hk_write(uc,access,addr,size,value,user_data):
     logger.console(LogType.INFO,'[*] Write access to addr 0x%.8X fro size %d with value 0x%.8X'%(addr,size,value))
 
+  
+  def hook_code(self,uc,addr,size,user_data): 
 
-  def display_stack(self,size=None):
-    sp = self.helper.get_sp()
-    used = (self.conf.stk_ba + self.conf.stk_size) - sp
-    logger.console(LogType.INFO,'sp = %x used = %d'%(sp,used))
-    if not size:
-      mem=self.uc.mem_read(sp,used)
-    else:
-      if not size > used:
-        mem=self.uc.mem_read(sp,size)
-      else: 
-        logger.console(LogType.WARN,'display size is to big, truncating')
-        mem=self.uc.mem_read(sp,used)
-    display_mem(mem,ba=sp)
+    if addr in self.stub_breakpoints.keys(): # default_stubs_breakpoint
+      try:
+        self.stub_breakpoints[addr]()
+      except Exception as e:
+        logger.console(LogType.WARN,'Error in stub, aborting')
+        uc.emu_stop()
+        raise e
+#     elif addr in self.custom_stubs.keys():
+#       self.custom_stubs[addr]() 
+    elif addr in self.user_breakpoints: 
+      uc.emu_stop() 
+#       self.step_n(1) 
+      logger.console(LogType.INFO,'Breakpoint at %x reached.\nType emu.continuee() to pursue execution'%addr)
+
+    self.color_map[addr] = get_insn_color(addr) 
+    insn = ida_ua.insn_t() 
+    ida_ua.decode_insn(insn,self.uc.reg_read(self.pcid))
+    op_str = 'opcode : %X'%int.from_bytes(uc.mem_read(uc.reg_read(self.pcid),insn.size),'big',signed=False)
+    logger.console(LogType.INFO,op_str)
+    insn_str = ''
+    if self.conf.useCapstone:
+      try:
+        insn=next(self.cs.disasm(uc.mem_read(uc.reg_read(self.pcid),insn.size),uc.reg_read(self.pcid),count=1))
+        insn_str="0x%x:\t%s\t%s" %(insn.address, insn.mnemonic, insn.op_str)
+      except StopIteration:
+        pass
+    else:  
+      try: 
+        operands = '' 
+        i=0
+        for x in insn.__get_ops__():
+          if x.type > 0:
+            operands+=' %s'%ida_ua.print_operand(insn.ea, i).strip()
+          i+=1
+        insn_str=ida_ua.print_insn_mnem(insn.ea)+' '+operands
+      except Exception as e:
+        insn_str='[!] Error occured while decoding insn:'+e.__str__()
+    
+    strout = '[PC=%.8X]'%uc.reg_read(self.pcid)+' '+str(self.get_alu_info())+' '+insn_str
+    
+    logger.console(LogType.INFO,strout)
+    if self.conf.showRegisters:
+      self.print_registers()
+
+    return True
+    
+
+
+  """ Stubbing functions 
+  """
+#---------------------------------------------------------------------------------------------
+
+
+  def stub_func_by_xref(self,ea,stub_func):
+   """ deref ea corresponding to a function reference
+        until a call insn is found. Nop it and add it 
+        to stub breakpoint dict with corresponding stub func. 
+   """ 
+
+
+   xref_g = idautils.XrefsTo(ea)
+   try:
+     while True:
+      xref = next(xref_g)
+      insn = get_insn_at(xref.frm)
+      if ida_idp.is_call_insn(insn): 
+        self.stub_breakpoints[xref.frm] = stub_func 
+        self.nop_insn(insn)
+#         logger.console(LogType.INFO,'[+] %x nopped '%xref.frm)
+      elif insn.itype in self.ida_jmp_itype:
+        xref_jmp_g = idautils.XrefsTo(xref.frm) 
+        try: 
+         while True:
+          xref_jmp = next(xref_jmp_g)
+          self.stub_func_by_xref(xref_jmp.frm,stub_func)
+        except StopIteration:
+          pass
+      else:
+        logger.console(LogType.WARN,'could not find valid call insn for stub at ea %x'%ea)
+        return 
+   except StopIteration:
+    pass     
+
+  def stub_by_first_insn(self,ea,stub_func):
+    
+    ret_insn = self.get_retn_insn(ea)  # retn X, pop pc, ... 
+    stub =  self.get_new_stub(stub_func)  
+    self.stub_breakpoints[ea] = stub.do_it
+    self.uc.mem_write(ea,ret_insn)
+    
+
+  def iter_by_name(self,start_ea,end_ea):
+    cur_ea = start_ea 
+    while cur_ea < end_ea:
+      name = ida_name.get_name(cur_ea)
+      if name in self.stubs.keys():
+        self.stubs[name].set_helper(self.helper)
+        self.stub_func_by_xref(cur_ea,self.stubs[name].do_it)
+      cur_ea += self.pointer_size
 
     
+  def iter_by_func(self,start_ea,end_ea):
+    f = ida_funcs.get_next_func(start_ea)
+    while f.start_ea < end_ea:
+      fname = ida_name.get_ea_name(f.start_ea)
+      if fname in self.stubs.keys():
+        self.stubs[fname].set_helper(self.helper)
+        self.stub_func_by_xref(f.start_ea,self.stubs[fname].do_it)
+        logger.console(LogType.INFO,'[+] %s is now stubbed'%fname)
+      f = ida_funcs.get_next_func(f.start_ea)
+      if f == None: 
+        break
+
+  def stubbit(self):
+    
+    s = ida_segment.get_segm_by_name(self.conf.s_conf.dynamic_func_tab_name)
+    
+    logger.console(LogType.INFO,"enter stubbit: base on section : %s"%self.conf.s_conf.dynamic_func_tab_name)
+    #this is heuristic to know if stub section is function array (.got)
+    #or function declarations (.plt)
+    f = ida_funcs.get_func(s.start_ea)
+    if f == None: 
+      logger.console(LogType.INFO,'Stubbed section is detected as array of function pointers')
+      self.iter_by_name(s.start_ea,s.end_ea) 
+    else: 
+      logger.console(LogType.INFO,"iter_by_func")
+      self.iter_by_func(s.start_ea,s.end_ea) 
+
+    for s_ea in self.conf.s_conf.nstubs.keys():
+        self.add_null_stub(s_ea)
+
+    for k,v in self.conf.s_conf.tags.items():
+      self.tag_func(k,v)
       
+
+    #TODO Add user stub
+
+  def add_custom_stub(self,ea,func):
+    
+    stub = self.get_new_stub(func) 
+    self.stub_by_first_insn(ea,stub.do_it)
+    logger.console(LogType.INFO,'[+] %s is now stubbed'%get_func_name(ea))
+
+
+  def remove_custom_stub(self,ea):
+    if ea in self.stub_breakpoints.keys():
+      del self.stub_breakpoints[ea] 
+      logger.console(LogType.INFO,'[+] %s stub func removed'%get_func_name(ea))
+    else:
+      logger.console(LogType.WARN,'[+] %x addr is not stubbed anymore'%ea)
+
+
+  def tag_func(self,ea,stub_name): 
+    if not stub_name in self.stubs.keys():
+      logger.console(LogType.WARN,'[!] %s is not among available stubs. Please refers to list_stubs command to get the list of available stubs'%stub_name)
+      return 
+    self.stub_by_first_insn(ea,self.stubs[stub_name])
+    logger.console(LogType.INFO,'[+] %x is now stubbed with %s function'%(ea,stub_name))
+    self.conf.add_tag(ea,stub_name)
+
+
+  def remove_tag(self,ea):
+    self.remove_custom_stub(ea)
+    self.conf.remove_tag(ea)
+
+  def add_null_stub(self,ea):
+    self.stub_by_first_insn(ea,self.nstub_obj.do_it)
+    logger.console(LogType.INFO,'%x is now null stubbed'%ea)
+    self.conf.add_null_stub(ea)
+
+  def remove_null_stub(self,ea): 
+    self.remove_custom_stub(ea)
+    self.conf.remove_null_stub(ea)
+
+  """ Debugging functions 
+  """
+#---------------------------------------------------------------------------------------------
+  def start(self,cnt=0,saddr=None): 
+    if not saddr:
+      saddr = self.conf.exec_saddr 
+    try:
+      self.uc.emu_start(saddr,self.conf.exec_eaddr,timeout=0,count=cnt)
+      logger.console(LogType.INFO,'End Address specified in configuration reached')
+    except UcError as e:  
+      logger.console(LogType.ERRR,'Error in unicorn engine')
+      raise e 
+    except Exception as e:
+      logger.console(LogType.WARN,'[!] Exception in program : %s' % e.__str__())
+      raise e
+    if self.conf.color_graph:
+      colorate_graph(self.color_map)
+
+
+    
   def step_n(self,n):
     # TODO idea:
     # to step n insn, we could use three add variable 
@@ -256,15 +421,12 @@ class Emucorn(Emulator):
     else:
       logger.console(LogType.WARN,'Could not step_over this kind of insn')
     self.continuee()
-    
-
 
   def restart(self,conf=None,cnt=0):
     # unmap & remap 
     for rsta,rsto,rpriv in self.uc.mem_regions():
       self.uc.mem_unmap(rsta,rsto-rsta+1)
     stk_p = Emucorn.do_mapping(self.uc,self.conf)
-    # TODO BUG: need to patch the program for PLT/PE stubs
 
     self.reset_regs() 
     self.setup_regs(stk_p)
@@ -275,68 +437,42 @@ class Emucorn(Emulator):
     
     logger.console(LogType.INFO,'Restart done. You can start exec (emu.start()/emu.step_{in,...))')
 
-   
-
-  def add_mapping(self,addr,mem):
-    """ TODO: handle protection
-    """
-    for rsta,rsto,rpriv in self.uc.mem_regions():
-      if addr in range(rsta,rsto):
-        logger.console(LogType.WARN,'0x%x is already map, please use another addr or change mapping using emu.helper.mem_write()'%addr)
-        return 
-     
-    Emucorn.do_required_mappng(self.uc,addr,addr+len(mem),self.conf.p_size,UC_PROT_ALL)
-    self.uc.mem_write(addr,mem) 
-    logger.console(LogType.INFO,'[%s] Additionnal mapping for data at 0x%x'%('Emucorn',addr)) 
-
-
-  def hook_code(self,uc,addr,size,user_data): 
-
-    if addr in self.breakpoints.keys():
-      try:
-        self.stubs[self.breakpoints[addr]].do_it()
-      except Exception as e:
-        logger.console(LogType.WARN,'Error in stub, aborting')
-        uc.emu_stop()
-        raise e
-    elif addr in self.custom_stubs.keys():
-      self.custom_stubs[addr]() 
-    elif addr in self.user_breakpoints: 
-      uc.emu_stop() 
-#       self.step_n(1) 
-      logger.console(LogType.INFO,'Breakpoint at %x reached.\nType emu.continuee() to pursue execution'%addr)
-
-    self.color_map[addr] = get_insn_color(addr) 
-    insn = ida_ua.insn_t() 
-    ida_ua.decode_insn(insn,self.uc.reg_read(self.pcid))
-    op_str = 'opcode : %X'%int.from_bytes(uc.mem_read(uc.reg_read(self.pcid),insn.size),'big',signed=False)
-    logger.console(LogType.INFO,op_str)
-    insn_str = ''
-    if self.conf.useCapstone:
-      try:
-        insn=next(self.cs.disasm(uc.mem_read(uc.reg_read(self.pcid),insn.size),uc.reg_read(self.pcid),count=1))
-        insn_str="0x%x:\t%s\t%s" %(insn.address, insn.mnemonic, insn.op_str)
-      except StopIteration:
-        pass
-    else:  
-      try: 
-        operands = '' 
-        i=0
-        for x in insn.__get_ops__():
-          if x.type > 0:
-            operands+=' %s'%ida_ua.print_operand(insn.ea, i).strip()
-          i+=1
-        insn_str=ida_ua.print_insn_mnem(insn.ea)+' '+operands
-      except Exception as e:
-        insn_str='[!] Error occured while decoding insn:'+e.__str__()
     
-    strout = '[PC=%.8X]'%uc.reg_read(self.pcid)+' '+str(self.get_alu_info())+' '+insn_str
-    
-    logger.console(LogType.INFO,strout)
-    if self.conf.showRegisters:
-      self.print_registers()
+  """ MISC 
+  """
+#---------------------------------------------------------------------------------------------
 
-    return True
+  def display_stack(self,size=None):
+    sp = self.helper.get_sp()
+    used = (self.conf.stk_ba + self.conf.stk_size) - sp
+    logger.console(LogType.INFO,'sp = %x used = %d'%(sp,used))
+    if not size:
+      mem=self.uc.mem_read(sp,used)
+    else:
+      if not size > used:
+        mem=self.uc.mem_read(sp,size)
+      else: 
+        logger.console(LogType.WARN,'display size is to big, truncating')
+        mem=self.uc.mem_read(sp,used)
+    display_mem(mem,ba=sp)
+
+  def display_page(self,p_base,size=None):
+    if not size:
+      size = self.conf.p_size 
+    mem=self.uc.mem_read(p_base,size)
+    display_mem(mem) 
+
+  def display_range(self,start_ea,end_ea):
+    mem=self.uc.mem_read(start_ea,end_ea-start_ea)  
+    display_mem(mem,ba=start_ea)
+ 
+
+  def dump_range(self,start_ea,end_ea,filename):
+    with open(filename,'wb+') as fbinout:
+      cntout = fbinout.write(self.uc.mem_read(start_ea,end_ea-start_ea))
+    logger.console(LogType.INFO,'%d bytes written in %s file'%(cntout,filename))
     
 
 
+
+ 
