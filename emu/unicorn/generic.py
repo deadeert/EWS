@@ -14,7 +14,7 @@ from unicorn import *
 from unicorn.arm_const import * 
 from unicorn.mips_const import * 
 from unicorn.arm64_const import * 
- 
+import struct
 
 from utils.utils import *
 from emu.emubase import Emulator
@@ -239,10 +239,8 @@ class Emucorn(Emulator):
       xref = next(xref_g)
       insn = get_insn_at(xref.frm)
       if ida_idp.is_call_insn(insn): 
-        print('stub at '%xref.frm)
         self.stub_breakpoints[xref.frm] = stub_func 
         self.nop_insn(insn)
-#         logger.console(LogType.INFO,'[+] %x nopped '%xref.frm)
       elif insn.itype in self.ida_jmp_itype:
         xref_jmp_g = idautils.XrefsTo(xref.frm) 
         try: 
@@ -262,6 +260,7 @@ class Emucorn(Emulator):
     ret_insn = self.get_retn_insn(ea)  # retn X, pop pc, ... 
     stub =  self.get_new_stub(stub_func)  
     self.stub_breakpoints[ea] = stub.do_it
+    logger.console(LogType.INFO,"Null stubbing ea %x with insn %x"%(ea,struct.unpack('<I',ret_insn)[0]))
     self.uc.mem_write(ea,ret_insn)
     
 
@@ -311,7 +310,7 @@ class Emucorn(Emulator):
                  #symbols that are not currently supported 
                  if self.conf.s_conf.auto_null_stub:
                     logger.console(LogType.INFO,'%s symbol not found. null-stubbing it'%k)
-                    self.add_null_stub(v)
+                    self.add_null_stub(xref.frm)
               i+=1
             except StopIteration:
                 if i>1:
@@ -355,6 +354,12 @@ class Emucorn(Emulator):
   def add_custom_stub(self,ea,func):
     
     stub = self.get_new_stub(func) 
+    if ea in self.stub_breakpoints.keys():
+        logger.console(LogType.WARN,"Function at %x is already stubbed. Overwritting stub with new tag"%ea)
+        self.stub_breakpoints[ea] = stub.do_it
+        # these function  implements checks 
+        self.conf.remove_tag(ea)
+        self.conf.remove_null_stub(ea)
     self.stub_by_first_insn(ea,stub.do_it)
     logger.console(LogType.INFO,'[+] %s is now stubbed'%get_func_name(ea))
 
@@ -371,7 +376,18 @@ class Emucorn(Emulator):
     if not stub_name in self.stubs.keys():
       logger.console(LogType.WARN,'[!] %s is not among available stubs. Please refers to list_stubs command to get the list of available stubs'%stub_name)
       return 
-    self.stub_by_first_insn(ea,self.stubs[stub_name])
+
+    if ea in self.stub_breakpoints.keys():
+        logger.console(LogType.WARN,"Function at %x is already stubbed. Overwritting stub with new tag"%ea)
+        self.conf.remove_null_stub(ea)
+    else:
+        self.stub_by_first_insn(ea,self.stubs[stub_name])
+
+    self.stub_breakpoints[ea] = self.stubs[stub_name].do_it
+    # in case the stub was not referenced in relocs
+    # we need to initiate it with helper
+    if self.stubs[stub_name].helper == None:
+        self.stubs[stub_name].set_helper(self.helper)
     logger.console(LogType.INFO,'[+] %x is now stubbed with %s function'%(ea,stub_name))
     self.conf.add_tag(ea,stub_name)
 
@@ -385,7 +401,7 @@ class Emucorn(Emulator):
     logger.console(LogType.INFO,'%x is now null stubbed'%ea)
     self.conf.add_null_stub(ea)
 
-  def remove_null_stub(self,ea): 
+  def remove_null_stub(self,ea):
     self.remove_custom_stub(ea)
     self.conf.remove_null_stub(ea)
 

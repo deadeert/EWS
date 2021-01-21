@@ -98,12 +98,6 @@ class NWSock(object):
 
 
     
-    
-
-
-
-
-    
 
 
 
@@ -155,9 +149,41 @@ def deref_format(helper,format,arg_num):
       dword = struct.pack('<I',helper.mem_read(helper,cur_arg))
     else :
       logger.console(LogType.WARN,'%s format unsupported')
-    
     arg_num+=1 
   return deref_list
+
+
+def build_chain(helper,format_l,values):
+
+    out = b''
+    for f in format_l:
+        print(f)
+        if  f == '%s' : out+=values.pop()
+        elif f == '%d' : out+=bytes('%d'%values.pop(),'utf-8')
+        elif f == '%ld': out+=bytes('%ld'%values.pop(),'utf-8')
+        elif f == '%x' : out+=bytes('%x'%values.pop(),'utf-8')
+        elif f == '%p' : out+=bytes('%x'%values.pop(),'utf-8')
+        elif f != ''   : out+=bytes(f,'utf-8')  # case its encapsulated 
+                                                #basic string ( %x basic string %s )
+
+    return out
+
+def write_to_fd(fdnum,fdesc_l,out):
+
+    ln = 0 
+    if fdnum > 2 and fdnum in fdesc_l:
+          ln = fdesc_l[fdnum].write(bytes(out))
+          logger.console(LogType.INFO,'[fprintf] on fd %d outputs: '%fd,out)
+          return ln 
+    elif fdnum == 2:
+          logger.console(LogType.INFO,'[fprintf@strderr] outputs:', out)
+    elif fdnum == 1: 
+          logger.console(LogType.INFO,'[fprintf@stdout] outputs:', out)
+    else:
+          logger.console(LogType.INFO,'[fprintf@stdin] outputs:', out)
+    return len(out)
+
+
 
 
 

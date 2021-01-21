@@ -37,7 +37,8 @@
 ###
 
 
-from ui.arm32 import Arm32Pannel
+#from ui.arm32 import Arm32Pannel
+from ui.arm32_simplified import Arm32Pannel
 from ui.mipsl32 import Mipsl32Pannel
 from ui.x86 import x86Pannel
 from ui.x64 import x64Pannel

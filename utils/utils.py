@@ -481,14 +481,22 @@ class Configuration():
     self.s_conf.nstubs[ea] = ida_funcs.get_func_name(ea)
 
   def remove_null_stub(self,ea):
-    del self.s_conf.nstubs[ea]
+    if ea in self.s_conf.nstubs.keys():
+        del self.s_conf.nstubs[ea]
+    else:
+        logger.console(LogType.WARN,"Could not remove null-stub. No null-stub registred at this address (%x)"%ea)
 
 
   def add_tag(self,ea,stub_name):
+    if ea in self.s_conf.tags.keys():
+        logger.console(LogType.WARN,'Tag already registred at this ea (%x). Overwritting the value'%ea)
     self.s_conf.tags[ea] = stub_name
 
   def remove_tag(self,ea):
-    del self.s_conf.nstubs[ea]
+    if ea in self.s_conf.nstubs.keys():
+        del self.s_conf.nstubs[ea]
+    else:
+        logger.console(LogType.WARN,"Could not remove tag. No tag registred at this address (%x)"%ea)
 
   def show_tags(self):
     for k,v in self.s_conf.tags.items():
@@ -797,7 +805,7 @@ def search_executable():
     f_path_l=ida_loader.get_path(ida_loader.PATH_TYPE_CMD).split('.')[:-1]
     ntry=1
     f_path=""
-    while ntry<len(f_path_l):
+    while ntry<=len(f_path_l):
         candidate='.'.join(f_path_l[0:ntry]) 
         if verify_valid_elf(candidate):
                 f_path=candidate 

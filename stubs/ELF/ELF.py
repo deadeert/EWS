@@ -201,7 +201,6 @@ class printf(Stub):
 
     def __init__(self):
         super().__init__()
-        
 
     def do_it(self,*args):
         format_addr = self.helper.get_arg(0)
@@ -213,24 +212,17 @@ class printf(Stub):
         fmt,l = codecs.escape_encode(fmt)
         pc = self.helper.get_pc()
         logger.console(LogType.INFO,'[printf] Call at 0x%.8X with format %s'%(pc,fmt))
-#         p  = re.compile('%+[l]{0,1}[dpsx]')
         p  = re.compile('%+[l]{0,1}[dpsx]+') # 08/11/2020: ajout du + 
-#         p2  = re.compile('(%+[dpsx])')
         p2  = re.compile('(%+[dpsx]+)') # 08/11/2020:  ajout du + 
         chain_addr = self.helper.get_arg(0)
         chain = deref_string(self.helper,chain_addr)
         reformat = [i for i in p.findall(chain.strip().decode('utf-8')) if i != '']
-#         deref_list = f(self.helper,reformat)
         deref_list = deref_format(self.helper,reformat,1) 
         deref_list.reverse()
-        out=b''
-        for x in p2.split(chain.strip().decode('utf-8')):
-            if   x == '%s' : out+=deref_list.pop()
-            elif x == '%d' : out+=bytes('%d'%deref_list.pop(),'utf-8')
-            elif x == '%ld': out+=bytes('%ld'%deref_list.pop(),'utf-8')
-            elif x == '%x' : out+=bytes('%x'%deref_list.pop(),'utf-8')
-            elif x == '%p' : out+=bytes('%x'%deref_list.pop(),'utf-8')
-            elif x != ''   : out+=bytes(x,'utf-8')
+        out = build_chain(self.helper,
+                    p2.split(chain.strip().decode('utf-8')),
+                    deref_list)
+
         logger.console(LogType.INFO,'[printf] outputs:',out)
         return True
 
@@ -241,7 +233,6 @@ class memcpy(Stub):
 
     def __init__(self):
         super().__init__()
-        
 
     def do_it(self,*args):
         logger.console(LogType.INFO,'[memcpy] called at 0x%.8X'%self.helper.get_pc())
@@ -469,49 +460,74 @@ class fgets(Stub):
 # -----------------------------------------------------------------------------
 #CAUTION : Does not handle space between format
 @LibcStub('_fprintf')
-@LibcStub('.fprintf')
 @LibcStub('fprintf')
 class fprintf(Stub):
+    """ Should create a fake rootfs
+    """
 
     def __init__(self):
         super().__init__()
-        
 
     def do_it(self,*args):
         logger.console(LogType.INFO,'[fprintf] called at 0x%.8X, fd : %d'%(self.helper.get_pc(),
                                                  self.helper.get_arg(0)))
         fd = self.helper.get_arg(0)
         if not fd in fd_list and fd > 2:
-            raise Exception('[fprintf] file descriptor not found')
+#            raise Exception('[fprintf] file descriptor not found')
+             logger.console(LogType.WARN,"File descriptor does not belongs to standard IO nor ",
+                            "opened files")
         chain_addr = self.helper.get_arg(1)
         chain = deref_string(self.helper,chain_addr)
         p  = re.compile('%+[l]{0,1}[dpsx]')
         p2  = re.compile('(%+[l]{0,1}[dpsx])')
         reformat = [i for i in p.findall(chain.strip().decode('utf-8')) if i != '']
-#         deref_list = g(self.helper,reformat)
         deref_list = deref_format(self.helper,reformat,2)
         deref_list.reverse()
-        out=b''
-        for x in p2.split(chain.strip().decode('utf-8')):
-            if   x == '%s' : out+=deref_list.pop()
-            elif x == '%d' : out+=bytes('%d'%deref_list.pop(),'utf-8')
-            elif x == '%ld': out+=bytes('%ld'%deref_list.pop(),'utf-8')
-            elif x == '%x' : out+=bytes('%x'%deref_list.pop(),'utf-8')
-            elif x == '%p' : out+=bytes('%x'%deref_list.pop(),'utf-8')
-            elif x != ''   : out+=bytes(x,'utf-8')
-        if fd > 2: 
-          fd_list[fd].write(bytes(out))
-          logger.console(LogType.INFO,'[fprintf] on fd %d outputs: '%fd,out)
-        elif fd == 2:
-          logger.console(LogType.INFO,'[fprintf@strderr] outputs:', out)
-        elif fd == 1: 
-          logger.console(LogType.INFO,'[fprintf@stdout] outputs:', out)
-        else:
-          logger.console(LogType.INFO,'[fprintf@stdin] outputs:', out)
+        out = build_chain(self.helper,
+                    p2.split(chain.strip().decode('utf-8')),
+                    deref_list)
+        ln = 0
+        write_to_fd(fd,fd_list,out)
 
-
-        self.helper.set_return(len(out))
+        self.helper.set_return(ln)
         return True
+
+
+@LibcStub("_fprintf_chk")
+class _fprintf_chk(Stub):
+    """ Should create a fake rootfs
+    """
+
+    def __init__(self):
+        super().__init__()
+
+    def do_it(self,*args):
+        logger.console(LogType.INFO,'[__fprintf_chk] called at 0x%.8X, fd : %d'%(self.helper.get_pc(),
+                                                 self.helper.get_arg(0)))
+        fd = self.helper.get_arg(0)
+        if not fd in fd_list and fd > 2:
+#            raise Exception('[fprintf] file descriptor not found')
+             logger.console(LogType.WARN,"File descriptor does not belongs to standard IO nor ",
+                            "opened files")
+        flag = self.helper.get_arg(1)
+        chain_addr = self.helper.get_arg(2)
+        chain = deref_string(self.helper,chain_addr)
+        p  = re.compile('%+[l]{0,1}[dpsx]')
+        p2  = re.compile('(%+[l]{0,1}[dpsx])')
+        reformat = [i for i in p.findall(chain.strip().decode('utf-8')) if i != '']
+        deref_list = deref_format(self.helper,reformat,3)
+        deref_list.reverse()
+        out = build_chain(self.helper,
+                    p2.split(chain.strip().decode('utf-8')),
+                    deref_list)
+        ln = 0
+        write_to_fd(fd,fd_list,out)
+
+        self.helper.set_return(ln)
+        return True
+
+
+
 
 # -----------------------------------------------------------------------------
 @LibcStub('snprintf')
@@ -534,17 +550,11 @@ class snprintf(Stub):
         p  = re.compile('%+[l]{0,1}[dpsx]')
         p2  = re.compile('(%+[l]{0,1}[dpsx])')
         reformat = [i for i in p.findall(chain.strip().decode('utf-8')) if i != '']
-#         deref_list = h(self.helper,reformat)
         deref_list = deref_format(self.helper,reformat,3)
         deref_list.reverse()
-        out=b''
-        for x in p2.split(chain.strip().decode('utf-8')):
-            if   x == '%s' : out+=deref_list.pop()
-            elif x == '%d' : out+=bytes('%d'%deref_list.pop(),'utf-8')
-            elif x == '%ld': out+=bytes('%ld'%deref_list.pop(),'utf-8')
-            elif x == '%x' : out+=bytes('%x'%deref_list.pop(),'utf-8')
-            elif x == '%p' : out+=bytes('%x'%deref_list.pop(),'utf-8')
-            elif x != ''   : out+=bytes(x,'utf-8')
+        out = build_chain(self.helper,
+                    p2.split(chain.strip().decode('utf-8')),
+                    deref_list)
         if len(out) > size:
             logger.console(LogType.INFO,'[snprintf] truncating output')
             self.helper.mem_write(buf_addr,bytes(out)[0:size])
@@ -595,7 +605,6 @@ class strncmp(Stub):
 
     def __init__(self):
         super().__init__()
-        
 
     def do_it(self,*args):
         """
@@ -710,11 +719,10 @@ class getpid(Stub):
 
     def __init__(self):
         super().__init__()
-        
 
     def do_it(self,*args):
         logger.console(LogType.INFO,'[getpid]    returning %X'%conf.pid)
-        self.helper.set_return(conf.pid) #
+        self.helper.set_return(conf.pid) 
         return True
 
 # -----------------------------------------------------------------------------
@@ -723,7 +731,6 @@ class __errno_location(Stub):
 
     def __init__(self):
         super().__init__()
-        
 
     def do_it(self,*args):
         logger.console(LogType.INFO,'[__errno_location] returning : %x'%conf.errno_location)

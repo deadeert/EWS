@@ -11,7 +11,7 @@ def search_executable():
     f_path=""
     print(f_path_l)
     print(len(f_path_l))
-    while ntry<len(f_path_l):
+    while ntry<=len(f_path_l):
         candidate='.'.join(f_path_l[0:ntry])
         print(candidate)
         if os.path.exists(candidate):

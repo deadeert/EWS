@@ -231,7 +231,7 @@ class Emulator(object):
     saveconfig(self.conf,filepath) 
 
 
-  def get_relocs(self):
+  def get_relocs(self,fpath):
       """ get the relocs for GOT entries (JMP_SLOT)
           for stub purpose
       """

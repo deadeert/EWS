@@ -5,7 +5,7 @@ from utils.utils import *
 from utils import consts_arm
 from stubs.ELF.allocator import *
 from stubs.ELF import ELF
-from stubs.emu.unicorn.sea import UnicornAarch64SEA
+from stubs.emu.unicorn.sea import UnicornArmSEA
 import struct
 
 
@@ -57,9 +57,6 @@ class ArmCorn(Emucorn):
     self.pcid = UC_ARM_REG_PC 
 
 
-#     # Add null stubs 
-#     for s_ea in conf.s_conf.nstubs.keys():
-#       self.add_null_stub(s_ea)
 #    
     # Init stubs engine 
     if self.conf.s_conf.stub_dynamic_func_tab: 
@@ -71,8 +68,6 @@ class ArmCorn(Emucorn):
       self.nstub_obj = ELF.NullStub()
       self.nstub_obj.set_helper(self.helper) 
  
-#     self.breakpoints= dict()
-#     self.custom_stubs = dict()
     if self.conf.s_conf.stub_dynamic_func_tab:
       self.stubs = ELF.libc_stubs 
       self.stubbit()
@@ -276,33 +271,26 @@ class ArmCorn(Emucorn):
       return UC_ARM_REG_R14
     elif r_str == 'R15':
       return UC_ARM_REG_R15 
-      
- 
 
-  
-  
   def get_alu_info(self): 
     return arm32CPSR.create(self.uc.reg_read(UC_ARM_REG_CPSR))
 
 
-    
-
-   
 
   def repatch(self):
     """ when using restart() function from debugger 
         memory is erased, thus stub instruction has be 
         to be patch again 
     """ 
-    if not self.conf.stub_pltgot_entries: 
+
+    if not self.conf.s_conf.stub_dynamic_func_tab: 
       return 
-    
-    self.stubbit(ELF.libc_stubs_arm)
+    self.uc.mem_map(consts_arm.ALLOC_BA,self.conf.p_size*consts_arm.ALLOC_PAGES,UC_PROT_READ | UC_PROT_WRITE)
+    self.stubbit()
 
 
 
 
-  
   def print_registers(self):
     strout  = 'Registers:\n'
     strout +=  '[R0=%.8X] [R1=%.8X] [R2=%.8X] [R3=%.8X]\n'%(self.uc.reg_read(UC_ARM_REG_R0),
@@ -321,6 +309,86 @@ class ArmCorn(Emucorn):
                                                            self.uc.reg_read(UC_ARM_REG_R13),
                                                            self.uc.reg_read(UC_ARM_REG_R14))
     logger.console(LogType.INFO,strout)
+
+
+  def get_relocs(self,fpath):
+        elf_l = lief.ELF.parse(fpath)
+        if str(elf_l) != None:
+            # overload get_reloc of emubase
+            relocs = elf_l.relocations
+            for r in relocs:
+                if r.type == int(lief.ELF.RELOCATION_ARM.JUMP_SLOT):
+                    self.reloc_map[r.symbol.name] = r.address
+        print(len(self.reloc_map))
+
+
+
+  @staticmethod
+  def generate_default_config(s_ea,
+                              e_ea,
+                              regs=None,
+                              s_conf=None,
+                              amap_conf=None):
+    if regs == None:
+        registers = ArmRegisters(0x0,
+                                  0x1,
+                                  0x2,
+                                  0x3,
+                                  0x4,
+                                  0x5,
+                                  0x6,
+                                  0x7,
+                                  0x8,
+                                  0x9,
+                                  0x10,
+                                  0x11,
+                                  0x12,
+                                  consts_arm.STACK_BASEADDR+consts_arm.STACK_SIZE, #SP
+                                  e_ea, #LR
+                                  s_ea) # PC
+    else:
+        registers = regs
+
+    if s_conf == None:
+        exec_path = search_executable() 
+        stub_conf = StubConfiguration(nstubs=dict(),
+                                        stub_dynamic_func_tab=True if exec_path != "" else False,
+                                        orig_filepath=exec_path,
+                                        custom_stubs_file=None,
+                                        auto_null_stub=True if exec_path != "" else False,
+                                        tags=dict())
+    else:
+        stub_conf = s_conf
+
+    if amap_conf == None:
+        addmap_conf = AdditionnalMapping.create()
+    else:
+        addmap_conf = amap_conf
+
+
+    return Configuration(     path='',
+                              arch='arml',
+                              emulator='unicorn',
+                              p_size=0x400,
+                              stk_ba=consts_arm.STACK_BASEADDR,
+                              stk_size=consts_arm.STACK_SIZE,
+                              autoMap=False,
+                              showRegisters=True,
+                              exec_saddr=s_ea,
+                              exec_eaddr=e_ea,
+                              mapping_saddr=get_min_ea_idb(),
+                              mapping_eaddr=get_max_ea_idb(),
+                              segms=[],
+                              map_with_segs=False,
+                              use_seg_perms=False,
+                              useCapstone=True,
+                              registers=registers,
+                              showMemAccess=True,
+                              s_conf=stub_conf,
+                              amap_conf=addmap_conf,
+                              color_graph=False,
+                              breakpoints= [])
+
 
 
 

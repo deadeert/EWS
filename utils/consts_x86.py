@@ -5,4 +5,6 @@ ida_jmp_conditional_itype = 0x55
 ret = 0xC3
 ALLOC_BA = 0x80000000
 ALLOC_PAGES = 0x10
+STACK_BASEADDR = 0x7FF00000
+STACK_SIZE = 0x10000
 
