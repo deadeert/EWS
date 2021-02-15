@@ -65,7 +65,14 @@ class x86Corn(Emucorn):
         self.nstub_obj = ELF.NullStub()
         self.loader_type = LoaderType.ELF 
         self.nstub_obj.set_helper(self.helper)
-
+        self.get_relocs(self.conf.s_conf.orig_filepath,lief.ELF.RELOCATION_i386.JUMP_SLOT)
+      logger.console(LogType.INFO,'calling stubbit')
+      self.libc_start_main_trampoline = consts_x86.LIBCSTARTSTUBADDR
+      self.uc.mem_map(consts_x86.LIBCSTARTSTUBADDR,consts_x86.PSIZE, UC_PROT_ALL)
+      self.uc.mem_write(consts_x86.LIBCSTARTSTUBADDR,consts_x86.LIBCSTARTSTUBCODE) 
+      print(consts_x86.LIBCSTARTSTUBADDR)
+      print(consts_x86.LIBCSTARTSTUBCODE)
+      print(self.uc.mem_read(0x7feff000,4))
       self.stubbit()
 
     self.uc.hook_add(UC_HOOK_CODE,
@@ -225,4 +232,65 @@ class x86Corn(Emucorn):
                                                          self.uc.reg_read(UC_X86_REG_EBP),
                                                          self.uc.reg_read(UC_X86_REG_ESP))
     logger.console(LogType.INFO,strout)
+
+
+  @staticmethod
+  def generate_default_config(s_ea,
+                              e_ea,
+                              regs=None,
+                              s_conf=None,
+                              amap_conf=None):
+    if regs == None:
+        registers = x86Registers(EAX=0,
+                                EBX=1,
+                                ECX=2,
+                                EDX=3,
+                                EDI=4,
+                                ESI=5,
+                                EBP=consts_x86.STACK_BASEADDR+consts_x86.STACK_SIZE-consts_x86.initial_stack_offset,
+                                ESP=consts_x86.STACK_BASEADDR+consts_x86.STACK_SIZE-consts_x86.initial_stack_offset,
+                                EIP=s_ea)
+    else:
+        registers = regs
+
+    if s_conf == None:
+        exec_path = search_executable()
+        stub_conf = StubConfiguration(nstubs=dict(),
+                                        stub_dynamic_func_tab=True if exec_path != "" else False,
+                                        orig_filepath=exec_path,
+                                        custom_stubs_file=None,
+                                        auto_null_stub=True if exec_path != "" else False,
+                                        tags=dict())
+    else:
+        stub_conf = s_conf
+
+    if amap_conf == None:
+        addmap_conf = AdditionnalMapping.create()
+    else:
+        addmap_conf = amap_conf
+
+
+    return Configuration(     path='',
+                              arch='x86',
+                              emulator='unicorn',
+                              p_size=consts_x86.PSIZE,
+                              stk_ba=consts_x86.STACK_BASEADDR,
+                              stk_size=consts_x86.STACK_SIZE,
+                              autoMap=False,
+                              showRegisters=True,
+                              exec_saddr=s_ea,
+                              exec_eaddr=e_ea,
+                              mapping_saddr=get_min_ea_idb(),
+                              mapping_eaddr=get_max_ea_idb(),
+                              segms=[],
+                              map_with_segs=False,
+                              use_seg_perms=False,
+                              useCapstone=True,
+                              registers=registers,
+                              showMemAccess=True,
+                              s_conf=stub_conf,
+                              amap_conf=addmap_conf,
+                              color_graph=False,
+                              breakpoints= [])
+
 

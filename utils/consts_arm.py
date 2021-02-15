@@ -11,6 +11,8 @@ nop_thumb = 0xBF00
 nop=0x00000000
 STACK_BASEADDR = 0x7FF00000
 STACK_SIZE = 0x10000
+
+initial_stack_offset=0x10
 ### END ARM SPECIFICS ####
 
 

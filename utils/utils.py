@@ -586,15 +586,14 @@ class ConfigDeserializer(json.JSONDecoder): #PASS ClassType for register parsing
       elif jdict['arch'] == 'mips':
         regs=MipslRegisters(**jdict['registers'])
 #         regs=MipslRegisters( *[ jdict['registers'][rname] for rname in jdict['registers'].keys()  ])
-      elif jdict['arch'] == 'pc':
+      elif jdict['arch'] == 'x86':
         regs=x86Registers(**jdict['registers']) 
-      elif jdict['arch'] == 'pc64':
-        print('pc64')
+      elif jdict['arch'] == 'x64':
         regs=x64Registers(**jdict['registers'])
       elif jdict['arch'] == 'aarch64':
         regs=Aarch64Registers(**jdict['registers'])
       else:
-        raise NotImplemented
+        raise Exception('NotImplemented')
           
         
      
@@ -807,7 +806,7 @@ def search_executable():
     f_path=""
     while ntry<=len(f_path_l):
         candidate='.'.join(f_path_l[0:ntry]) 
-        if verify_valid_elf(candidate):
+        if os.path.exists(candidate):
                 f_path=candidate 
                 break
         else:
@@ -823,8 +822,39 @@ def search_executable():
 
 def verify_valid_elf(candidate):
     if os.path.exists(candidate):
-            if str(lief.ELF.parse(candidate)) != None:
+            if str(lief.ELF.parse(candidate)) != 'None':
                     return True
     return False
         
+
+def get_next_pc(insn):
+
+    if ida_idp.is_call_insn(insn) or ida_idp.has_insn_feature(insn.itype,ida_idp.CF_STOP):
+        xf_ea = ida_xref.get_first_cref_from(insn.ea)
+        xf_ea = ida_xref.get_next_cref_from(insn.ea,xf_ea) 
+        if xf_ea != idaapi.BADADDR:
+            return xf_ea
+        else:
+            raise Exception('[+] Could not determine target of the call/jmp insn')
+    elif ida_idp.is_indirect_jump_insn(insn):
+        #see ev_calc_next_insn and ev_calc_step_over
+        raise NotImplemented
+    # TODO 
+    # elif as_feature CF_JF CF_JN pour les sauts conditionnels
+    else:
+        return insn.ea + insn.size
+
+
+def breakpoints_all_insn_target(insn):
+    """
+    This function will add breakpoint to all potential target ea. 
+    Usefull for jump table. 
+    """
+    xf_ea = ida_xref.get_first_cref_from(insn.ea)
+    while (xf_ea != idaapi.BADADDR):
+        bp_addr.append(xf_ea)
+        xf_ea = ida_xref.get_next_cref_from(insn.ea,xf_ea)
+    for bp_ea in bp_addr:
+        ida_dbg.add_bpt(bp_ea,0,idc.BPT_SOFT)
+
 

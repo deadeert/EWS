@@ -61,6 +61,7 @@ class NullStub(Stub):
 "   STUBBED FUNCTIONS   "
 """                   """
 # -----------------------------------------------------------------------------
+
 @LibcStub('memset')
 @LibcStub('.memset')
 class memset(Stub):
@@ -129,21 +130,21 @@ class calloc(Stub):
         return True
 
 # -----------------------------------------------------------------------------
-@LibcStub('__libc_start_main')
-class libc_start_main(Stub):
-
-    def __init__(self):
-        super().__init__()
-        
-
-    def do_it(self,*args):
-        logger.console(LogType.INFO,'[__libc_start_main] called at %.8X'%self.helper.get_pc())
-        arg0 = self.helper.get_arg(0)
-        logger.console(LogType.INFO,'[__libc_start_main] main => %.8X'%(arg0))
-        self.helper.reg_write(14, arg0)
-        return True
-
-
+#@LibcStub('__libc_start_main')
+#class libc_start_main(Stub):
+#
+#    def __init__(self):
+#        super().__init__()
+#        
+#
+#    def do_it(self,*args):
+#        logger.console(LogType.INFO,'[__libc_start_main] called at %.8X'%self.helper.get_pc())
+#        arg0 = self.helper.get_arg(0)
+#        logger.console(LogType.INFO,'[__libc_start_main] main => %.8X'%(arg0))
+#        self.helper.reg_write(14, arg0)
+#        return True
+#
+#
 # -----------------------------------------------------------------------------
 @LibcStub('puts')
 class puts(Stub):
@@ -216,6 +217,7 @@ class printf(Stub):
         p2  = re.compile('(%+[dpsx]+)') # 08/11/2020:  ajout du + 
         chain_addr = self.helper.get_arg(0)
         chain = deref_string(self.helper,chain_addr)
+        print('chain_addr:%x, '%chain_addr,chain)
         reformat = [i for i in p.findall(chain.strip().decode('utf-8')) if i != '']
         deref_list = deref_format(self.helper,reformat,1) 
         deref_list.reverse()

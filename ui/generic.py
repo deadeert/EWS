@@ -75,7 +75,6 @@ class Pannel(ida_kernwin.Form):
 
 
 #----------------------------------------------------------------------------------------------
-
 class FileSelector(ida_kernwin.Form):
   def __init__(self):
     self.invert = False
@@ -85,26 +84,28 @@ BUTTON YES Yeah
 BUTTON NO Nope
 BUTTON CANCEL* Nevermind
 Select a file 
-<## Path: {iFile}> |  <##Select: {bFile}>
+{cbCallback}
+<## Path: {iFile}> 
 """,{
-            'iFile': Form.FileInput(open=True,save=False),
-            'bFile': Form.ButtonInput(self.OnbFile),
+            'iFile': ida_kernwin.Form.FileInput(open=True,save=False),
+            'cbCallback': ida_kernwin.Form.FormChangeCb(self.cb_callback),
 })
-  def OnbFile(self,code):
-    self.f_path = self.GetControlValue(self.iFile)
-    
+
+  def cb_callback(self,fid):
+      if fid == self.iFile.id:
+          self.f_path = self.GetControlValue(self.iFile) 
+      return 1 
+
+
   @staticmethod 
   def fillconfig():
       f = FileSelector()
       f.Compile()
-      
+
       ok = f.Execute()
       f.Free()
 
-      logger.console(0,' [%s] f_path: %s'%('UI',f.f_path))
       return f.f_path 
-     
-  
 
 #----------------------------------------------------------------------------------------------
 
@@ -211,7 +212,7 @@ BUTTON CANCEL* Nevermind
 Stubbing confiugration
 {cbCallback}
 <##Stub dynamic func tab No:      {sfNo}> <Yes:{sfYes}>{sfC}>
-<##Original filepath:{origFpath}> <##Apply file: {bFile}>
+<##Original filepath:{origFpath}>
 <##Auto null stub missing symbols: {asNo}>< Yes:{asYes}>{saC}>
 <##Add custom stubs file: {customStubFile}>
 """,{
@@ -219,9 +220,6 @@ Stubbing confiugration
             'customStubFile': Form.ButtonInput(self.CustomStubFile),
             'origFpath': Form.FileInput(open=True,save=False),
             'saC': Form.RadGroupControl(("asNo","asYes")),
-            'bFile': Form.ButtonInput(self.OnbFile),
-
-
             'cbCallback': Form.FormChangeCb(self.cb_callback)
 })
 
@@ -236,11 +234,6 @@ Stubbing confiugration
     return 1
 
 
-  def OnbFile(self,code):
-    self.orig_fpath = self.GetControlValue(self.origFpath)
-
-
-   
   def CustomStubFile(self,code):
 
     f_path =  FileSelector.fillconfig()

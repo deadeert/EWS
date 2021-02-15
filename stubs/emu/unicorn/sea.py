@@ -234,11 +234,12 @@ class UnicornX86SEA(UnicornSEA):
 
   def get_arg(self,arg_num):
     esp = self.reg_read('esp')
-    # TODO warning it may change according the compiler (GCC vs MSVC prolog)
-    # as we patch call insn, the ret@ is not pushed into the stack,
-    # therefore, when we reach a stub, the first argument corresponds to the first stack entry
-    # pointed by esp
-    return struct.unpack('<I',self.mem_read(esp+arg_num*self.wsize,self.wsize))[0] 
+    # TODO may add heuristic to detect compiler/linker 
+    # Warning: May change accordingly to the compiler/linker. 
+    # here it correspond to a plt that perform jmp [got_addr] 
+    # if call [got_addr] is used, this is invalid 
+    return struct.unpack('<I',self.mem_read(esp+arg_num*self.wsize+self.wsize,
+                                            self.wsize))[0] 
 
   def set_return(self,value):
     self.reg_write('eax',value)

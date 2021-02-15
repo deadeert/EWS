@@ -1,7 +1,4 @@
 
-def suce():
-    print('suce')
-
 
 class Handler(idaapi.action_handler_t):
 

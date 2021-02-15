@@ -56,10 +56,9 @@ class ArmCorn(Emucorn):
     self.setup_regs(stk_p)
     self.pcid = UC_ARM_REG_PC 
 
-
-#    
     # Init stubs engine 
-    if self.conf.s_conf.stub_dynamic_func_tab: 
+    if self.conf.s_conf.stub_dynamic_func_tab:
+
       self.uc.mem_map(consts_arm.ALLOC_BA,conf.p_size*consts_arm.ALLOC_PAGES,UC_PROT_READ | UC_PROT_WRITE)
 
       self.helper = UnicornArmSEA(uc=self.uc,
@@ -68,12 +67,12 @@ class ArmCorn(Emucorn):
       self.nstub_obj = ELF.NullStub()
       self.nstub_obj.set_helper(self.helper) 
  
-    if self.conf.s_conf.stub_dynamic_func_tab:
       self.stubs = ELF.libc_stubs 
-      self.stubbit()
-     
+      if verify_valid_elf(self.conf.s_conf.orig_filepath):
+            print(self.conf.s_conf.orig_filepath) 
+            self.get_relocs(self.conf.s_conf.orig_filepath,lief.ELF.RELOCATION_ARM.JUMP_SLOT)
+            self.stubbit()
 
-           
     self.uc.hook_add(UC_HOOK_CODE,
                      self.hook_code,
                      user_data=self.conf)
@@ -113,6 +112,28 @@ class ArmCorn(Emucorn):
       raise e
     if self.conf.color_graph:
       colorate_graph(self.color_map)
+
+
+  def step_over(self):
+    """
+    need to overload because of Thumb mode
+    """
+
+
+
+    insn = get_insn_at(self.helper.get_pc())
+    bp_addr = []
+
+    if ida_idp.is_call_insn(insn) or ida_idp.has_insn_feature(insn.itype,ida_idp.CF_STOP):
+        self.uc.emu_start(insn.ea|1 if self.isThumb() else insn.ea,
+                          insn.ea+insn.size,0,0)
+    elif ida_idp.is_indirect_jump_insn(insn):
+        logger.console(LogType.WARN,
+                       "Indirect jump incompatible with step_over feature.",
+                       "Please do it manually")
+    else:
+        self.step_in()
+
 
 
   """ Instructions specifics functions 
@@ -286,7 +307,9 @@ class ArmCorn(Emucorn):
     if not self.conf.s_conf.stub_dynamic_func_tab: 
       return 
     self.uc.mem_map(consts_arm.ALLOC_BA,self.conf.p_size*consts_arm.ALLOC_PAGES,UC_PROT_READ | UC_PROT_WRITE)
-    self.stubbit()
+
+    if verify_valid_elf(self.conf.s_conf.orig_filepath):
+        self.stubbit()
 
 
 
@@ -311,17 +334,7 @@ class ArmCorn(Emucorn):
     logger.console(LogType.INFO,strout)
 
 
-  def get_relocs(self,fpath):
-        elf_l = lief.ELF.parse(fpath)
-        if str(elf_l) != None:
-            # overload get_reloc of emubase
-            relocs = elf_l.relocations
-            for r in relocs:
-                if r.type == int(lief.ELF.RELOCATION_ARM.JUMP_SLOT):
-                    self.reloc_map[r.symbol.name] = r.address
-        print(len(self.reloc_map))
-
-
+  
 
   @staticmethod
   def generate_default_config(s_ea,
@@ -343,7 +356,7 @@ class ArmCorn(Emucorn):
                                   0x10,
                                   0x11,
                                   0x12,
-                                  consts_arm.STACK_BASEADDR+consts_arm.STACK_SIZE, #SP
+                                  consts_arm.STACK_BASEADDR+consts_arm.STACK_SIZE-consts_arm.initial_stack_offset, #SP
                                   e_ea, #LR
                                   s_ea) # PC
     else:
@@ -352,7 +365,7 @@ class ArmCorn(Emucorn):
     if s_conf == None:
         exec_path = search_executable() 
         stub_conf = StubConfiguration(nstubs=dict(),
-                                        stub_dynamic_func_tab=True if exec_path != "" else False,
+                                        stub_dynamic_func_tab=True, #True if exec_path != "" else False,
                                         orig_filepath=exec_path,
                                         custom_stubs_file=None,
                                         auto_null_stub=True if exec_path != "" else False,

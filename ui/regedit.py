@@ -89,14 +89,6 @@ Edit Registers
                               R15=regform.R15.value)
 
 
-if __name__ == '__main__':
-    # test open
-    regs = RegArm32Edit.create()
-    print('%x'%regs.R0)
-    # test passing argument 
-    regs = RegArm32Edit.create(regs)
-    # test are argument properly refreshed when modified 
-    #regs = RegArm32Edit.create(regs) 
 class RegArm64Edit(ida_kernwin.Form):
 
 
@@ -108,9 +100,6 @@ BUTTON NO Nope
 BUTTON CANCEL* Nevermind
 Reg Edit AARCH64
 {cbCallback}
-<## AutoMap missing regions## No:{aNo}> <Yes:{aYes}>{cAGrp}> 
-Execution Configuration
-<##Start address:{sAddr}> | <##End address:{eAddr}>
 <##X0:{X0}>  |<##X1:{X1}>  |<##X2:{X2}>  |<##X3:{X3}> |<##X4:{X4}>
 <##X5:{X5}>  |<##X6:{X6}>  |<##X7:{X7}>  |<##X8:{X8}> |<##X9:{X9}>
 <##X10:{X10}> |<##X11:{X11}>| <##X12:{X12}>|<##SP:{X13}>
@@ -195,7 +184,6 @@ Execution Configuration
           self.SetControlValue(self.SP,self.regs.SP)
           self.SetControlValue(self.PC,self.regs.PC)
 
-    
     @staticmethod
     def create(regs=None):
       regform = RegArm32Edit(regs)
@@ -235,3 +223,153 @@ Execution Configuration
                                                      regform.LR.value,
                                                      regform.SP.value,
                                                      regform.PC.value)
+class Regx64Edit(ida_kernwin.Form):
+
+    def __init__(self,regs):
+        self.regs = regs
+        Form.__init__(self, r"""STARTITEM 
+BUTTON YES Yeah
+BUTTON NO Nope
+BUTTON CANCEL* Nevermind
+x64 Reg Edit
+{cbCallback}
+Edit Registers
+ <##RAX:{RAX}>  |<##RBX:{RBX}>  |<##RCX:{RCX}>  |<##RDX:{RDX}> 
+ <##RDI:{RDI}>  |<##RSI:{RSI}>  |<##RBP:{RBP}>  |<##RSP:{RSP}> 
+ <##R8:{R8}>    |<##R9:{R9}>    |<##R10:{R10}>  |<##R11:{R11}>
+ <##R12:{R12}>  |<##R13:{R13}>  |<##R14:{R14}>  |<##R15:{R15}>
+ <##RIP:{RIP}>
+<## Refresh Button: {refreshButton}>
+""",{
+
+            'RAX': Form.NumericInput(tp=Form.FT_RAWHEX),
+            'RBX': Form.NumericInput(tp=Form.FT_RAWHEX),
+            'RCX': Form.NumericInput(tp=Form.FT_RAWHEX),
+            'RDX': Form.NumericInput(tp=Form.FT_RAWHEX),
+            'RDI': Form.NumericInput(tp=Form.FT_RAWHEX),
+            'RSI': Form.NumericInput(tp=Form.FT_RAWHEX),
+            'RBP': Form.NumericInput(tp=Form.FT_RAWHEX),
+            'RSP': Form.NumericInput(tp=Form.FT_RAWHEX),
+            'RIP': Form.NumericInput(tp=Form.FT_RAWHEX),
+            'R8': Form.NumericInput(tp=Form.FT_RAWHEX),
+            'R9': Form.NumericInput(tp=Form.FT_RAWHEX),
+            'R10': Form.NumericInput(tp=Form.FT_RAWHEX),
+            'R11': Form.NumericInput(tp=Form.FT_RAWHEX),
+            'R12': Form.NumericInput(tp=Form.FT_RAWHEX),
+            'R13': Form.NumericInput(tp=Form.FT_RAWHEX),
+            'R14': Form.NumericInput(tp=Form.FT_RAWHEX),
+            'R15': Form.NumericInput(tp=Form.FT_RAWHEX),
+            'cbCallback': Form.FormChangeCb(self.onCallback),
+            'refreshButton': Form.ButtonInput(self.onRefreshButton)})
+
+
+
+    def onRefreshButton(self,code):
+      if self.regs != None:
+
+          self.SetControlValue(self.RAX,self.regs.RAX)
+          self.SetControlValue(self.RBX,self.regs.RBX)
+          self.SetControlValue(self.RCX,self.regs.RCX)
+          self.SetControlValue(self.RDX,self.regs.RDX)
+          self.SetControlValue(self.RDI,self.regs.RDI)
+          self.SetControlValue(self.RSI,self.regs.RSI)
+          self.SetControlValue(self.RBP,self.regs.RBP)
+          self.SetControlValue(self.RSP,self.regs.RSP)
+          self.SetControlValue(self.RIP,self.regs.RIP)
+          self.SetControlValue(self.RIP,self.regs.R8)
+          self.SetControlValue(self.RIP,self.regs.R9)
+          self.SetControlValue(self.RIP,self.regs.R10)
+          self.SetControlValue(self.RIP,self.regs.R11)
+          self.SetControlValue(self.RIP,self.regs.R12)
+          self.SetControlValue(self.RIP,self.regs.R13)
+          self.SetControlValue(self.RIP,self.regs.R14)
+          self.SetControlValue(self.RIP,self.regs.R15)
+      return True
+
+    def onCallback(self,fid):
+        return True
+
+
+    @staticmethod
+    def create(regs=None):
+      regform = Regx64Edit(regs)
+      regform.Compile()
+      ok = regform.Execute()
+      if ok:
+          return x64Registers(regform.RAX.value,
+                            regform.RBX.value,
+                            regform.RCX.value,
+                            regform.RDX.value,
+                            regform.RSI.value,
+                            regform.R8.value,
+                            regform.R9.value,
+                            regform.R10.value,
+                            regform.R11.value,
+                            regform.R12.value,
+                            regform.R13.value,
+                            regform.R14.value,
+                            regform.R15.value,
+                            regform.RBP.value,
+                            regform.RSP.value,
+                            regform.RIP.value)
+
+class Regx86Edit(ida_kernwin.Form):
+
+    def __init__(self,regs):
+        self.regs = regs
+        Form.__init__(self, r"""STARTITEM 
+x86 Reg Edit
+{cbCallback}
+ <##EAX:{EAX}>  |<##EBX:{EBX}>  |<##ECX:{ECX}>
+ <##EDX:{EDX}>  |<##EDI:{EDI}>  |<##ESI:{ESI}>
+ <##EBP:{EBP}>  |<##ESP:{ESP}>  |<##EIP:{EIP}>
+<## Refresh Button: {refreshButton}>
+""",{
+            'EAX': Form.NumericInput(tp=Form.FT_RAWHEX),
+            'EBX': Form.NumericInput(tp=Form.FT_RAWHEX),
+            'ECX': Form.NumericInput(tp=Form.FT_RAWHEX),
+            'EDX': Form.NumericInput(tp=Form.FT_RAWHEX),
+            'EDI': Form.NumericInput(tp=Form.FT_RAWHEX),
+            'ESI': Form.NumericInput(tp=Form.FT_RAWHEX),
+            'EBP': Form.NumericInput(tp=Form.FT_RAWHEX),
+            'ESP': Form.NumericInput(tp=Form.FT_RAWHEX),
+            'EIP': Form.NumericInput(tp=Form.FT_RAWHEX),
+            'cbCallback': Form.FormChangeCb(self.onCallback),
+            'refreshButton': Form.ButtonInput(self.onRefreshButton)})
+
+    def onRefreshButton(self,code):
+      if self.regs != None:
+
+          self.SetControlValue(self.EAX,self.regs.EAX)
+          self.SetControlValue(self.EBX,self.regs.EBX)
+          self.SetControlValue(self.ECX,self.regs.ECX)
+          self.SetControlValue(self.EDX,self.regs.EDX)
+          self.SetControlValue(self.EDI,self.regs.EDI)
+          self.SetControlValue(self.ESI,self.regs.ESI)
+          self.SetControlValue(self.EBP,self.regs.EBP)
+          self.SetControlValue(self.ESP,self.regs.ESP)
+          self.SetControlValue(self.EIP,self.regs.EIP)
+
+      return True
+
+    def onCallback(self,fid):
+        return True
+
+
+    @staticmethod
+    def create(regs=None):
+      regform = Regx86Edit(regs)
+      regform.Compile()
+      ok = regform.Execute()
+      if ok:
+            return x86Registers(regform.EAX.value,
+                                                    regform.EBX.value,
+                                                    regform.ECX.value,
+                                                    regform.EDX.value,
+                                                    regform.EDI.value,
+                                                    regform.ESI.value,
+                                                    regform.EBP.value,
+                                                    regform.ESP.value,
+                                                    regform.EIP.value)
+
+

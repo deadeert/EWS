@@ -42,7 +42,9 @@ class Aarch64Corn(Emucorn):
 
 
         # Init stubs engine
-        if self.conf.s_conf.stub_dynamic_func_tab:
+        if self.conf.s_conf.stub_dynamic_func_tab and verify_valid_elf(self.conf.s_conf.orig_filepath):
+
+          self.get_relocs(self.conf.s_conf.orig_filepath,lief.ELF.RELOCATION_AARCH64.JUMP_SLOT)
           self.uc.mem_map(consts_aarch64.ALLOC_BA,
                           conf.p_size*consts_aarch64.ALLOC_PAGES,
                           UC_PROT_READ | UC_PROT_WRITE)
@@ -338,17 +340,6 @@ class Aarch64Corn(Emucorn):
                                                                self.uc.reg_read(UC_ARM64_REG_SP))
         logger.console(LogType.INFO,strout)
 
-
-
-    def get_relocs(self,fpath):
-        elf_l = lief.ELF.parse(fpath)
-        if str(elf_l) != None:
-            # overload get_reloc of emubase
-            relocs = elf_l.relocations
-            for r in relocs:
-                if r.type == int(lief.ELF.RELOCATION_AARCH64.JUMP_SLOT):
-                    self.reloc_map[r.symbol.name] = r.address
-        print(len(self.reloc_map))
 
 
 

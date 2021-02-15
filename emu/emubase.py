@@ -19,16 +19,12 @@ class Emulator(object):
     self.conf = conf
     self.color_map = dict()
     self.user_breakpoints = list()
+    self.ida_breakpoints = list()
     self.reloc_map = dict()
+    self.last_pc = None
     for ea in self.conf.breakpoints:
       self.add_breakpoint(ea,update_conf=False)
-    if  self.conf.s_conf.stub_dynamic_func_tab:
-        if not verify_valid_elf(self.conf.s_conf.orig_filepath):
-            logger.console(LogType.WARN,"Symbol resolution won't work. Could not use stub mechanism")
-        else:
-            self.get_relocs(self.conf.s_conf.orig_filepath)
-
-
+    
 
     
   def start(self):
@@ -214,8 +210,16 @@ class Emulator(object):
       if update_conf: self.conf.remove_breakpoint(ea)
     except ValueError:
       logger.console(LogType.WARN,'no breakpoint at specified address %x'%ea)
-        
 
+  def list_breakpoints(self):
+      for ea in self.user_breakpoints:
+        logger.console(LogType.INFO,"bp at %x"%ea)
+
+  def del_breakpoints(self):
+      for ea in self.user_breakpoints:
+          self.del_breakpoint(ea)
+      logger.console(LogType.INFO,"All breakpoint were removed")
+        
   def step_over(self):
     """ stop at next function return 
         works also with conditionnal jump  

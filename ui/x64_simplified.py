@@ -15,11 +15,7 @@ BUTTON CANCEL* Nevermind
 EWS x64
 {cbCallback}
 Mapping Configuration
-<## Page size  :{iPageSize}> | <## Stack base address: {iStkBA}> | <## Stack size: {iStkSize}>
 <## AutoMap missing regions## No:{aNo}> <Yes:{aYes}>{cAGrp}> 
-<##Start Mapping (ea in IDB):{sMapping}> | <##End Mapping (ea in IDB):{eMapping}>   
-<## Map using segments## No:{sNo}> <Yes:{sYes}>{cCSeg}> | <## Use segment perms ## No:{spNo}> <Yes:{spYes}>{spCSeg}>
-<Segment: {cSegChooser}>
 Execution Configuration
 <##Start address:{sAddr}> | <##End address:{eAddr}>
  <##RAX:{RAX}>  |<##RBX:{RBX}>  |<##RCX:{RCX}>  |<##RDX:{RDX}> 
@@ -34,21 +30,13 @@ Display Configuration
 <## Add mapping: {amapButton}> (arguments or missing segms in IDB)
 <## Save Configration: {saveButton}> | <## Load Configuration: {loadButton} > 
 """,{
-            'iPageSize': Form.NumericInput(tp=Form.FT_RAWHEX), 
-            'iStkBA': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'iStkSize': Form.NumericInput(tp=Form.FT_RAWHEX),
             'cAGrp': Form.RadGroupControl(("aNo","aYes")),
             'cRGrp': Form.RadGroupControl(("rNo","rYes")),
             'cCGrp': Form.RadGroupControl(("cNo","cYes")),
-            'cCSeg': Form.RadGroupControl(("sNo","sYes")),
-            'spCSeg': Form.RadGroupControl(("spNo","spYes")),
             'maGrp': Form.RadGroupControl(("maNo","maYes")),
             'cgGrp': Form.RadGroupControl(("cgNo","cgYes")),
             'sAddr': Form.NumericInput(tp=Form.FT_ADDR),
             'eAddr': Form.NumericInput(tp=Form.FT_ADDR),
-            'sMapping': Form.NumericInput(tp=Form.FT_ADDR),
-            'eMapping': Form.NumericInput(tp=Form.FT_ADDR),
-            'cSegChooser': Form.EmbeddedChooserControl(Pannel.segment_chooser("Segmentname")),
             'RAX': Form.NumericInput(tp=Form.FT_RAWHEX),
             'RBX': Form.NumericInput(tp=Form.FT_RAWHEX),
             'RCX': Form.NumericInput(tp=Form.FT_RAWHEX),
@@ -78,18 +66,18 @@ Display Configuration
   def onSaveButton(self,code):
     conf = Configuration(path='',arch='x64',
                               emulator='unicorn',
-                              p_size=self.GetControlValue(self.iPageSize),
-                              stk_ba=self.GetControlValue(self.iStkBA),
-                              stk_size=self.GetControlValue(self.iStkSize),
+                              p_size=consts_x64.PSIZE,
+                              stk_ba=consts_x64.STACK_BASEADDR,
+                              stk_size=consts_x64.STACK_SIZE,
                               autoMap=self.GetControlValue(self.cAGrp),
                               showRegisters=self.GetControlValue(self.cRGrp),
                               exec_saddr=self.GetControlValue(self.sAddr),
                               exec_eaddr=self.GetControlValue(self.eAddr),
-                              mapping_saddr=self.GetControlValue(self.sMapping),
-                              mapping_eaddr=self.GetControlValue(self.eMapping),
-                              segms=self.segs,
-                              map_with_segs=self.GetControlValue(self.cCSeg),
-                              use_seg_perms=self.GetControlValue(self.spCSeg),
+                              mapping_saddr=get_min_ea_idb(),
+                              mapping_eaddr=get_max_ea_idb(),
+                              segms=[],
+                              map_with_segs=False,
+                              use_seg_perms=False,
                               useCapstone=self.GetControlValue(self.cCGrp),
                               registers=x64Registers(self.GetControlValue(self.RAX),
                                                       self.GetControlValue(self.RBX),
@@ -133,36 +121,13 @@ Display Configuration
 #     conf_apath = '/tmp/idaemu_conf_'+time.ctime().replace(' ','_')
       conf = loadconfig(f_path)
 
-      if not conf.map_with_segs: self.EnableField(self.cSegChooser,False)
-      else: 
-          self.EnableField(self.sMapping, False)
-          self.EnableField(self.eMapping, False)
-          self.EnableField(self.cSegChooser,True)
 
 
-      segms = get_seg_list()
-      s_chooser = [] 
-      
-      i=0 
-      for x in segms:
-        if x in conf.segms:
-          s_chooser.append(i)
-        i+=1
-    
-      self.SetControlValue(self.cSegChooser,s_chooser)
 
-      self.SetControlValue(self.iPageSize,conf.p_size)
-      self.SetControlValue(self.iStkBA,conf.stk_ba)
-      self.SetControlValue(self.iStkSize,conf.stk_size)
       self.SetControlValue(self.cAGrp,conf.autoMap)
       self.SetControlValue(self.cRGrp,conf.showRegisters)
       self.SetControlValue(self.sAddr,conf.exec_saddr)
       self.SetControlValue(self.eAddr,conf.exec_eaddr)
-      self.SetControlValue(self.sMapping,conf.mapping_saddr)
-      self.SetControlValue(self.eMapping,conf.mapping_eaddr)
-      self.segs = conf.segms
-      self.SetControlValue(self.cCSeg,conf.map_with_segs)
-      self.SetControlValue(self.spCSeg,conf.use_seg_perms)
       self.SetControlValue(self.cCGrp,conf.useCapstone)
       self.SetControlValue(self.RAX,conf.registers.RAX)
       self.SetControlValue(self.RBX,conf.registers.RBX)
@@ -190,21 +155,8 @@ Display Configuration
 
 
   def cb_callback(self,fid):
-    if fid == self.cSegChooser.id:
-        if not self.GetControlValue(self.cCSeg): 
-          self.EnableField(self.cSegChooser,False)
-        self.segs = []  
-        for x in self.GetControlValue(self.cSegChooser):
-          self.segs.append(get_seg_list()[x])
-    elif fid == self.cCSeg.id:
-          self.EnableField(self.sMapping,not self.GetControlValue(self.cCSeg))
-          self.EnableField(self.eMapping,not self.GetControlValue(self.cCSeg))
-          self.EnableField(self.cSegChooser,self.GetControlValue(self.cCSeg))
-    elif fid == self.sAddr.id:
+    if fid == self.sAddr.id:
           self.SetControlValue(self.RIP,self.GetControlValue(self.sAddr))
-    elif fid == self.iStkSize.id or fid == self.iStkBA.id:
-          sp = self.GetControlValue(self.iStkSize) + self.GetControlValue(self.iStkBA) 
-          self.SetControlValue(self.RSP,sp)
 
     return 1 
 
@@ -218,18 +170,18 @@ Display Configuration
       
           ret = Configuration(path=f.conf_path, arch='x64',
                               emulator='unicorn',
-                              p_size=f.iPageSize.value,
-                              stk_ba=f.iStkBA.value,
-                              stk_size=f.iStkSize.value,
+                              p_size=consts_x64.PSIZE,
+                              stk_ba=f.consts_x64.STACK_BASEADDR,
+                              stk_size=consts_x64.STACK_SIZE,
                               autoMap=f.cAGrp.value,
                               showRegisters=f.cRGrp.value,
                               exec_saddr=f.sAddr.value,
                               exec_eaddr=f.eAddr.value,
-                              mapping_saddr=f.sMapping.value,
-                              mapping_eaddr=f.eMapping.value,
-                              segms=f.segs,
-                              map_with_segs=f.cCSeg.value,
-                              use_seg_perms=f.spCSeg.value,
+                              mapping_saddr=get_min_ea_idb(),
+                              mapping_eaddr=get_max_ea_idb(),
+                              segms=[],
+                              map_with_segs=False,
+                              use_seg_perms=False,
                               useCapstone=f.cCGrp.value,
                               registers=x64Registers(f.RAX.value,
                                                         f.RBX.value,

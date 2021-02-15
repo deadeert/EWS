@@ -13,16 +13,11 @@ EDITREG=PLUGNAME+":regedit"
 EDITSTUBCONF=PLUGNAME+"stubconfedit"
 NSTUB=PLUGNAME+":nullstubfunc"
 TAGFUNC=PLUGNAME+":tagfunc"
-
-
-
+LOADCONF=PLUGNAME+":loadconf"
+EXECFROMSTART=PLUGNAME+":execfrmstart"
 
 
 emu = None
-
-
-
-
 
 class menu_action_handler_t(idaapi.action_handler_t):
     """
@@ -44,6 +39,8 @@ class menu_action_handler_t(idaapi.action_handler_t):
             self.edit_registers()
         elif self.action == TAGFUNC:
             self.tag_func()
+        elif self.action == LOADCONF:
+            self.loadconf()
         else:
             logger.console(LogType.ERRR,"Function not yet implemented")
             return 0
@@ -53,7 +50,7 @@ class menu_action_handler_t(idaapi.action_handler_t):
         return idaapi.AST_ENABLE_ALWAYS
 
     def emul_func(self):
-        global emu 
+        global emu
         s_ea, e_ea = utils_ui.get_func_boundaries()
         emu = utils_ui.get_emul(s_ea,e_ea)
 
@@ -107,6 +104,13 @@ class menu_action_handler_t(idaapi.action_handler_t):
             logger.console(LogType.INFO,
                            'Function at %x now tagger with %s'%(ea,tag_name))
 
+    def loadconf(self):
+        global emu
+        emu = utils_ui.loadconfig()
+
+    def patchmem(self):
+        global emu
+        utils_ui.patch_mem(emu)
 
 
 
@@ -125,30 +129,34 @@ class UI_Hook(idaapi.UI_Hooks):
                 idaapi.attach_action_to_popup(form, popup, EDITSTUBCONF, None)
                 idaapi.attach_action_to_popup(form, popup, NSTUB, None)
                 idaapi.attach_action_to_popup(form, popup, TAGFUNC, None)
+                idaapi.attach_action_to_popup(form, popup, LOADCONF, None)
 
 
 menu_actions = [
 
             idaapi.action_desc_t(EMULLAUNCHER, "EWS Launcher",
-                                 menu_action_handler_t(EMULLAUNCHER), None,
+                                 menu_action_handler_t(EMULLAUNCHER), 'Alt+Ctrl+L',
                                  "S", 8),
             idaapi.action_desc_t(EMULF, "Emulate Function",
-                                 menu_action_handler_t(EMULF), None,
+                                 menu_action_handler_t(EMULF), 'Alt+Ctrl+F',
                                  "S", 9),
             idaapi.action_desc_t(EMULSELECT, "Emulate Selection",
-                                 menu_action_handler_t(EMULSELECT), None,
+                                 menu_action_handler_t(EMULSELECT), 'Alt+Ctrl+S',
                                  "T", 10),
             idaapi.action_desc_t(EDITREG, "Edit registers",
-                                 menu_action_handler_t(EDITREG), None,
+                                 menu_action_handler_t(EDITREG), 'Alt+Ctrl+R',
                                  "T", 11),
             idaapi.action_desc_t(EDITSTUBCONF, "Edit Stub conf",
-                                 menu_action_handler_t(EDITSTUBCONF), None,
+                                 menu_action_handler_t(EDITSTUBCONF), 'Alt+Ctrl+G',
                                  "T", 12),
             idaapi.action_desc_t(NSTUB, "Null Stub function",
-                                 menu_action_handler_t(NSTUB), None,
+                                 menu_action_handler_t(NSTUB), 'Alt+Ctrl+N',
                                  "T", 12),
             idaapi.action_desc_t(TAGFUNC, "Tag function",
-                                 menu_action_handler_t(TAGFUNC), None,
+                                 menu_action_handler_t(TAGFUNC), 'Alt+Ctrl+T',
+                                 "T", 12),
+            idaapi.action_desc_t(LOADCONF, "Load Config",
+                                 menu_action_handler_t(LOADCONF), 'Alt+Ctrl+C',
                                  "T", 12)
             ]
 for action in menu_actions:
