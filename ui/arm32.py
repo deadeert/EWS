@@ -121,32 +121,32 @@ Display Configuration
     saveconfig(conf,f_path)
 
 
-  def onLoadButton(self,code): 
-    
+  def onLoadButton(self,code):
+
 
       f_path = FileSelector.fillconfig()
-      if f_path == '' or not os.path.exists(f_path) or os.path.isdir(f_path): 
+      if f_path == '' or not os.path.exists(f_path) or os.path.isdir(f_path):
         logger.console(2,' [Configuration Load] Invalid file path')
-        return 
+        return
 #     conf_apath = '/tmp/idaemu_conf_'+time.ctime().replace(' ','_')
       conf = loadconfig(f_path)
 
       if not conf.map_with_segs: self.EnableField(self.cSegChooser,False)
-      else: 
+      else:
           self.EnableField(self.sMapping, False)
           self.EnableField(self.eMapping, False)
           self.EnableField(self.cSegChooser,True)
 
 
       segms = get_seg_list()
-      s_chooser = [] 
-      
-      i=0 
+      s_chooser = []
+
+      i=0
       for x in segms:
         if x in conf.segms:
           s_chooser.append(i)
         i+=1
-    
+
       self.SetControlValue(self.cSegChooser,s_chooser)
 
       self.SetControlValue(self.iPageSize,conf.p_size)
