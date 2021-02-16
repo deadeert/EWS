@@ -7,11 +7,11 @@ class StubEngineAbstractor(object):
         - allocator : a reference to the alloc mechanism
         - wsize : 16/32/64 bit value for pop/push ops.  
   """ 
-  def __init__(self,runner,allocator,wsize):
-    self.runner = runner
+  def __init__(self,emu,allocator,wsize):
+    self.emu = emu
     self.allocator = allocator
     self.wsize = wsize
-    pass
+
   def mem_read(self,addr,size):
     """ return value from emulator memory """
     pass
@@ -42,6 +42,7 @@ class StubEngineAbstractor(object):
       nbytes: int number of bytes to add to SP clean
     """
     raise NotImplemented
+
   def malloc(self,size):
     return self.allocator.malloc(size)
   def free(self,addr):

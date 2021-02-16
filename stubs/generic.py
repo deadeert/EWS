@@ -3,12 +3,12 @@ class StubEngineAbstractor(object):
       It also define the calling convention th. get_arm()
       and set_return() functions. 
       This interface defines: 
-        - runner : a reference to the emu object 
+        - emu : a reference to the emu object 
         - allocator : a reference to the alloc mechanism
         - wsize : 16/32/64 bit value for pop/push ops.  
   """ 
-  def __init__(self,runner,allocator,wsize):
-    self.runner = runner
+  def __init__(self,emu,allocator,wsize):
+    self.emu = emu
     self.allocator = allocator
     self.wsize = wsize
     pass

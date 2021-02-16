@@ -48,7 +48,7 @@ class x86Corn(Emucorn):
     if self.conf.s_conf.stub_dynamic_func_tab:
       self.uc.mem_map(consts_x86.ALLOC_BA,conf.p_size*consts_x86.ALLOC_PAGES,UC_PROT_READ | UC_PROT_WRITE)
 
-      self.helper = UnicornX86SEA(uc=self.uc,
+      self.helper = UnicornX86SEA(emu=self,
                                   allocator=DumpAllocator(consts_x86.ALLOC_BA,consts_x86.ALLOC_PAGES*conf.p_size),
                                   wsize=4)
       
@@ -65,15 +65,13 @@ class x86Corn(Emucorn):
         self.nstub_obj = ELF.NullStub()
         self.loader_type = LoaderType.ELF 
         self.nstub_obj.set_helper(self.helper)
-        self.get_relocs(self.conf.s_conf.orig_filepath,lief.ELF.RELOCATION_i386.JUMP_SLOT)
-      logger.console(LogType.INFO,'calling stubbit')
-      self.libc_start_main_trampoline = consts_x86.LIBCSTARTSTUBADDR
-      self.uc.mem_map(consts_x86.LIBCSTARTSTUBADDR,consts_x86.PSIZE, UC_PROT_ALL)
-      self.uc.mem_write(consts_x86.LIBCSTARTSTUBADDR,consts_x86.LIBCSTARTSTUBCODE) 
-      print(consts_x86.LIBCSTARTSTUBADDR)
-      print(consts_x86.LIBCSTARTSTUBCODE)
-      print(self.uc.mem_read(0x7feff000,4))
-      self.stubbit()
+
+        if verify_valid_elf(self.conf.s_conf.orig_filepath):
+          self.get_relocs(self.conf.s_conf.orig_filepath,lief.ELF.RELOCATION_i386.JUMP_SLOT)
+          self.libc_start_main_trampoline = consts_x86.LIBCSTARTSTUBADDR
+          self.uc.mem_map(consts_x86.LIBCSTARTSTUBADDR,consts_x86.PSIZE, UC_PROT_ALL)
+          self.uc.mem_write(consts_x86.LIBCSTARTSTUBADDR,consts_x86.LIBCSTARTSTUBCODE) 
+          self.stubbit()
 
     self.uc.hook_add(UC_HOOK_CODE,
                      self.hook_code,

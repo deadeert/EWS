@@ -42,23 +42,24 @@ class Aarch64Corn(Emucorn):
 
 
         # Init stubs engine
-        if self.conf.s_conf.stub_dynamic_func_tab and verify_valid_elf(self.conf.s_conf.orig_filepath):
+        if self.conf.s_conf.stub_dynamic_func_tab :
 
-          self.get_relocs(self.conf.s_conf.orig_filepath,lief.ELF.RELOCATION_AARCH64.JUMP_SLOT)
+          
           self.uc.mem_map(consts_aarch64.ALLOC_BA,
                           conf.p_size*consts_aarch64.ALLOC_PAGES,
                           UC_PROT_READ | UC_PROT_WRITE)
 
-          self.helper = UnicornAarch64SEA(uc=self.uc,
+          self.helper = UnicornAarch64SEA(emu=self,
                                           allocator=DumpAllocator(consts_aarch64.ALLOC_BA,
                                                                   consts_aarch64.ALLOC_PAGES*conf.p_size),
                                           wsize=4)
           self.nstub_obj = ELF.NullStub()
           self.nstub_obj.set_helper(self.helper) 
 
-        if self.conf.s_conf.stub_dynamic_func_tab:
-          self.stubs = ELF.libc_stubs 
-          self.stubbit()
+          if verify_valid_elf(self.conf.s_conf.orig_filepath):
+              self.get_relocs(self.conf.s_conf.orig_filepath,lief.ELF.RELOCATION_AARCH64.JUMP_SLOT)
+              self.stubs = ELF.libc_stubs 
+              self.stubbit()
 
         self.uc.hook_add(UC_HOOK_CODE,
                          self.hook_code,
@@ -77,6 +78,22 @@ class Aarch64Corn(Emucorn):
           self.uc.hook_add(UC_HOOK_MEM_READ,
                            Emucorn.hk_read,
                            self.conf)
+
+    def repatch(self):
+        """ when using restart() function from debugger 
+            memory is erased, thus stub instruction has be 
+            to be patch again 
+        """ 
+
+        if not self.conf.s_conf.stub_dynamic_func_tab: 
+          return 
+        self.uc.mem_map(consts_aarch64.ALLOC_BA,
+                        self.conf.p_size*consts_aarch64.ALLOC_PAGES,
+                        UC_PROT_READ | UC_PROT_WRITE)
+
+        if verify_valid_elf(self.conf.s_conf.orig_filepath):
+            self.stubbit()
+
 
 
 

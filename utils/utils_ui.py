@@ -10,6 +10,7 @@ from ui.x86_simplified import x86Pannel
 from ui.x64_simplified import x64Pannel
 from ui.aarch64_simplified import Aarch64Pannel
 from ui.regedit import RegArm32Edit, RegArm64Edit, Regx86Edit, Regx64Edit
+from ui.MemEdit import MemEdit
 from ui.tag_func_ui import TagForm
 import ui
 
@@ -177,7 +178,16 @@ def loadconfig():
         logger.console(LogType.ERRR,'Specified architecture not valid')
         return None
 
-def patchmem(emu):
-    addr,bytesval = MemEdit.fillconfig()
+def patch_mem(emu):
+    ok,addr,bytesval = MemEdit.fillconfig(emu)
+    print(ok,addr,bytesval)
+    if ok:
+       import binascii
+       try:
+            emu.mem_write(addr,binascii.a2b_hex(bytesval))
+       except:
+            ok=False
+    return ok
+
 
 

@@ -88,6 +88,11 @@ class Miarm(Emuiasm):
     Miarm.reg_write(self.jitter,15,self.conf.registers.R15)
 
     
+  def reg_read(self,r_id):
+      return Miarm.reg_read(r_id)
+  def reg_write(self,r_id,data):
+      Miarm.reg_write(r_id,data)
+
   @staticmethod
   def reg_read(jitter,r_id):
     if r_id == 0:

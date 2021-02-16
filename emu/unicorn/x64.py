@@ -63,27 +63,30 @@ class x64Corn(Emucorn):
       self.add_null_stub(s_ea)
    
     # Init stubs engine 
-    if self.conf.s_conf.stub_dynamic_func_tab and verify_valid_elf(self.conf.s_conf.orig_filepath):
+    if self.conf.s_conf.stub_dynamic_func_tab:
 
-      self.get_relocs(self.conf.s_conf.orig_filepath,lief.ELF.RELOCATION_X86_64.JUMP_SLOT)
+      
       self.uc.mem_map(consts_x64.ALLOC_BA,
                       conf.p_size*consts_x64.ALLOC_PAGES,
                       UC_PROT_READ | UC_PROT_WRITE)
       # TODO it is may be a good idea to differ GCC / MSVC here as prolog/epilic might change 
-      self.helper = UnicornX64SEA(uc=self.uc,
+      self.helper = UnicornX64SEA(emu=self,
                                   allocator=DumpAllocator(consts_x64.ALLOC_BA,consts_x64.ALLOC_PAGES*conf.p_size),
                                   wsize=8)
 
       self.nstub_obj = ELF.NullStub()
       self.nstub_obj.set_helper(self.helper) 
  
+      
       self.stubs = ELF.libc_stubs 
- 
+      if verify_valid_elf(self.conf.s_conf.orig_filepath):
+         self.get_relocs(self.conf.s_conf.orig_filepath,lief.ELF.RELOCATION_X86_64.JUMP_SLOT)
+         self.stubbit()
+
       self.filetype = ida_loader.get_file_type_name()
 
 
-      self.stubbit()
-
+     
     self.ks = Ks(KS_ARCH_X86,KS_MODE_64) 
     self.uc.hook_add(UC_HOOK_CODE,
                      self.hook_code,

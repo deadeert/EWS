@@ -55,14 +55,18 @@ class Emuiasm(Emulator):
     # Init stack 
     self.jitter.vm.add_memory_page(self.conf.stk_ba,PAGE_READ|PAGE_WRITE,b'\x00'*self.conf.stk_size)
 
-
   @staticmethod
   def mem_read(jitter,addr,size):
     return jitter.vm.get_mem(addr,size) 
-  
   @staticmethod
   def mem_write(jitter,addr,data):
-    jitter.vm.set_mem(addr,data)
+    jitter.vm.set_mem(addr,value) 
+  
+  def mem_read(self,addr,size):
+    return self.jitter.vm.get_mem(addr,size) 
+  
+  def mem_write(self,addr,data):
+    self.jitter.vm.set_mem(addr,data)
 
 
     

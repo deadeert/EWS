@@ -8,16 +8,16 @@ import struct
 
 class UnicornSEA(StubEngineAbstractor):
   
-  def __init__(self,uc,allocator,wsize):
-    super().__init__(uc,allocator,wsize)
+  def __init__(self,emu,allocator,wsize):
+    super().__init__(emu,allocator,wsize)
   def mem_read(self,addr,size):
-    return Emucorn.mem_read(self.runner,addr,size)
+    return self.emu.mem_read(addr,size)
   def mem_write(self,addr,data):
-    Emucorn.mem_write(self.runner,addr,data)
+    self.emu.mem_write(addr,data)
   def reg_read(self,reg_id):
-    raise NotImplemented
+    return self.emu.reg_read(self.reg_conv(reg_id))
   def reg_write(self,reg_id,data):
-    raise NotImplemented
+    self.emu.reg_write(self.reg_conv(reg_id),data)
   def reg_conv(self,reg_id):
     raise NotImplemented
   def get_arg(self,arg_num):
@@ -45,18 +45,13 @@ class UnicornSEA(StubEngineAbstractor):
 
 class UnicornArmSEA(UnicornSEA):
 
-  def __init__(self,uc,allocator,wsize):
-    super().__init__(uc,allocator,wsize)
+  def __init__(self,emu,allocator,wsize):
+    super().__init__(emu,allocator,wsize)
 
 
   def reg_conv(self,r_id):
     return emu.unicorn.arm32.ArmCorn.reg_convert(r_id)
    
-  def reg_read(self,reg_id):
-    return Emucorn.reg_read(self.runner,self.reg_conv(reg_id))
-
-  def reg_write(self,reg_id,data):
-    Emucorn.reg_write(self.runner,self.reg_conv(reg_id),data)
 
   def get_arg(self,arg_num):
     if arg_num == 0:
@@ -83,22 +78,15 @@ class UnicornArmSEA(UnicornSEA):
 "     AARCH64     "
 """             """
 
-
 class UnicornAarch64SEA(UnicornSEA):
 
-  def __init__(self,uc,allocator,wsize):
-    super().__init__(uc,allocator,wsize)
+  def __init__(self,emu,allocator,wsize):
+    super().__init__(emu,allocator,wsize)
 
 
   def reg_conv(self,r_id):
     return emu.unicorn.aarch64.Aarch64Corn.reg_convert(r_id)
    
-  def reg_read(self,reg_id):
-    return Emucorn.reg_read(self.runner,self.reg_conv(reg_id))
-
-  def reg_write(self,reg_id,data):
-    Emucorn.reg_write(self.runner,self.reg_conv(reg_id),data)
-
   def get_arg(self,arg_num):
     if arg_num == 0:
       return self.reg_read(0)
@@ -138,19 +126,14 @@ class UnicornAarch64SEA(UnicornSEA):
 
 
 class UnicornMipslSEA(UnicornSEA):
-  def __init__(self,uc,allocator,wsize):
-    super().__init__(uc,allocator,wsize)
+  def __init__(self,emu,allocator,wsize):
+    super().__init__(emu,allocator,wsize)
 
 
   def reg_conv(self,r_id):
     return emu.unicorn.mipsl32.MipsCorn.reg_convert(r_id)
 
-  def reg_read(self,reg_id):
-    return Emucorn.reg_read(self.runner,self.reg_conv(reg_id))
-
-  def reg_write(self,reg_id,data):
-    Emucorn.reg_write(self.runner,self.reg_conv(reg_id),data)
-
+  
   def get_arg(self,arg_num):
     if arg_num == 0:
       return self.reg_read('a0')
@@ -175,19 +158,14 @@ class UnicornMipslSEA(UnicornSEA):
 
 
 class UnicornMipsbSEA(UnicornSEA):
-  def __init__(self,uc,allocator,wsize):
-    super().__init__(uc,allocator,wsize)
+  def __init__(self,emu,allocator,wsize):
+    super().__init__(emu,allocator,wsize)
 
 
   def reg_conv(self,r_id):
     return emu.unicorn.mipsl32.MipsCorn.reg_convert(r_id)
   
-  def reg_read(self,reg_id):
-    return Emucorn.reg_read(self.runner,self.reg_conv(reg_id))
-
-  def reg_write(self,reg_id,data):
-    Emucorn.reg_write(self.runner,self.reg_conv(reg_id),data)
-
+  
   def get_arg(self,arg_num):
     if arg_num == 0:
       return self.reg_read('a0')
@@ -219,19 +197,14 @@ class UnicornMipsbSEA(UnicornSEA):
   
 class UnicornX86SEA(UnicornSEA):
 
-  def __init__(self,uc,allocator,wsize):
-    super().__init__(uc,allocator,wsize)
+  def __init__(self,emu,allocator,wsize):
+    super().__init__(emu,allocator,wsize)
 
 
   def reg_conv(self,r_id):
     return emu.unicorn.x86.x86Corn.reg_convert(r_id)
 
-  def reg_read(self,reg_id):
-    return Emucorn.reg_read(self.runner,self.reg_conv(reg_id))
-
-  def reg_write(self,reg_id,data):
-    Emucorn.reg_write(self.runner,self.reg_conv(reg_id),data)
-
+ 
   def get_arg(self,arg_num):
     esp = self.reg_read('esp')
     # TODO may add heuristic to detect compiler/linker 
@@ -258,17 +231,12 @@ class UnicornX86SEA(UnicornSEA):
 #TODO create other instance for GCC compiler
 class UnicornX64SEA(UnicornSEA):
 
-  def __init__(self,uc,allocator,wsize):
-    super().__init__(uc,allocator,wsize)
+  def __init__(self,emu,allocator,wsize):
+    super().__init__(emu,allocator,wsize)
 
   def reg_conv(self,r_id):
     return emu.unicorn.x64.x64Corn.reg_convert(r_id)
 
-  def reg_read(self,reg_id):
-    return Emucorn.reg_read(self.runner,self.reg_conv(reg_id))
-
-  def reg_write(self,reg_id,data):
-    Emucorn.reg_write(self.runner,self.reg_conv(reg_id),data)
 
   def get_arg(self,arg_num):
     if arg_num == 0:

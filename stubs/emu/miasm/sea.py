@@ -5,16 +5,16 @@ import emu
 
 class MiasmSEA(StubEngineAbstractor):
 
-  def __init__(self,jitter,allocator,wsize):
-    super().__init__(jitter,allocator,wsize)
+  def __init__(self,emu,allocator,wsize):
+    super().__init__(emu,allocator,wsize)
   def mem_read(self,addr,size):
-    return emu.miasm.generic.Emuiasm.mem_read(self.runner,addr,size)
+    return self.emu.mem_read(addr,size) 
   def mem_write(self,addr,data):
-    emu.miasm.generic.Emuiasm.mem_write(self.runner,addr,data)
+    self.emu.mem_write(addr,data)
   def reg_read(self,reg_id):
-    raise NotImplemented
+    return self.emu.reg_read(reg_id)
   def reg_write(self,reg_id,data):
-    raise NotImplemented
+    self.emu.reg_write(reg_id,data)
   def push(self,sp_id,value,endianness='little'):
     sp = self.reg_read(sp_id)
     sp -= self.wsize
@@ -29,14 +29,9 @@ class MiasmSEA(StubEngineAbstractor):
  
 class MiasmArmSEA(MiasmSEA):
 
-  def __init__(self,uc,allocator,wsize):
-    super().__init__(uc,allocator,wsize)
+  def __init__(self,jitter,allocator,wsize):
+    super().__init__(jitter,allocator,wsize)
 
-  def reg_read(self,reg_id):
-    return emu.miasm.arm32.Miarm.reg_read(self.runner,reg_id)
-
-  def reg_write(self,reg_id,data):
-    emu.miasm.arm32.Miarm.reg_write(self.runner,reg_id,data)
 
   def get_arg(self,arg_num):
     if arg_num == 0:

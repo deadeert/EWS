@@ -61,7 +61,7 @@ class ArmCorn(Emucorn):
 
       self.uc.mem_map(consts_arm.ALLOC_BA,conf.p_size*consts_arm.ALLOC_PAGES,UC_PROT_READ | UC_PROT_WRITE)
 
-      self.helper = UnicornArmSEA(uc=self.uc,
+      self.helper = UnicornArmSEA(emu=self,
                                   allocator=DumpAllocator(consts_arm.ALLOC_BA,consts_arm.ALLOC_PAGES*conf.p_size),
                                   wsize=4)
       self.nstub_obj = ELF.NullStub()
@@ -69,7 +69,6 @@ class ArmCorn(Emucorn):
  
       self.stubs = ELF.libc_stubs 
       if verify_valid_elf(self.conf.s_conf.orig_filepath):
-            print(self.conf.s_conf.orig_filepath) 
             self.get_relocs(self.conf.s_conf.orig_filepath,lief.ELF.RELOCATION_ARM.JUMP_SLOT)
             self.stubbit()
 

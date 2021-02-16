@@ -15,6 +15,7 @@ NSTUB=PLUGNAME+":nullstubfunc"
 TAGFUNC=PLUGNAME+":tagfunc"
 LOADCONF=PLUGNAME+":loadconf"
 EXECFROMSTART=PLUGNAME+":execfrmstart"
+PATCHMEM=PLUGNAME+":patchmem"
 
 
 emu = None
@@ -41,6 +42,8 @@ class menu_action_handler_t(idaapi.action_handler_t):
             self.tag_func()
         elif self.action == LOADCONF:
             self.loadconf()
+        elif self.action == PATCHMEM:
+            self.patchmem()
         else:
             logger.console(LogType.ERRR,"Function not yet implemented")
             return 0
@@ -110,7 +113,14 @@ class menu_action_handler_t(idaapi.action_handler_t):
 
     def patchmem(self):
         global emu
-        utils_ui.patch_mem(emu)
+        if emu == None:
+            logger.console(LogType.ERRR,
+                           "Please initiate an emulator before using this function")
+            return
+
+        if not utils_ui.patch_mem(emu):
+            logger.console(LogType.WARN,
+                           "An error occuring while patching memory")
 
 
 
@@ -130,6 +140,7 @@ class UI_Hook(idaapi.UI_Hooks):
                 idaapi.attach_action_to_popup(form, popup, NSTUB, None)
                 idaapi.attach_action_to_popup(form, popup, TAGFUNC, None)
                 idaapi.attach_action_to_popup(form, popup, LOADCONF, None)
+                idaapi.attach_action_to_popup(form, popup, PATCHMEM, None)
 
 
 menu_actions = [
@@ -157,6 +168,9 @@ menu_actions = [
                                  "T", 12),
             idaapi.action_desc_t(LOADCONF, "Load Config",
                                  menu_action_handler_t(LOADCONF), 'Alt+Ctrl+C',
+                                 "T", 12),
+            idaapi.action_desc_t(PATCHMEM, "Patch Mem",
+                                 menu_action_handler_t(PATCHMEM), 'Alt+Ctrl+M',
                                  "T", 12)
             ]
 for action in menu_actions:

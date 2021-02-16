@@ -112,26 +112,26 @@ class Emucorn(Emulator):
 #---------------------------------------------------------------------------------------------
 
 
-    @staticmethod
-    def mem_read(uc,addr,size):
-        return uc.mem_read(addr,size)
-    
-    @staticmethod
-    def mem_write(uc,addr,data):
-        uc.mem_write(addr,data)
+    def mem_read(self,addr,size):
+        return self.uc.mem_read(addr,size)
 
-    @staticmethod
-    def reg_read(uc,r_id):
+    def mem_write(self,addr,data):
+        self.uc.mem_write(addr,data)
+
+    def reg_read(self,r_id):
         """ id mapping functions might be call before 
         """
-        return uc.reg_read(r_id)
-        
-    @staticmethod
-    def reg_write(uc,r_id,value):
+        return self.uc.reg_read(r_id)
+
+    def reg_write(self,r_id,value):
         """ id mapping functions might be call before 
         """
-        uc.reg_write(r_id,value)
- 
+        self.uc.reg_write(r_id,value)
+
+
+    """ Hooking event functions    
+    """
+#---------------------------------------------------------------------------------------------
     @staticmethod
     def unmp_read(uc,access,addr,value,size,user_data):
         logger.console(LogType.WARN,'[!] Read Access Exception: cannot read 0x%.8X for size %d (reason: unmapped page)'%(addr,size))
@@ -146,10 +146,6 @@ class Emucorn(Emulator):
         return False
 
 
-    
-    """ Hooking event functions    
-    """
-#---------------------------------------------------------------------------------------------
 
     @staticmethod
     def unmp_write(uc,access,addr,size,value,user_data):
