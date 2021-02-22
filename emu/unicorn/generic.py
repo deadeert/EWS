@@ -26,7 +26,7 @@ from emu.emubase import Emulator
 
 MAX_INSN_SIZE=8
 MAX_EXEC= 0x1000 # max number of executed insn 
-FOLLOW_PC= True  #TODO move it to the configuration option
+FOLLOW_PC= False  #TODO move it to the configuration option
 
 class Emucorn(Emulator):
 

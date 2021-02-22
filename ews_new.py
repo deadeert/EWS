@@ -7,15 +7,18 @@ from ui import *
 
 PLUGNAME="ews"
 EMULLAUNCHER=PLUGNAME+":defaultlauncher"
+EMULADVANCECONF=PLUGNAME+":advancelauncher"
 EMULF=PLUGNAME+":emulfunc"
 EMULSELECT=PLUGNAME+":emulselection"
 EDITREG=PLUGNAME+":regedit"
+EDITCONF=PLUGNAME+":editconf"
 EDITSTUBCONF=PLUGNAME+"stubconfedit"
 NSTUB=PLUGNAME+":nullstubfunc"
 TAGFUNC=PLUGNAME+":tagfunc"
 LOADCONF=PLUGNAME+":loadconf"
 EXECFROMSTART=PLUGNAME+":execfrmstart"
 PATCHMEM=PLUGNAME+":patchmem"
+DISPLAYMEM=PLUGNAME+":displaymem"
 
 
 emu = None
@@ -31,7 +34,9 @@ class menu_action_handler_t(idaapi.action_handler_t):
 
     def activate(self, ctx):
         if self.action == EMULLAUNCHER: 
-            self.emul_launcher()
+            self.emul_launcher(simplified=True)
+        elif self.action == EMULADVANCECONF:
+            self.emul_launcher(simplified=False)
         elif self.action == EMULF:
             self.emul_func()
         elif self.action == EMULSELECT: 
@@ -42,8 +47,12 @@ class menu_action_handler_t(idaapi.action_handler_t):
             self.tag_func()
         elif self.action == LOADCONF:
             self.loadconf()
+        elif self.action == EDITCONF:
+            self.editconf()
         elif self.action == PATCHMEM:
             self.patchmem()
+        elif self.action == DISPLAYMEM:
+            self.displaymem()
         else:
             logger.console(LogType.ERRR,"Function not yet implemented")
             return 0
@@ -66,9 +75,9 @@ class menu_action_handler_t(idaapi.action_handler_t):
 
         logger.console(LogType.INFO,'[+] Ready to start, type emu.start() to launch')
 
-    def emul_launcher(self):
+    def emul_launcher(self,simplified=True):
         global emu
-        emu = utils_ui.get_emul_fullconf()
+        emu = utils_ui.get_emul_conf(simplified=simplified)
 
     def edit_registers(self):
         global emu
@@ -111,6 +120,18 @@ class menu_action_handler_t(idaapi.action_handler_t):
         global emu
         emu = utils_ui.loadconfig()
 
+    def editconf(self):
+        global emu
+        if emu == None:
+            logger.console(LogType.ERRR,
+                           "Please initiate an emulator before using this function")
+            return
+        logger.console(LogType.INFO,
+                       "Please use refresh button to updates values in the UI")
+        emu = utils_ui.get_emul_conf(simplified=False,
+                                     conf=emu.conf)
+
+
     def patchmem(self):
         global emu
         if emu == None:
@@ -122,6 +143,14 @@ class menu_action_handler_t(idaapi.action_handler_t):
             logger.console(LogType.WARN,
                            "An error occuring while patching memory")
 
+    def displaymem(self):
+        global emu
+        if emu == None:
+            logger.console(LogType.ERRR,
+                           "Please initiate an emulator before using this function")
+            return
+
+        utils_ui.displaymem(emu)
 
 
 class UI_Hook(idaapi.UI_Hooks):
@@ -140,7 +169,9 @@ class UI_Hook(idaapi.UI_Hooks):
                 idaapi.attach_action_to_popup(form, popup, NSTUB, None)
                 idaapi.attach_action_to_popup(form, popup, TAGFUNC, None)
                 idaapi.attach_action_to_popup(form, popup, LOADCONF, None)
+                idaapi.attach_action_to_popup(form, popup, EDITCONF, None)
                 idaapi.attach_action_to_popup(form, popup, PATCHMEM, None)
+                idaapi.attach_action_to_popup(form, popup, DISPLAYMEM, None)
 
 
 menu_actions = [
@@ -169,8 +200,14 @@ menu_actions = [
             idaapi.action_desc_t(LOADCONF, "Load Config",
                                  menu_action_handler_t(LOADCONF), 'Alt+Ctrl+C',
                                  "T", 12),
+            idaapi.action_desc_t(EDITCONF, "Edit Config",
+                                 menu_action_handler_t(EDITCONF), 'Alt+Ctrl+E',
+                                 "T", 12),
             idaapi.action_desc_t(PATCHMEM, "Patch Mem",
                                  menu_action_handler_t(PATCHMEM), 'Alt+Ctrl+M',
+                                 "T", 12),
+            idaapi.action_desc_t(DISPLAYMEM, "Display Mem",
+                                 menu_action_handler_t(DISPLAYMEM), 'Alt+Ctrl+D',
                                  "T", 12)
             ]
 for action in menu_actions:

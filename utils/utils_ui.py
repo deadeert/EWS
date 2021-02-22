@@ -3,16 +3,22 @@ import idc
 import ida_funcs
 import ida_idp
 import ida_ua
+import ida_segment
 from ui.arm32_simplified import Arm32Pannel
 from ui.mipsl32 import Mipsl32Pannel
-#from ui.x86 import x86Pannel
 from ui.x86_simplified import x86Pannel
 from ui.x64_simplified import x64Pannel
 from ui.aarch64_simplified import Aarch64Pannel
+from ui.arm32 import Arm32Pannel as Arm32PannelFull
+from ui.aarch64 import Aarch64Pannel as Aarch64CornFull
+from ui.x86 import x86Pannel as x86PannelFull
+from ui.x64 import x64Pannel as x64PannelFull
 from ui.regedit import RegArm32Edit, RegArm64Edit, Regx86Edit, Regx64Edit
 from ui.MemEdit import MemEdit
 from ui.tag_func_ui import TagForm
+from ui.DisplayMem import SelectSegment, MemDisplayer, asciify, space
 import ui
+import binascii
 
 from emu.unicorn.arm32 import ArmCorn
 from emu.unicorn.aarch64 import Aarch64Corn
@@ -99,26 +105,38 @@ def get_emul(s_ea,
 
   return emu
 
-def get_emul_fullconf():
+def get_emul_conf(simplified=True, conf=False):
 
   emu = None
   procname = idaapi.get_idp_name()
   if procname == 'arm':
     if idc.__EA64__:
-        conf = Aarch64Pannel.fillconfig() 
+        if simplified:
+            conf = Aarch64Pannel.fillconfig() 
+        else:
+            conf = Aarch64CornFull.fillconfig(conf)
         if conf:
             emu = Aarch64Corn(conf)
     else:
-        conf = Arm32Pannel.fillconfig()
+        if simplified:
+            conf = Arm32Pannel.fillconfig()
+        else:
+            conf = Arm32PannelFull.fillconfig(conf)
         if conf: 
             emu = ArmCorn(conf)
   elif procname == 'pc':
    if idc.__EA64__: # assess if ida is running in 64bits
-     conf = x64Pannel.fillconfig()
+     if simplified:
+        conf = x64Pannel.fillconfig()
+     else:
+         conf = x64PannelFull.fillconfig(conf)
      if conf:
        emu = x64Corn(conf)
    else:
-       conf = x86Pannel.fillconfig()
+       if simplified:
+        conf = x86Pannel.fillconfig()
+       else:
+        conf = x86PannelFull.fillconfig(conf)
        if conf:
          emu = x86Corn(conf)
   else:
@@ -126,6 +144,9 @@ def get_emul_fullconf():
 
 
   return emu
+
+
+
 
 def get_regedit_func():
     procname = idaapi.get_idp_name()
@@ -188,6 +209,32 @@ def patch_mem(emu):
        except:
             ok=False
     return ok
+
+
+
+def displaymem(emu):
+
+    seg = SelectSegment.fillconfig()
+    if seg == None:
+        return False
+    p_base = seg.start_ea & ~ (emu.conf.p_size -1)
+    seg_size = seg.end_ea - p_base
+    d,r = divmod(seg_size,emu.conf.p_size)
+    if r:
+        logger.console(LogType.WARN,'Weird segment size to display, should be aligned')
+        d+=1
+    content = emu.mem_read(p_base,d*emu.conf.p_size)
+    values = []
+    for i in range(0,len(content),16):
+        values.append(['0x%x'%(p_base+i),
+                      space(binascii.b2a_hex(content[i:i+16]).decode('utf-8')),
+                      asciify(content[i:i+16])])
+
+    md = MemDisplayer("%s Memory"%ida_segment.get_segm_name(seg),
+                      values,
+                      emu)
+    md.show()
+
 
 
 

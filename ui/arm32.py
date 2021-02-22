@@ -32,6 +32,7 @@ Display Configuration
 <## Configure Stub: {stubButton}> 
 <## Add mapping: {amapButton}> (arguments or missing segms in IDB)
 <## Save Configration: {saveButton}> | <## Load Configuration: {loadButton} > 
+<## Refresh values: {refreshButton}>
 """,{
             'iPageSize': Form.NumericInput(tp=Form.FT_RAWHEX), 
             'iStkBA': Form.NumericInput(tp=Form.FT_RAWHEX),
@@ -68,7 +69,8 @@ Display Configuration
             'stubButton': Form.ButtonInput(self.onStubButton),
             'amapButton': Form.ButtonInput(self.onaMapButton),
             'saveButton': Form.ButtonInput(self.onSaveButton),
-            'loadButton': Form.ButtonInput(self.onLoadButton)
+            'loadButton': Form.ButtonInput(self.onLoadButton),
+            'refreshButton': Form.ButtonInput(self.onRefreshButton)
 })
 
 
@@ -128,9 +130,24 @@ Display Configuration
       if f_path == '' or not os.path.exists(f_path) or os.path.isdir(f_path):
         logger.console(2,' [Configuration Load] Invalid file path')
         return
-#     conf_apath = '/tmp/idaemu_conf_'+time.ctime().replace(' ','_')
-      conf = loadconfig(f_path)
+      try: 
+        conf = loadconfig(f_path)
+      except: 
+        logger.console(2,'Error loading conf. Exiting...')
+        return
+      if conf:
+          self.conf = conf
+          self.update_with_conf(conf)
 
+
+  def onRefreshButton(self,code):
+      if self.conf == None:
+          return
+      else:
+          self.update_with_conf(self.conf)
+
+
+  def update_with_conf(self,conf):
       if not conf.map_with_segs: self.EnableField(self.cSegChooser,False)
       else:
           self.EnableField(self.sMapping, False)
@@ -209,10 +226,10 @@ Display Configuration
   def fillconfig(conf=None):
       f = Arm32Pannel(conf)
       f.Compile()
-      
+
       ok = f.Execute()
       if ok:
-      
+ 
           ret = Configuration(path=f.conf_path,arch=ida_idp.get_idp_name(),
                               emulator='unicorn',
                               p_size=f.iPageSize.value,

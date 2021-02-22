@@ -16,7 +16,7 @@ from utils.utils import *
 #----------------------------------------------------------------------------------------------
 
 class Pannel(ida_kernwin.Form):
-  
+
   class segment_chooser(ida_kernwin.Choose):
         """
         A simple chooser to be used as an embedded chooser
