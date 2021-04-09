@@ -39,7 +39,6 @@ Edit memory
       return 1
 
 
-#
     @staticmethod 
     def fillconfig(emu=None):
         f= MemEdit(emu)

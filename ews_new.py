@@ -19,6 +19,8 @@ LOADCONF=PLUGNAME+":loadconf"
 EXECFROMSTART=PLUGNAME+":execfrmstart"
 PATCHMEM=PLUGNAME+":patchmem"
 DISPLAYMEM=PLUGNAME+":displaymem"
+DISPLAYSTK=PLUGNAME+":displaystack"
+DISPLAYADDR=PLUGNAME+":displayaddr"
 
 
 emu = None
@@ -53,6 +55,10 @@ class menu_action_handler_t(idaapi.action_handler_t):
             self.patchmem()
         elif self.action == DISPLAYMEM:
             self.displaymem()
+        elif self.action == DISPLAYSTK:
+            self.displaystack()
+        elif self.action == DISPLAYADDR:
+            self.displayaddr()
         else:
             logger.console(LogType.ERRR,"Function not yet implemented")
             return 0
@@ -80,13 +86,15 @@ class menu_action_handler_t(idaapi.action_handler_t):
         emu = utils_ui.get_emul_conf(simplified=simplified)
 
     def edit_registers(self):
-        global emu
+        global emu 
         if emu == None:
             logger.console(LogType.ERRR,"Please initiate an emulator before using this function")
             return
 
         regedit_func  = utils_ui.get_regedit_func()
-        emu.conf.registers = regedit_func(emu.conf.registers)
+
+#       new_reg = regedit_func(emu.get_regs())
+#        emu.actualize_regs
 
 
     def tag_func(self):
@@ -150,7 +158,24 @@ class menu_action_handler_t(idaapi.action_handler_t):
                            "Please initiate an emulator before using this function")
             return
 
-        utils_ui.displaymem(emu)
+        utils_ui.display_section(emu)
+
+    def displaystack(self):
+        global emu
+        if emu == None:
+            logger.console(LogType.ERRR,
+                           "Please initiate an emulator before using this function")
+            return
+
+        utils_ui.display_stack(emu)
+
+    def displayaddr(self):
+        global emu
+        if emu == None:
+            logger.console(LogType.ERRR,
+                           "Please initiate an emulator before using this function")
+            return
+        utils_ui.display_addr(emu) 
 
 
 class UI_Hook(idaapi.UI_Hooks):
@@ -172,6 +197,8 @@ class UI_Hook(idaapi.UI_Hooks):
                 idaapi.attach_action_to_popup(form, popup, EDITCONF, None)
                 idaapi.attach_action_to_popup(form, popup, PATCHMEM, None)
                 idaapi.attach_action_to_popup(form, popup, DISPLAYMEM, None)
+                idaapi.attach_action_to_popup(form, popup, DISPLAYSTK, None)
+                idaapi.attach_action_to_popup(form, popup, DISPLAYADDR, None)
 
 
 menu_actions = [
@@ -208,7 +235,14 @@ menu_actions = [
                                  "T", 12),
             idaapi.action_desc_t(DISPLAYMEM, "Display Mem",
                                  menu_action_handler_t(DISPLAYMEM), 'Alt+Ctrl+D',
+                                 "T", 12),
+             idaapi.action_desc_t(DISPLAYSTK, "Display Stack",
+                                 menu_action_handler_t(DISPLAYSTK), 'Alt+Ctrl+D+S',
+                                 "T", 12),
+             idaapi.action_desc_t(DISPLAYADDR, "Display Addr",
+                                 menu_action_handler_t(DISPLAYADDR), 'Alt+Ctrl+D+S',
                                  "T", 12)
+
             ]
 for action in menu_actions:
             idaapi.register_action(action)

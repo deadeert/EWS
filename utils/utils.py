@@ -801,7 +801,10 @@ def search_executable():
         to parse dynamic information (PT_DYNAMIC segment) 
     """
 
-    f_path_l=ida_loader.get_path(ida_loader.PATH_TYPE_CMD).split('.')[:-1]
+    f_path = ida_loader.get_path(ida_loader.PATH_TYPE_CMD)
+    if '.idb' in f_path: f_path_l = f_path.split('.')[:-1] 
+    else:                f_path_l = f_path.split('.')
+
     ntry=1
     f_path=""
     while ntry<=len(f_path_l):
@@ -821,6 +824,7 @@ def search_executable():
 
 
 def verify_valid_elf(candidate):
+    print(candidate)
     if os.path.exists(candidate):
             if str(lief.ELF.parse(candidate)) != 'None':
                     return True

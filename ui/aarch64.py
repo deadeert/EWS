@@ -1,15 +1,6 @@
 from ui.generic import * 
 
-
-class Aarch64Pannel(Pannel):
-
-  def __init__(self,conf):
-    super().__init__(conf)
-    self.invert = False
-    self.segs = [] 
-    self.s_conf = StubConfiguration.create() 
-    self.amap_conf = AdditionnalMapping({})#AdditionnalMapping.create()
-    Form.__init__(self, r"""STARTITEM 
+FormDesc = r"""STARTITEM 
 BUTTON YES Yeah
 BUTTON NO Nope
 BUTTON CANCEL* Nevermind
@@ -37,7 +28,18 @@ Display Configuration
 <## Configure Stub: {stubButton}> 
 <## Add mapping: {amapButton}> (arguments or missing segms in IDB)
 <## Save Configration: {saveButton}> | <## Load Configuration: {loadButton} > 
-""",{
+"""
+
+class Aarch64Pannel(Pannel):
+
+  def __init__(self,conf):
+    super().__init__(conf)
+    self.invert = False
+    self.segs = [] 
+    self.s_conf = StubConfiguration.create() 
+    self.amap_conf = AdditionnalMapping({})#AdditionnalMapping.create()
+    if self.conf == None:
+        Form.__init__(self, FormDesc ,{
             'iPageSize': Form.NumericInput(tp=Form.FT_RAWHEX), 
             'iStkBA': Form.NumericInput(tp=Form.FT_RAWHEX),
             'iStkSize': Form.NumericInput(tp=Form.FT_RAWHEX),
@@ -92,6 +94,74 @@ Display Configuration
             'saveButton': Form.ButtonInput(self.onSaveButton),
             'loadButton': Form.ButtonInput(self.onLoadButton)
 })
+    else:
+        Form.__init__(self, FormDesc ,{
+            'iPageSize': Form.NumericInput(tp=Form.FT_RAWHEX, 
+                                           value=self.conf.p_size), 
+            'iStkBA': Form.NumericInput(tp=Form.FT_RAWHEX,
+                                        value=self.conf.stk_ba),
+            'iStkSize': Form.NumericInput(tp=Form.FT_RAWHEX,
+                                          value=self.conf.stk_size),
+            'cAGrp': Form.RadGroupControl(("aNo","aYes"),
+                                          value=1 if self.conf.autoMap else 0),
+            'cRGrp': Form.RadGroupControl(("rNo","rYes"),
+                                          value=1 if self.conf.showRegisters else 0),
+            'cCGrp': Form.RadGroupControl(("cNo","cYes"),
+                                          value=1 if self.conf.useCapstone else 0),
+            'cCSeg': Form.RadGroupControl(("sNo","sYes"),
+                                          value=1 if self.conf.map_with_segs else 0),
+            'spCSeg': Form.RadGroupControl(("spNo","spYes"),
+                                           value=1 if self.conf.use_seg_perms else 0),
+            'maGrp': Form.RadGroupControl(("maNo","maYes"),
+                                          value=1 if self.conf.showMemAccess else 0),
+            'cgGrp': Form.RadGroupControl(("cgNo","cgYes"),
+                                          value=1 if self.conf.color_graph else 0),
+            'sAddr': Form.NumericInput(tp=Form.FT_ADDR,value=self.conf.exec_saddr),
+            'eAddr': Form.NumericInput(tp=Form.FT_ADDR,value=self.conf.exec_eaddr),
+            'sMapping': Form.NumericInput(tp=Form.FT_ADDR,value=self.conf.mapping_saddr),
+            'eMapping': Form.NumericInput(tp=Form.FT_ADDR,value=self.conf.mapping_eaddr),
+            'cSegChooser': Form.EmbeddedChooserControl(Pannel.segment_chooser("Segmentname")),
+            'X0': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X0),
+            'X1': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X1),
+            'X2': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X2),
+            'X3': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X3),
+            'X4': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X4),
+            'X5': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X5),
+            'X6': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X6),
+            'X7': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X7),
+            'X8': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X8),
+            'X9': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X9),
+            'X10': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X10),
+            'X11': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X11),
+            'X12': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X12),
+            'X13': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X13),
+            'X14': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X14),
+            'X15': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X15),
+            'X16': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X16),
+            'X17': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X17),
+            'X18': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X18),
+            'X19': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X19),
+            'X20': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X20),
+            'X21': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X21),
+            'X22': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X22),
+            'X23': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X23),
+            'X24': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X24),
+            'X25': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X25),
+            'X26': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X26),
+            'X27': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X27),
+            'X28': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X28),
+            'FP': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X29),
+            'LR': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X30),
+            'SP': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.X31),
+            'PC': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.PC),
+            'cbCallback': Form.FormChangeCb(self.cb_callback),
+            'stubButton': Form.ButtonInput(self.onStubButton),
+            'amapButton': Form.ButtonInput(self.onaMapButton),
+            'saveButton': Form.ButtonInput(self.onSaveButton),
+            'loadButton': Form.ButtonInput(self.onLoadButton)
+})
+
+
 
 
 

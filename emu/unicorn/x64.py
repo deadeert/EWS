@@ -51,17 +51,17 @@ class x64Corn(Emucorn):
 
        
     # Setup regs 
-    self.setup_regs(stk_p)
+    self.setup_regs(stk_p,self.conf.registers)
     self.pcid = UC_X86_REG_RIP 
   
 
-    self.breakpoints = dict()
-    self.custom_stubs = dict()
+#    self.breakpoints = dict()
+#    self.custom_stubs = dict()
+#
 
-
-    for s_ea in conf.s_conf.nstubs.keys():
-      self.add_null_stub(s_ea)
-   
+#    for s_ea in conf.s_conf.nstubs.keys():
+#      self.add_null_stub(s_ea)
+#   
     # Init stubs engine 
     if self.conf.s_conf.stub_dynamic_func_tab:
 
@@ -74,18 +74,30 @@ class x64Corn(Emucorn):
                                   allocator=DumpAllocator(consts_x64.ALLOC_BA,consts_x64.ALLOC_PAGES*conf.p_size),
                                   wsize=8)
 
-      self.nstub_obj = ELF.NullStub()
-      self.nstub_obj.set_helper(self.helper) 
- 
-      
-      self.stubs = ELF.libc_stubs 
-      if verify_valid_elf(self.conf.s_conf.orig_filepath):
-         self.get_relocs(self.conf.s_conf.orig_filepath,lief.ELF.RELOCATION_X86_64.JUMP_SLOT)
-         self.stubbit()
-
       self.filetype = ida_loader.get_file_type_name()
+      print('filetype: %s'%self.filetype)
+      if self.conf.s_conf.stub_dynamic_func_tab:
+          if '(PE)' in self.filetype:
+#            self.stubs = PE.winx86_stubs
+#            self.nstub_obj = PE.NullStub() 
+#            self.loader_type = LoaderType.PE
+#            self.nstub_obj.set_helper(self.helper)
+            logger.console(LogType.ERRR,'Stub mechansim does not yet support PE format')
+          elif 'ELF' in self.filetype: 
+            self.stubs = ELF.libc_stubs 
+            self.nstub_obj = ELF.NullStub()
+            self.loader_type = LoaderType.ELF 
+            self.nstub_obj.set_helper(self.helper)
 
+            if verify_valid_elf(self.conf.s_conf.orig_filepath):
+              self.get_relocs(self.conf.s_conf.orig_filepath,lief.ELF.RELOCATION_X86_64.JUMP_SLOT)
 
+              self.libc_start_main_trampoline =  0 #cconsts_x86.LIBCSTARTSTUBADDR
+#              self.uc.mem_map(consts_x86.LIBCSTARTSTUBADDR,consts_x86.PSIZE, UC_PROT_ALL)
+#              self.uc.mem_write(consts_x86.LIBCSTARTSTUBADDR,consts_x86.LIBCSTARTSTUBCODE) 
+              self.stubbit()
+
+         
      
     self.ks = Ks(KS_ARCH_X86,KS_MODE_64) 
     self.uc.hook_add(UC_HOOK_CODE,
@@ -131,25 +143,45 @@ class x64Corn(Emucorn):
 
 
 
-  def setup_regs(self,stk_p):
+  def setup_regs(self,stk_p,regs):
 
     # Segment register might be instancied manually using console
-    self.uc.reg_write(UC_X86_REG_RAX,self.conf.registers.RAX)
-    self.uc.reg_write(UC_X86_REG_RBX,self.conf.registers.RBX)
-    self.uc.reg_write(UC_X86_REG_RCX,self.conf.registers.RCX)
-    self.uc.reg_write(UC_X86_REG_RDX,self.conf.registers.RDX)
-    self.uc.reg_write(UC_X86_REG_RDI,self.conf.registers.RDI)
-    self.uc.reg_write(UC_X86_REG_RSI,self.conf.registers.RSI)
-    self.uc.reg_write(UC_X86_REG_RSP,self.conf.registers.RSP)
-    self.uc.reg_write(UC_X86_REG_RBP,self.conf.registers.RBP)
-    self.uc.reg_write(UC_X86_REG_R8,self.conf.registers.R8)
-    self.uc.reg_write(UC_X86_REG_R9,self.conf.registers.R9)
-    self.uc.reg_write(UC_X86_REG_R10,self.conf.registers.R10)
-    self.uc.reg_write(UC_X86_REG_R11,self.conf.registers.R11)
-    self.uc.reg_write(UC_X86_REG_R12,self.conf.registers.R12)
-    self.uc.reg_write(UC_X86_REG_R13,self.conf.registers.R13)
-    self.uc.reg_write(UC_X86_REG_R14,self.conf.registers.R14)
-    self.uc.reg_write(UC_X86_REG_R15,self.conf.registers.R15)
+    self.uc.reg_write(UC_X86_REG_RAX,regs.RAX)
+    self.uc.reg_write(UC_X86_REG_RBX,regs.RBX)
+    self.uc.reg_write(UC_X86_REG_RCX,regs.RCX)
+    self.uc.reg_write(UC_X86_REG_RDX,regs.RDX)
+    self.uc.reg_write(UC_X86_REG_RDI,regs.RDI)
+    self.uc.reg_write(UC_X86_REG_RSI,regs.RSI)
+    self.uc.reg_write(UC_X86_REG_RSP,regs.RSP)
+    self.uc.reg_write(UC_X86_REG_RBP,regs.RBP)
+    self.uc.reg_write(UC_X86_REG_R8,regs.R8)
+    self.uc.reg_write(UC_X86_REG_R9,regs.R9)
+    self.uc.reg_write(UC_X86_REG_R10,regs.R10)
+    self.uc.reg_write(UC_X86_REG_R11,regs.R11)
+    self.uc.reg_write(UC_X86_REG_R12,regs.R12)
+    self.uc.reg_write(UC_X86_REG_R13,regs.R13)
+    self.uc.reg_write(UC_X86_REG_R14,regs.R14)
+    self.uc.reg_write(UC_X86_REG_R15,regs.R15)
+
+  def get_regs(self):
+      return x64Registers(
+                            self.uc.reg_read(UC_X86_REG_RAX),
+                            self.uc.reg_read(UC_X86_REG_RBX),
+                            self.uc.reg_read(UC_X86_REG_RCX),
+                            self.uc.reg_read(UC_X86_REG_RDX),
+                            self.uc.reg_read(UC_X86_REG_RDI),
+                            self.uc.reg_read(UC_X86_REG_RSI),
+                            self.uc.reg_read(UC_X86_REG_RSP),
+                            self.uc.reg_read(UC_X86_REG_RBP),
+                            self.uc.reg_read(UC_X86_REG_R8),
+                            self.uc.reg_read(UC_X86_REG_R9),
+                            self.uc.reg_read(UC_X86_REG_R10),
+                            self.uc.reg_read(UC_X86_REG_R11),
+                            self.uc.reg_read(UC_X86_REG_R12),
+                            self.uc.reg_read(UC_X86_REG_R13),
+                            self.uc.reg_read(UC_X86_REG_R14),
+                            self.uc.reg_read(UC_X86_REG_R15),
+      ) 
     
     
   def reset_regs(self):
@@ -171,6 +203,8 @@ class x64Corn(Emucorn):
     self.uc.reg_write(UC_X86_REG_R13,0)
     self.uc.reg_write(UC_X86_REG_R14,0)
     self.uc.reg_write(UC_X86_REG_R15,0)
+
+
    
 
   @staticmethod

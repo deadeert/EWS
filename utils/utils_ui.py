@@ -16,7 +16,7 @@ from ui.x64 import x64Pannel as x64PannelFull
 from ui.regedit import RegArm32Edit, RegArm64Edit, Regx86Edit, Regx64Edit
 from ui.MemEdit import MemEdit
 from ui.tag_func_ui import TagForm
-from ui.DisplayMem import SelectSegment, MemDisplayer, asciify, space
+from ui.DisplayMem import SelectSegment, MemDisplayer, asciify, space, AddrNBPages
 import ui
 import binascii
 
@@ -152,9 +152,9 @@ def get_regedit_func():
     procname = idaapi.get_idp_name()
     if procname == 'arm':
         if idc.__EA64__:
-            return RegArm32Edit.create
-        else:
             return RegArm64Edit.create
+        else:
+            return RegArm32Edit.create
 
     elif procname == 'pc':
        if idc.__EA64__: # assess if ida is running in 64bits
@@ -212,8 +212,21 @@ def patch_mem(emu):
 
 
 
-def displaymem(emu):
+def displaymem(emu,content,name,base_addr):
 
+    values = []
+    for i in range(0,len(content),16):
+        values.append(['0x%x'%(base_addr+i),
+                      space(binascii.b2a_hex(content[i:i+16]).decode('utf-8')),
+                      asciify(content[i:i+16])])
+
+    md = MemDisplayer("%s Memory"%name,
+                      values,
+                      emu)
+    md.show()
+
+
+def display_section(emu):
     seg = SelectSegment.fillconfig()
     if seg == None:
         return False
@@ -224,16 +237,35 @@ def displaymem(emu):
         logger.console(LogType.WARN,'Weird segment size to display, should be aligned')
         d+=1
     content = emu.mem_read(p_base,d*emu.conf.p_size)
-    values = []
-    for i in range(0,len(content),16):
-        values.append(['0x%x'%(p_base+i),
-                      space(binascii.b2a_hex(content[i:i+16]).decode('utf-8')),
-                      asciify(content[i:i+16])])
+    displaymem(emu,
+               content,
+               ida_segment.get_segm_name(seg),
+               p_base)
 
-    md = MemDisplayer("%s Memory"%ida_segment.get_segm_name(seg),
-                      values,
-                      emu)
-    md.show()
+def display_addr(emu):
+    addr,nbpages = AddrNBPages.fillconfig()
+    p_base = addr & ~ (emu.conf.p_size -1)
+    try:
+        content = emu.mem_read(p_base,nbpages*emu.conf.p_size)
+    except:
+        logger.console(LogType.ERRR,"Invalid parameters for addr displaying.")
+        return
+    displaymem(emu,
+               content,
+               "%x Memory"%p_base,
+               p_base)
+
+
+
+
+
+def display_stack(emu):
+    content = emu.mem_read(emu.conf.stk_ba,
+                           emu.conf.stk_size)
+    displaymem(emu,
+               content,
+               "Stack",
+               emu.conf.stk_ba)
 
 
 

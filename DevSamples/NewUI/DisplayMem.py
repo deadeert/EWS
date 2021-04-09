@@ -65,41 +65,6 @@ Select Segment
       ok = f.Execute()
       if ok:
          return f.segname
-
-
-class AddrNBPages(ida_kernwin.Form): 
-
-
-    def __init__(self):
-        ida_kernwin.Form.__init__(self, r"""STARTITEM 
-BUTTON YES Yeah
-BUTTON NO Nope
-BUTTON CANCEL* Nevermind
-EWS ARML32
-Show Memory
-<Address : {iAddr}> <Number of Pages : {iValue}>
-""",{
-
-   'iAddr': ida_kernwin.Form.NumericInput(ida_kernwin.Form.FT_ADDR),
-  'iValue': ida_kernwin.Form.NumericInput(ida_kernwin.Form.FT_RAWHEX)
-})
-
-
-
-    @staticmethod
-    def fillconfig():
-      f = AddrNBPages()
-      f.Compile()
-      ok = f.Execute()
-      if ok:
-         return f.iAddr.value,f.iValue.value
-
-
-
-
-
-
-
  
 class MemDisplayer(idaapi.Choose):
 
@@ -187,13 +152,10 @@ def space(chain):
 
 if __name__ == '__main__':
 
-#    lol = SelectSegment.fillconfig()
-#    print(lol.start_ea)
-#
+    lol = SelectSegment.fillconfig()
+    print(lol.start_ea)
+
     
-    addr,nbpages = AddrNBPages.fillconfig()
-    print(addr)
-    print(nbpages)
 
 
 #    values = []

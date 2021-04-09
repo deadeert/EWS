@@ -253,11 +253,11 @@ class ArmCorn(Emucorn):
       return UC_ARM_REG_SP
     elif reg_id == 14:
       return UC_ARM_REG_LR
-    elif reg_id == 15: 
-      return UC_ARM_REG_PC 
+    elif reg_id == 15:
+      return UC_ARM_REG_PC
     return UC_ARM_REG_R0 + reg_id
 
-  @staticmethod           
+  @staticmethod
   def str2reg(r_str):
     if r_str == 'R0':
       return UC_ARM_REG_R0
@@ -301,10 +301,10 @@ class ArmCorn(Emucorn):
     """ when using restart() function from debugger 
         memory is erased, thus stub instruction has be 
         to be patch again 
-    """ 
+    """
 
-    if not self.conf.s_conf.stub_dynamic_func_tab: 
-      return 
+    if not self.conf.s_conf.stub_dynamic_func_tab:
+      return
     self.uc.mem_map(consts_arm.ALLOC_BA,self.conf.p_size*consts_arm.ALLOC_PAGES,UC_PROT_READ | UC_PROT_WRITE)
 
     if verify_valid_elf(self.conf.s_conf.orig_filepath):

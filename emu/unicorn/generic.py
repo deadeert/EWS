@@ -7,7 +7,6 @@ import ida_bytes
 import ida_segregs
 import ida_idp 
 import ida_name
-import ida_segment
 import idautils
 import ida_dbg
 import ida_xref
@@ -101,6 +100,18 @@ class Emucorn(Emulator):
 
         stk_p,r = divmod(conf.stk_size,conf.p_size)
         if r: stk_p+=1 
+        print('stk_ba = %x\n'%conf.stk_ba,
+              'stk_end = %x'%(conf.stk_ba + stk_p * conf.p_size))
+#        s = ida_segment.getseg(conf.stk_ba)
+#        if not s:
+#           ida_segment.del_segm(conf.stk_ba+1,ida_segment.SEGMOD_KILL)
+#        add_flags = ida_segment.ADDSEG_NOAA | ida_segment.ADDSEG_NOSREG | ida_segment.ADDSEG_OR_DIE
+#        ida_segment.add_segm(0,
+#                                    conf.stk_ba,
+#                                    conf.stk_ba + (stk_p * conf.p_size),
+#                                    'Stack',
+#                                    'STACK',
+#                                    add_flags)
         uc.mem_map(conf.stk_ba,stk_p*conf.p_size)
         logger.console(LogType.INFO,' [%s] mapped stack at 0x%.8X '%('Emucorn',conf.stk_ba))
     
@@ -317,9 +328,9 @@ class Emucorn(Emulator):
                             elif k == '__libc_start_main':
                                     logger.console(LogType.INFO,'libc_start_main stubbed!')
                                     self.uc.mem_write(v,
-                                                                        int.to_bytes(self.libc_start_main_trampoline,
-                                                                        8 if idc.__EA64__ else 4,
-                                                                     'little'))
+                                                    int.to_bytes(self.libc_start_main_trampoline,
+                                                    8 if idc.__EA64__ else 4,
+                                                 'little'))
                             else:
                                  #TODO add configuration option to automatically null-stub 
                                  #symbols that are not currently supported 

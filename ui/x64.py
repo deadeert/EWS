@@ -1,14 +1,7 @@
 from ui.generic import * 
 
-class x64Pannel(Pannel):
 
-  def __init__(self,conf):
-    super().__init__(conf)
-    self.invert = False
-    self.segs = [] 
-    self.s_conf = StubConfiguration.create() 
-    self.amap_conf = AdditionnalMapping({})#AdditionnalMapping.create()
-    Form.__init__(self, r"""STARTITEM 
+FormDesc=r"""STARTITEM 
 BUTTON YES Yeah
 BUTTON NO Nope
 BUTTON CANCEL* Nevermind
@@ -33,7 +26,20 @@ Display Configuration
 <## Configure Stub: {stubButton}> 
 <## Add mapping: {amapButton}> (arguments or missing segms in IDB)
 <## Save Configration: {saveButton}> | <## Load Configuration: {loadButton} > 
-""",{
+"""
+
+
+
+class x64Pannel(Pannel):
+
+  def __init__(self,conf):
+    super().__init__(conf)
+    self.invert = False
+    self.segs = [] 
+    self.s_conf = StubConfiguration.create() 
+    self.amap_conf = AdditionnalMapping({})#AdditionnalMapping.create()
+    if conf == None :
+        Form.__init__(self, FormDesc,{
             'iPageSize': Form.NumericInput(tp=Form.FT_RAWHEX), 
             'iStkBA': Form.NumericInput(tp=Form.FT_RAWHEX),
             'iStkSize': Form.NumericInput(tp=Form.FT_RAWHEX),
@@ -72,6 +78,57 @@ Display Configuration
             'saveButton': Form.ButtonInput(self.onSaveButton),
             'loadButton': Form.ButtonInput(self.onLoadButton)
 })
+    else:
+         Form.__init__(self, FormDesc,{
+            'iPageSize': Form.NumericInput(tp=Form.FT_RAWHEX, 
+                                           value=self.conf.p_size), 
+            'iStkBA': Form.NumericInput(tp=Form.FT_RAWHEX,
+                                        value=self.conf.stk_ba),
+            'iStkSize': Form.NumericInput(tp=Form.FT_RAWHEX,
+                                          value=self.conf.stk_size),
+            'cAGrp': Form.RadGroupControl(("aNo","aYes"),
+                                          value=1 if self.conf.autoMap else 0),
+            'cRGrp': Form.RadGroupControl(("rNo","rYes"),
+                                          value=1 if self.conf.showRegisters else 0),
+            'cCGrp': Form.RadGroupControl(("cNo","cYes"),
+                                          value=1 if self.conf.useCapstone else 0),
+            'cCSeg': Form.RadGroupControl(("sNo","sYes"),
+                                          value=1 if self.conf.map_with_segs else 0),
+            'spCSeg': Form.RadGroupControl(("spNo","spYes"),
+                                           value=1 if self.conf.use_seg_perms else 0),
+            'maGrp': Form.RadGroupControl(("maNo","maYes"),
+                                          value=1 if self.conf.showMemAccess else 0),
+            'cgGrp': Form.RadGroupControl(("cgNo","cgYes"),
+                                          value=1 if self.conf.color_graph else 0),
+            'sAddr': Form.NumericInput(tp=Form.FT_ADDR,value=self.conf.exec_saddr),
+            'eAddr': Form.NumericInput(tp=Form.FT_ADDR,value=self.conf.exec_eaddr),
+            'sMapping': Form.NumericInput(tp=Form.FT_ADDR,value=self.conf.mapping_saddr),
+            'eMapping': Form.NumericInput(tp=Form.FT_ADDR,value=self.conf.mapping_eaddr),
+            'cSegChooser': Form.EmbeddedChooserControl(Pannel.segment_chooser("Segmentname")),
+            'RAX': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.RAX),
+            'RBX': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.RBX),
+            'RCX': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.RCX),
+            'RDX': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.RDX),
+            'RDI': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.RDI),
+            'RSI': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.RSI),
+            'RBP': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.RBP),
+            'RSP': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.RSP),
+            'RIP': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.RIP),
+            'R8': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.R8),
+            'R9': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.R9),
+            'R10': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.R10),
+            'R11': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.R11),
+            'R12': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.R12),
+            'R13': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.R13),
+            'R14': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.R14),
+            'R15': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.R15),
+            'cbCallback': Form.FormChangeCb(self.cb_callback),
+            'stubButton': Form.ButtonInput(self.onStubButton),
+            'amapButton': Form.ButtonInput(self.onaMapButton),
+            'saveButton': Form.ButtonInput(self.onSaveButton),
+            'loadButton': Form.ButtonInput(self.onLoadButton)
+})
+
 
 
 
@@ -173,14 +230,14 @@ Display Configuration
       self.SetControlValue(self.RBP,conf.registers.RBP)
       self.SetControlValue(self.RSP,conf.registers.RSP)
       self.SetControlValue(self.RIP,conf.registers.RIP)
-      self.SetControlValue(self.RIP,conf.registers.R8)
-      self.SetControlValue(self.RIP,conf.registers.R9)
-      self.SetControlValue(self.RIP,conf.registers.R10)
-      self.SetControlValue(self.RIP,conf.registers.R11)
-      self.SetControlValue(self.RIP,conf.registers.R12)
-      self.SetControlValue(self.RIP,conf.registers.R13)
-      self.SetControlValue(self.RIP,conf.registers.R14)
-      self.SetControlValue(self.RIP,conf.registers.R15)
+      self.SetControlValue(self.R8,conf.registers.R8)
+      self.SetControlValue(self.R9,conf.registers.R9)
+      self.SetControlValue(self.R10,conf.registers.R10)
+      self.SetControlValue(self.R11,conf.registers.R11)
+      self.SetControlValue(self.R12,conf.registers.R12)
+      self.SetControlValue(self.R13,conf.registers.R13)
+      self.SetControlValue(self.R14,conf.registers.R14)
+      self.SetControlValue(self.R15,conf.registers.R15)
       self.SetControlValue(self.maGrp,conf.showMemAccess)
       self.s_conf = conf.s_conf 
       self.amap_conf = conf.amap_conf 
@@ -231,22 +288,23 @@ Display Configuration
                               map_with_segs=f.cCSeg.value,
                               use_seg_perms=f.spCSeg.value,
                               useCapstone=f.cCGrp.value,
-                              registers=x64Registers(f.RAX.value,
-                                                        f.RBX.value,
-                                                        f.RCX.value,
-                                                        f.RDX.value,
-                                                        f.RSI.value,
-                                                        f.R8.value,
-                                                        f.R9.value,
-                                                        f.R10.value,
-                                                        f.R11.value,
-                                                        f.R12.value,
-                                                        f.R13.value,
-                                                        f.R14.value,
-                                                        f.R15.value,
-                                                        f.RBP.value,
-                                                        f.RSP.value,
-                                                        f.RIP.value),
+                              registers=x64Registers(RAX=f.RAX.value,
+                                                        RBX=f.RBX.value,
+                                                        RCX=f.RCX.value,
+                                                        RDX=f.RDX.value,
+                                                        RDI=f.RDI.value,
+                                                        RSI=f.RSI.value,
+                                                        R8=f.R8.value,
+                                                        R9=f.R9.value,
+                                                        R10=f.R10.value,
+                                                        R11=f.R11.value,
+                                                        R12=f.R12.value,
+                                                        R13=f.R13.value,
+                                                        R14=f.R14.value,
+                                                        R15=f.R15.value,
+                                                        RBP=f.RBP.value,
+                                                        RSP=f.RSP.value,
+                                                        RIP=f.RIP.value),
 
                               showMemAccess=f.maGrp.value,
                               s_conf=f.s_conf,

@@ -67,10 +67,11 @@ class x86Corn(Emucorn):
         self.nstub_obj.set_helper(self.helper)
 
         if verify_valid_elf(self.conf.s_conf.orig_filepath):
-          self.get_relocs(self.conf.s_conf.orig_filepath,lief.ELF.RELOCATION_i386.JUMP_SLOT)
-          self.libc_start_main_trampoline = consts_x86.LIBCSTARTSTUBADDR
-          self.uc.mem_map(consts_x86.LIBCSTARTSTUBADDR,consts_x86.PSIZE, UC_PROT_ALL)
-          self.uc.mem_write(consts_x86.LIBCSTARTSTUBADDR,consts_x86.LIBCSTARTSTUBCODE) 
+          self.get_relocs(self.conf.s_conf.orig_filepath,lief.ELF.RELOCATION_X86_64.JUMP_SLOT)
+
+#          self.libc_start_main_trampoline = consts_x86.LIBCSTARTSTUBADDR
+#          self.uc.mem_map(consts_x86.LIBCSTARTSTUBADDR,consts_x86.PSIZE, UC_PROT_ALL)
+#          self.uc.mem_write(consts_x86.LIBCSTARTSTUBADDR,consts_x86.LIBCSTARTSTUBCODE) 
           self.stubbit()
 
     self.uc.hook_add(UC_HOOK_CODE,

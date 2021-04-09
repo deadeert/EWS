@@ -1,14 +1,7 @@
 from ui.generic import * 
 
-class x86Pannel(Pannel):
 
-  def __init__(self,conf):
-    super().__init__(conf)
-    self.invert = False
-    self.segs = [] 
-    self.s_conf = StubConfiguration.create() 
-    self.amap_conf = AdditionnalMapping({})#AdditionnalMapping.create()
-    Form.__init__(self, r"""STARTITEM 
+FormDesc=r"""STARTITEM 
 BUTTON YES Yeah
 BUTTON NO Nope
 BUTTON CANCEL* Nevermind
@@ -31,7 +24,18 @@ Display Configuration
 <## Configure Stub: {stubButton}> 
 <## Add mapping: {amapButton}> (arguments or missing segms in IDB)
 <## Save Configration: {saveButton}> | <## Load Configuration: {loadButton} > 
-""",{
+"""
+
+class x86Pannel(Pannel):
+
+  def __init__(self,conf):
+    super().__init__(conf)
+    self.invert = False
+    self.segs = [] 
+    self.s_conf = StubConfiguration.create() 
+    self.amap_conf = AdditionnalMapping({})#AdditionnalMapping.create()
+    if self.conf == None:
+        Form.__init__(self, FormDesc,{
             'iPageSize': Form.NumericInput(tp=Form.FT_RAWHEX), 
             'iStkBA': Form.NumericInput(tp=Form.FT_RAWHEX),
             'iStkSize': Form.NumericInput(tp=Form.FT_RAWHEX),
@@ -62,6 +66,49 @@ Display Configuration
             'saveButton': Form.ButtonInput(self.onSaveButton),
             'loadButton': Form.ButtonInput(self.onLoadButton)
 })
+    else:
+        Form.__init__(self, FormDesc,{
+            'iPageSize': Form.NumericInput(tp=Form.FT_RAWHEX, 
+                                           value=self.conf.p_size), 
+            'iStkBA': Form.NumericInput(tp=Form.FT_RAWHEX,
+                                        value=self.conf.stk_ba),
+            'iStkSize': Form.NumericInput(tp=Form.FT_RAWHEX,
+                                          value=self.conf.stk_size),
+            'cAGrp': Form.RadGroupControl(("aNo","aYes"),
+                                          value=1 if self.conf.autoMap else 0),
+            'cRGrp': Form.RadGroupControl(("rNo","rYes"),
+                                          value=1 if self.conf.showRegisters else 0),
+            'cCGrp': Form.RadGroupControl(("cNo","cYes"),
+                                          value=1 if self.conf.useCapstone else 0),
+            'cCSeg': Form.RadGroupControl(("sNo","sYes"),
+                                          value=1 if self.conf.map_with_segs else 0),
+            'spCSeg': Form.RadGroupControl(("spNo","spYes"),
+                                           value=1 if self.conf.use_seg_perms else 0),
+            'maGrp': Form.RadGroupControl(("maNo","maYes"),
+                                          value=1 if self.conf.showMemAccess else 0),
+            'cgGrp': Form.RadGroupControl(("cgNo","cgYes"),
+                                          value=1 if self.conf.color_graph else 0),
+            'sAddr': Form.NumericInput(tp=Form.FT_ADDR,value=self.conf.exec_saddr),
+            'eAddr': Form.NumericInput(tp=Form.FT_ADDR,value=self.conf.exec_eaddr),
+            'sMapping': Form.NumericInput(tp=Form.FT_ADDR,value=self.conf.mapping_saddr),
+            'eMapping': Form.NumericInput(tp=Form.FT_ADDR,value=self.conf.mapping_eaddr),
+            'cSegChooser': Form.EmbeddedChooserControl(Pannel.segment_chooser("Segmentname")),
+            'EAX': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.EAX),
+            'EBX': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.EBX),
+            'ECX': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.ECX),
+            'EDX': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.EDX),
+            'EDI': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.EDI),
+            'ESI': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.ESI),
+            'EBP': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.EBP),
+            'ESP': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.ESP),
+            'EIP': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.conf.registers.EIP),
+            'cbCallback': Form.FormChangeCb(self.cb_callback),
+            'stubButton': Form.ButtonInput(self.onStubButton),
+            'amapButton': Form.ButtonInput(self.onaMapButton),
+            'saveButton': Form.ButtonInput(self.onSaveButton),
+            'loadButton': Form.ButtonInput(self.onLoadButton)
+        })
+
 
 
 
