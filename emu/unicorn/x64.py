@@ -39,7 +39,7 @@ class x64Corn(Emucorn):
       logger.console(LogType.WARN,' invalid page size, using default')
       self.conf.p_size = self.uc.query(UC_QUERY_PAGE_SIZE)
 
-    stk_p = Emucorn.do_mapping(self.uc,self.conf)
+    Emucorn.do_mapping(self.uc,self.conf)
     
     if conf.useCapstone:
       from capstone import Cs, CS_ARCH_X86, CS_MODE_64
@@ -48,10 +48,10 @@ class x64Corn(Emucorn):
     self.ks = Ks(KS_ARCH_X86,KS_MODE_64) 
     self.pointer_size = 8 
 
+    
 
-       
     # Setup regs 
-    self.setup_regs(stk_p,self.conf.registers)
+    self.setup_regs(self.conf.registers)
     self.pcid = UC_X86_REG_RIP 
   
 
@@ -143,7 +143,7 @@ class x64Corn(Emucorn):
 
 
 
-  def setup_regs(self,stk_p,regs):
+  def setup_regs(self,regs):
 
     # Segment register might be instancied manually using console
     self.uc.reg_write(UC_X86_REG_RAX,regs.RAX)
@@ -162,25 +162,27 @@ class x64Corn(Emucorn):
     self.uc.reg_write(UC_X86_REG_R13,regs.R13)
     self.uc.reg_write(UC_X86_REG_R14,regs.R14)
     self.uc.reg_write(UC_X86_REG_R15,regs.R15)
+    self.uc.reg_write(UC_X86_REG_RIP,regs.RIP)
 
   def get_regs(self):
       return x64Registers(
-                            self.uc.reg_read(UC_X86_REG_RAX),
-                            self.uc.reg_read(UC_X86_REG_RBX),
-                            self.uc.reg_read(UC_X86_REG_RCX),
-                            self.uc.reg_read(UC_X86_REG_RDX),
-                            self.uc.reg_read(UC_X86_REG_RDI),
-                            self.uc.reg_read(UC_X86_REG_RSI),
-                            self.uc.reg_read(UC_X86_REG_RSP),
-                            self.uc.reg_read(UC_X86_REG_RBP),
-                            self.uc.reg_read(UC_X86_REG_R8),
-                            self.uc.reg_read(UC_X86_REG_R9),
-                            self.uc.reg_read(UC_X86_REG_R10),
-                            self.uc.reg_read(UC_X86_REG_R11),
-                            self.uc.reg_read(UC_X86_REG_R12),
-                            self.uc.reg_read(UC_X86_REG_R13),
-                            self.uc.reg_read(UC_X86_REG_R14),
-                            self.uc.reg_read(UC_X86_REG_R15),
+                            RAX=self.uc.reg_read(UC_X86_REG_RAX),
+                            RBX=self.uc.reg_read(UC_X86_REG_RBX),
+                            RCX=self.uc.reg_read(UC_X86_REG_RCX),
+                            RDX=self.uc.reg_read(UC_X86_REG_RDX),
+                            RDI=self.uc.reg_read(UC_X86_REG_RDI),
+                            RSI=self.uc.reg_read(UC_X86_REG_RSI),
+                            RSP=self.uc.reg_read(UC_X86_REG_RSP),
+                            RBP=self.uc.reg_read(UC_X86_REG_RBP),
+                            R8=self.uc.reg_read(UC_X86_REG_R8),
+                            R9=self.uc.reg_read(UC_X86_REG_R9),
+                            R10=self.uc.reg_read(UC_X86_REG_R10),
+                            R11=self.uc.reg_read(UC_X86_REG_R11),
+                            R12=self.uc.reg_read(UC_X86_REG_R12),
+                            R13=self.uc.reg_read(UC_X86_REG_R13),
+                            R14=self.uc.reg_read(UC_X86_REG_R14),
+                            R15=self.uc.reg_read(UC_X86_REG_R15),
+                            RIP=self.uc.reg_read(UC_X86_REG_RIP)
       ) 
     
     
@@ -203,6 +205,7 @@ class x64Corn(Emucorn):
     self.uc.reg_write(UC_X86_REG_R13,0)
     self.uc.reg_write(UC_X86_REG_R14,0)
     self.uc.reg_write(UC_X86_REG_R15,0)
+    self.uc.reg_write(UC_X86_REG_RIP,0)
 
 
    
@@ -244,6 +247,42 @@ class x64Corn(Emucorn):
     elif r_id.lower() == 'r15':
       return UC_X86_REG_R15
     
+  def reg_convert_ns(self,r_id):
+    if r_id.lower() == 'rax':
+      return UC_X86_REG_RAX 
+    elif r_id.lower() == 'rbx':
+      return UC_X86_REG_RBX 
+    elif r_id.lower() == 'rcx':
+      return UC_X86_REG_RCX 
+    elif r_id.lower() == 'rdx':
+      return UC_X86_REG_RDX 
+    elif r_id.lower() == 'rdi':
+      return UC_X86_REG_RDI
+    elif r_id.lower() == 'rsi':
+      return UC_X86_REG_RSI
+    elif r_id.lower() == 'rsp':
+      return UC_X86_REG_RSP
+    elif r_id.lower() == 'rbp':
+      return UC_X86_REG_RBP
+    elif r_id.lower() == 'rip':
+      return UC_X86_REG_RIP
+    elif r_id.lower() == 'r8':
+      return UC_X86_REG_R8
+    elif r_id.lower() == 'r9':
+      return UC_X86_REG_R9
+    elif r_id.lower() == 'r10':
+      return UC_X86_REG_R10
+    elif r_id.lower() == 'r11':
+      return UC_X86_REG_R11
+    elif r_id.lower() == 'r12':
+      return UC_X86_REG_R12
+    elif r_id.lower() == 'r13':
+      return UC_X86_REG_R13
+    elif r_id.lower() == 'r14':
+      return UC_X86_REG_R14
+    elif r_id.lower() == 'r15':
+      return UC_X86_REG_R15
+
   def print_registers(self):
     strout  = 'Registers:\n'
     strout +=  '[RAX=%.8X] [RBX=%.8X] [RCX=%.8X] [RDX=%.8X]\n'%(self.uc.reg_read(UC_X86_REG_RAX),

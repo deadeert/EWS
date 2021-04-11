@@ -1,0 +1,950 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+ALLOC_BA	utils/consts_aarch64.py	/^ALLOC_BA = 0x80000000$/;"	v
+ALLOC_BA	utils/consts_arm.py	/^ALLOC_BA = 0x80000000$/;"	v
+ALLOC_BA	utils/consts_mips.py	/^ALLOC_BA = 0x50000000$/;"	v
+ALLOC_BA	utils/consts_x64.py	/^ALLOC_BA = 0x80000000$/;"	v
+ALLOC_BA	utils/consts_x86.py	/^ALLOC_BA = 0x80000000$/;"	v
+ALLOC_PAGES	utils/consts_aarch64.py	/^ALLOC_PAGES = 0x10$/;"	v
+ALLOC_PAGES	utils/consts_arm.py	/^ALLOC_PAGES = 0x10$/;"	v
+ALLOC_PAGES	utils/consts_mips.py	/^ALLOC_PAGES = 0x10$/;"	v
+ALLOC_PAGES	utils/consts_x64.py	/^ALLOC_PAGES = 0x10$/;"	v
+ALLOC_PAGES	utils/consts_x86.py	/^ALLOC_PAGES = 0x10$/;"	v
+Aarch64Corn	emu/unicorn/aarch64.py	/^class Aarch64Corn(Emucorn):$/;"	c
+Aarch64Pannel	ui/aarch64.py	/^class Aarch64Pannel(Pannel):$/;"	c
+Aarch64Pannel	ui/aarch64_simplified.py	/^class Aarch64Pannel(Pannel):$/;"	c
+Aarch64Registers	utils/utils.py	/^class Aarch64Registers(Registers):$/;"	c
+AddButton	ui/generic.py	/^  def AddButton(self,code):$/;"	f
+AddMapping	ui/generic.py	/^class AddMapping(ida_kernwin.Form):$/;"	c
+AdditionnalMapping	utils/utils.py	/^class AdditionnalMapping():$/;"	c
+AddrNBPages	ui/DisplayMem.py	/^class AddrNBPages(ida_kernwin.Form): $/;"	c
+Arm32Pannel	ui/arm32.py	/^class Arm32Pannel(Pannel):$/;"	c
+Arm32Pannel	ui/arm32_simplified.py	/^class Arm32Pannel(Pannel):$/;"	c
+ArmCorn	emu/unicorn/arm32.py	/^class ArmCorn(Emucorn): $/;"	c
+ArmRegisters	utils/utils.py	/^class ArmRegisters(Registers):$/;"	c
+BREAK_INSN_MIPS	utils/consts_mips.py	/^BREAK_INSN_MIPS = 0xD # 001101$/;"	v
+CONTINUE	ews_new.py	/^CONTINUE=PLUGNAME+":continue"$/;"	v
+Chunck	stubs/ELF/allocator.py	/^  class Chunck():$/;"	c	class:DumpAllocator
+Chunck	stubs/allocator.py	/^  class Chunck():$/;"	c	class:DumpAllocator
+ConfigDeserializer	utils/utils.py	/^class ConfigDeserializer(json.JSONDecoder): #PASS ClassType for register parsing ? $/;"	c
+ConfigExcption	utils/utils.py	/^class ConfigExcption(Exception):$/;"	c
+ConfigSerializer	utils/utils.py	/^class ConfigSerializer(json.JSONEncoder):$/;"	c
+Configuration	utils/utils.py	/^class Configuration():$/;"	c
+CustomStubFile	ui/generic.py	/^  def CustomStubFile(self,code):$/;"	f
+DISPLAYADDR	ews_new.py	/^DISPLAYADDR=PLUGNAME+":displayaddr"$/;"	v
+DISPLAYMEM	ews_new.py	/^DISPLAYMEM=PLUGNAME+":displaymem"$/;"	v
+DISPLAYSTK	ews_new.py	/^DISPLAYSTK=PLUGNAME+":displaystack"$/;"	v
+DumpAllocator	stubs/ELF/allocator.py	/^class DumpAllocator(object):$/;"	c
+DumpAllocator	stubs/allocator.py	/^class DumpAllocator(object):$/;"	c
+EDITCONF	ews_new.py	/^EDITCONF=PLUGNAME+":editconf"$/;"	v
+EDITREG	ews_new.py	/^EDITREG=PLUGNAME+":regedit"$/;"	v
+EDITSTUBCONF	ews_new.py	/^EDITSTUBCONF=PLUGNAME+"stubconfedit"$/;"	v
+ELF	utils/utils.py	/^  ELF = 0 $/;"	v	class:LoaderType
+EMULADVANCECONF	ews_new.py	/^EMULADVANCECONF=PLUGNAME+":advancelauncher"$/;"	v
+EMULF	DevSamples/NewUI/hooks.py	/^EMULF=PLUGNAME+":emulfunc"$/;"	v
+EMULF	ews_new.py	/^EMULF=PLUGNAME+":emulfunc"$/;"	v
+EMULLAUNCHER	ews_new.py	/^EMULLAUNCHER=PLUGNAME+":defaultlauncher"$/;"	v
+EMULSELECT	DevSamples/NewUI/hooks.py	/^EMULSELECT=PLUGNAME+":emulselection"$/;"	v
+EMULSELECT	ews_new.py	/^EMULSELECT=PLUGNAME+":emulselection"$/;"	v
+ERRR	utils/utils.py	/^  ERRR = 2$/;"	v	class:LogType
+EXECFROMSTART	ews_new.py	/^EXECFROMSTART=PLUGNAME+":execfrmstart"$/;"	v
+Emucorn	emu/unicorn/generic.py	/^class Emucorn(Emulator):$/;"	c
+Emuiasm	emu/miasm/generic.py	/^class Emuiasm(Emulator):$/;"	c
+Emulator	emu/emubase.py	/^class Emulator(object):$/;"	c
+FILE	stubs/ELF/utils.py	/^class FILE(object):$/;"	c
+FILE	stubs/stubs_helper.py	/^class FILE(object):$/;"	c
+FOLLOW_PC	emu/unicorn/generic.py	/^FOLLOW_PC= False  #TODO move it to the configuration option$/;"	v
+FileSelector	DevSamples/NewUI/configloader.py	/^class FileSelector(ida_kernwin.Form):$/;"	c
+FileSelector	ui/generic.py	/^class FileSelector(ida_kernwin.Form):$/;"	c
+Handler	DevSamples/NewUI/menu.py	/^class Handler(idaapi.action_handler_t):$/;"	c
+INFO	utils/utils.py	/^  INFO = 0$/;"	v	class:LogType
+LIBCSTARTSTUBADDR	utils/consts_x86.py	/^LIBCSTARTSTUBADDR=STACK_BASEADDR-PSIZE$/;"	v
+LIBCSTARTSTUBCODE	utils/consts_x86.py	/^LIBCSTARTSTUBCODE=b"\\x8b\\x5c\\x24\\x10\\xff\\x74\\x24\\x08\\xff\\x74\\x24\\x0c\\xff\\xd3\\x8b\\x44\\x24\\x0c\\xff\\xd0"$/;"	v
+LOADCONF	ews_new.py	/^LOADCONF=PLUGNAME+":loadconf"$/;"	v
+LibcStub	stubs/ELF/ELF.py	/^class LibcStub():$/;"	c
+LoaderType	utils/utils.py	/^class LoaderType(Enum):$/;"	c
+LogType	utils/utils.py	/^class LogType(Enum):$/;"	c
+Logger	utils/utils.py	/^class Logger():$/;"	c
+MAX_EXEC	emu/unicorn/generic.py	/^MAX_EXEC= 0x1000 # max number of executed insn $/;"	v
+MAX_INSN_SIZE	emu/unicorn/generic.py	/^MAX_INSN_SIZE=8$/;"	v
+MemDisplayer	DevSamples/NewUI/DisplayMem.py	/^class MemDisplayer(idaapi.Choose):$/;"	c
+MemDisplayer	ui/DisplayMem.py	/^class MemDisplayer(idaapi.Choose):$/;"	c
+MemEdit	DevSamples/NewUI/MemEdit.py	/^class MemEdit(ida_kernwin.Form):$/;"	c
+MemEdit	ui/MemEdit.py	/^class MemEdit(ida_kernwin.Form):$/;"	c
+Miarm	emu/miasm/arm32.py	/^class Miarm(Emuiasm):$/;"	c
+MiasmArmSEA	stubs/emu/miasm/sea.py	/^class MiasmArmSEA(MiasmSEA):$/;"	c
+MiasmSEA	stubs/emu/miasm/sea.py	/^class MiasmSEA(StubEngineAbstractor):$/;"	c
+MipsCorn	emu/unicorn/mipsl32.py	/^class MipsCorn(Emucorn): $/;"	c
+Mipsl32Pannel	ui/mipsl32.py	/^class Mipsl32Pannel(Pannel):$/;"	c
+MipslRegisters	utils/utils.py	/^class MipslRegisters(Registers): $/;"	c
+NSTUB	ews_new.py	/^NSTUB=PLUGNAME+":nullstubfunc"$/;"	v
+NWSock	stubs/ELF/utils.py	/^class NWSock(object):$/;"	c
+NWSock	stubs/stubs_helper.py	/^class NWSock(object):$/;"	c
+NullStub	stubs/ELF/ELF.py	/^class NullStub(Stub):$/;"	c
+NullStub	stubs/PE.py	/^class NullStub(Stub):$/;"	c
+OnClose	DevSamples/NewUI/DisplayMem.py	/^    def OnClose(self):$/;"	m	class:MemDisplayer
+OnClose	ui/DisplayMem.py	/^    def OnClose(self):$/;"	m	class:MemDisplayer
+OnGetLine	DevSamples/NewUI/DisplayMem.py	/^        def OnGetLine(self, n):$/;"	m	class:SelectSegment.segment_chooser
+OnGetLine	DevSamples/NewUI/DisplayMem.py	/^    def OnGetLine(self,n):$/;"	m	class:MemDisplayer
+OnGetLine	DevSamples/NewUI/tag_func_ui.py	/^        def OnGetLine(self, n):$/;"	m	class:TagForm.tag_chooser
+OnGetLine	ui/DisplayMem.py	/^        def OnGetLine(self, n):$/;"	m	class:SelectSegment.segment_chooser
+OnGetLine	ui/DisplayMem.py	/^    def OnGetLine(self,n):$/;"	m	class:MemDisplayer
+OnGetLine	ui/generic.py	/^        def OnGetLine(self, n):$/;"	m	class:Pannel.segment_chooser
+OnGetLine	ui/generic.py	/^        def OnGetLine(self, n):$/;"	m	class:StubForm.function_chooser
+OnGetLine	ui/tag_func_ui.py	/^        def OnGetLine(self, n):$/;"	m	class:TagForm.tag_chooser
+OnGetSize	DevSamples/NewUI/DisplayMem.py	/^        def OnGetSize(self):$/;"	m	class:SelectSegment.segment_chooser
+OnGetSize	DevSamples/NewUI/DisplayMem.py	/^    def OnGetSize(self):$/;"	m	class:MemDisplayer
+OnGetSize	DevSamples/NewUI/tag_func_ui.py	/^        def OnGetSize(self):$/;"	m	class:TagForm.tag_chooser
+OnGetSize	ui/DisplayMem.py	/^        def OnGetSize(self):$/;"	m	class:SelectSegment.segment_chooser
+OnGetSize	ui/DisplayMem.py	/^    def OnGetSize(self):$/;"	m	class:MemDisplayer
+OnGetSize	ui/generic.py	/^        def OnGetSize(self):$/;"	m	class:Pannel.segment_chooser
+OnGetSize	ui/generic.py	/^        def OnGetSize(self):$/;"	m	class:StubForm.function_chooser
+OnGetSize	ui/tag_func_ui.py	/^        def OnGetSize(self):$/;"	m	class:TagForm.tag_chooser
+OnSelectLine	DevSamples/NewUI/DisplayMem.py	/^    def OnSelectLine(self,n):$/;"	m	class:MemDisplayer
+OnSelectLine	ui/DisplayMem.py	/^    def OnSelectLine(self,n):$/;"	m	class:MemDisplayer
+OnbAdd	ui/generic.py	/^  def OnbAdd(self,code):$/;"	f
+OnbFile	ui/generic.py	/^  def OnbFile(self,code):$/;"	f
+PATCHMEM	ews_new.py	/^PATCHMEM=PLUGNAME+":patchmem"$/;"	v
+PE	utils/utils.py	/^  PE  = 1$/;"	v	class:LoaderType
+PLUGNAME	DevSamples/NewUI/hooks.py	/^PLUGNAME="ews"$/;"	v
+PLUGNAME	ews_new.py	/^PLUGNAME="ews"$/;"	v
+PSIZE	utils/consts_aarch64.py	/^PSIZE=0x1000$/;"	v
+PSIZE	utils/consts_x64.py	/^PSIZE=0x1000$/;"	v
+PSIZE	utils/consts_x86.py	/^PSIZE=0x1000$/;"	v
+Pannel	ui/generic.py	/^class Pannel(ida_kernwin.Form):$/;"	c
+READ	utils/utils.py	/^  READ=0$/;"	v	class:SockMode
+RESTART	ews_new.py	/^RESTART=PLUGNAME+":restart"$/;"	v
+RegArm32Edit	DevSamples/NewUI/regedit.py	/^class RegArm32Edit(ida_kernwin.Form):$/;"	c
+RegArm32Edit	ui/regedit.py	/^class RegArm32Edit(ida_kernwin.Form):$/;"	c
+RegArm64Edit	ui/regedit.py	/^class RegArm64Edit(ida_kernwin.Form):$/;"	c
+RegEnumKeyExW	stubs/PE.py	/^class RegEnumKeyExW(Stub):$/;"	c
+Registers	utils/utils.py	/^class Registers(object):$/;"	c
+Regx64Edit	ui/regedit.py	/^class Regx64Edit(ida_kernwin.Form):$/;"	c
+Regx86Edit	ui/regedit.py	/^class Regx86Edit(ida_kernwin.Form):$/;"	c
+STACK_BASEADDR	utils/consts_aarch64.py	/^STACK_BASEADDR = 0x7FFFFFFF00000000$/;"	v
+STACK_BASEADDR	utils/consts_arm.py	/^STACK_BASEADDR = 0x7FF00000$/;"	v
+STACK_BASEADDR	utils/consts_x64.py	/^STACK_BASEADDR = 0x7FFFFFFF00000000$/;"	v
+STACK_BASEADDR	utils/consts_x86.py	/^STACK_BASEADDR = 0x7FF00000$/;"	v
+STACK_SIZE	utils/consts_aarch64.py	/^STACK_SIZE = 0x10000$/;"	v
+STACK_SIZE	utils/consts_arm.py	/^STACK_SIZE = 0x10000$/;"	v
+STACK_SIZE	utils/consts_x64.py	/^STACK_SIZE = 0x10000$/;"	v
+STACK_SIZE	utils/consts_x86.py	/^STACK_SIZE = 0x10000$/;"	v
+STDERR	stubs/ELF/utils.py	/^STDERR=2$/;"	v
+STDERR	stubs/stubs_helper.py	/^STDERR=2$/;"	v
+STDIN	stubs/ELF/utils.py	/^STDIN=0$/;"	v
+STDIN	stubs/stubs_helper.py	/^STDIN=0$/;"	v
+STDOUT	stubs/ELF/utils.py	/^STDOUT=1$/;"	v
+STDOUT	stubs/stubs_helper.py	/^STDOUT=1$/;"	v
+STEPIN	ews_new.py	/^STEPIN=PLUGNAME+":stepin"$/;"	v
+STEPOVER	ews_new.py	/^STEPOVER=PLUGNAME+":stepover"$/;"	v
+SVC_INSN_ARM	utils/consts_arm.py	/^SVC_INSN_ARM   = 0xEF000000$/;"	v
+SelectSegment	DevSamples/NewUI/DisplayMem.py	/^class SelectSegment(ida_kernwin.Form):$/;"	c
+SelectSegment	ui/DisplayMem.py	/^class SelectSegment(ida_kernwin.Form):$/;"	c
+SockMode	utils/utils.py	/^class SockMode(Enum):$/;"	c
+Stub	stubs/ELF/ELF.py	/^class Stub(object):$/;"	c
+Stub	stubs/PE.py	/^class Stub(object):$/;"	c
+StubConfiguration	utils/utils.py	/^class StubConfiguration():$/;"	c
+StubEngineAbstractor	stubs/emu/generic.py	/^class StubEngineAbstractor(object):$/;"	c
+StubEngineAbstractor	stubs/generic.py	/^class StubEngineAbstractor(object):$/;"	c
+StubForm	ui/generic.py	/^class StubForm(ida_kernwin.Form):$/;"	c
+StubsX64	stubs/PE.py	/^class StubsX64(): $/;"	c
+StubsX86	stubs/PE.py	/^class StubsX86():$/;"	c
+TAGFUNC	ews_new.py	/^TAGFUNC=PLUGNAME+":tagfunc"$/;"	v
+TRAMPOLINE_ADDR	utils/consts_mips.py	/^TRAMPOLINE_ADDR=0x1000$/;"	v
+TRAMPOLINE_INSNS	utils/consts_mips.py	/^TRAMPOLINE_INSNS=0x8C01000003E0000800000000 # lw $at, ($zero); jr $ar ; nop;$/;"	v
+TRAMPOLINE_SIZE	utils/consts_mips.py	/^TRAMPOLINE_SIZE=0xC$/;"	v
+TRAP_INS_SIZE	utils/consts_arm.py	/^TRAP_INS_SIZE  = 2$/;"	v
+TRAP_INX_SIZE	utils/consts_arm.py	/^TRAP_INX_SIZE  = 2$/;"	v
+TRAP_PAGE_BA	utils/consts_arm.py	/^TRAP_PAGE_BA = 0xFFFFE000$/;"	v
+TagForm	DevSamples/NewUI/tag_func_ui.py	/^class TagForm(ida_kernwin.Form):$/;"	c
+TagForm	ui/tag_func_ui.py	/^class TagForm(ida_kernwin.Form):$/;"	c
+UI_Hook	DevSamples/NewUI/hooks.py	/^class UI_Hook(idaapi.UI_Hooks):$/;"	c
+UI_Hook	ews_new.py	/^class UI_Hook(idaapi.UI_Hooks):$/;"	c
+UKN	utils/utils.py	/^  UKN=-1$/;"	v	class:SockMode
+UnicornAarch64SEA	stubs/emu/unicorn/sea.py	/^class UnicornAarch64SEA(UnicornSEA):$/;"	c
+UnicornArmSEA	stubs/emu/unicorn/sea.py	/^class UnicornArmSEA(UnicornSEA):$/;"	c
+UnicornMipsbSEA	stubs/emu/unicorn/sea.py	/^class UnicornMipsbSEA(UnicornSEA):$/;"	c
+UnicornMipslSEA	stubs/emu/unicorn/sea.py	/^class UnicornMipslSEA(UnicornSEA):$/;"	c
+UnicornSEA	stubs/emu/unicorn/sea.py	/^class UnicornSEA(StubEngineAbstractor):$/;"	c
+UnicornX64SEA	stubs/emu/unicorn/sea.py	/^class UnicornX64SEA(UnicornSEA):$/;"	c
+UnicornX86SEA	stubs/emu/unicorn/sea.py	/^class UnicornX86SEA(UnicornSEA):$/;"	c
+WARN	utils/utils.py	/^  WARN = 1$/;"	v	class:LogType
+WRITE	utils/utils.py	/^  WRITE=1 $/;"	v	class:SockMode
+__add__	utils/utils.py	/^  def __add__(self,addm):$/;"	m	class:AdditionnalMapping	file:
+__add__	utils/utils.py	/^  def __add__(self,sconf):$/;"	m	class:StubConfiguration	file:
+__call__	stubs/ELF/ELF.py	/^    def __call__(self,cls):$/;"	m	class:LibcStub	file:
+__call__	stubs/PE.py	/^    def __call__(self,cls):$/;"	m	class:StubsX64	file:
+__call__	stubs/PE.py	/^    def __call__(self,cls):$/;"	m	class:StubsX86	file:
+__errno_location	stubs/ELF/ELF.py	/^class __errno_location(Stub):$/;"	c
+__init__	DevSamples/NewUI/DisplayMem.py	/^        def __init__(self, title, nb=5, flags=ida_kernwin.Choose.CH_MODAL):$/;"	m	class:SelectSegment.segment_chooser
+__init__	DevSamples/NewUI/DisplayMem.py	/^    def __init__(self,$/;"	m	class:MemDisplayer
+__init__	DevSamples/NewUI/DisplayMem.py	/^  def __init__(self):$/;"	m	class:SelectSegment
+__init__	DevSamples/NewUI/MemEdit.py	/^    def __init__(self,uc=None):$/;"	m	class:MemEdit
+__init__	DevSamples/NewUI/configloader.py	/^  def __init__(self):$/;"	m	class:FileSelector
+__init__	DevSamples/NewUI/hooks.py	/^    def __init__(self):$/;"	m	class:UI_Hook
+__init__	DevSamples/NewUI/hooks.py	/^    def __init__(self, action):$/;"	m	class:menu_action_handler_t
+__init__	DevSamples/NewUI/menu.py	/^    def __init__(self, callback):$/;"	m	class:Handler
+__init__	DevSamples/NewUI/regedit.py	/^    def __init__(self,regs):$/;"	m	class:RegArm32Edit
+__init__	DevSamples/NewUI/tag_func_ui.py	/^        def __init__(self, title, tag_list, nb=5):$/;"	m	class:TagForm.tag_chooser
+__init__	DevSamples/NewUI/tag_func_ui.py	/^  def __init__(self,tag_list):$/;"	m	class:TagForm
+__init__	emu/emubase.py	/^  def __init__(self,conf):$/;"	m	class:Emulator
+__init__	emu/miasm/arm32.py	/^  def __init__(self,conf):$/;"	m	class:Miarm
+__init__	emu/miasm/generic.py	/^  def __init__(self,conf):$/;"	m	class:Emuiasm
+__init__	emu/unicorn/Olds/x86.py	/^  def __init__(self,conf):$/;"	m	class:x86Corn
+__init__	emu/unicorn/aarch64.py	/^    def __init__(self,conf):$/;"	m	class:Aarch64Corn
+__init__	emu/unicorn/arm32.py	/^  def __init__(self,conf):$/;"	m	class:ArmCorn
+__init__	emu/unicorn/generic.py	/^    def __init__(self,conf):$/;"	m	class:Emucorn
+__init__	emu/unicorn/mipsl32.py	/^  def __init__(self,conf):$/;"	m	class:MipsCorn
+__init__	emu/unicorn/x64.py	/^  def __init__(self,conf):$/;"	m	class:x64Corn
+__init__	emu/unicorn/x86.py	/^  def __init__(self,conf):$/;"	m	class:x86Corn
+__init__	ews_new.py	/^    def __init__(self):$/;"	m	class:UI_Hook
+__init__	ews_new.py	/^    def __init__(self, action):$/;"	m	class:menu_action_handler_t
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:NullStub
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:__errno_location
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:_fprintf_chk
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:calloc
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:fclose
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:fflush
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:fgetc
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:fgets
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:fopen
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:fprintf
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:fread
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:free
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:fseek
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:fwrite
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:g_file_get_contents
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:getpid
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:index
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:malloc
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:memcpy
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:memset
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:printf
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:puts
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:recv
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:scandir
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:send
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:snprintf
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:strcmp
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:strcpy
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:strdup
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:strerror
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:strlen
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:strncat
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:strncmp
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:strncpy
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:strtok
+__init__	stubs/ELF/ELF.py	/^    def __init__(self):$/;"	m	class:strtol
+__init__	stubs/ELF/ELF.py	/^    def __init__(self,name):$/;"	m	class:LibcStub
+__init__	stubs/ELF/ELF.py	/^  def __init__(self):$/;"	m	class:socket
+__init__	stubs/ELF/ELF.py	/^  def __init__(self):$/;"	m	class:strchr
+__init__	stubs/ELF/ELF.py	/^  def __init__(self):$/;"	m	class:strfry
+__init__	stubs/ELF/ELF.py	/^  def __init__(self):$/;"	m	class:strstr
+__init__	stubs/ELF/ELF.py	/^  def __init__(self,helper=None):$/;"	m	class:Stub
+__init__	stubs/ELF/allocator.py	/^    def __init__(self,addr,size):$/;"	m	class:DumpAllocator.Chunck
+__init__	stubs/ELF/allocator.py	/^  def __init__(self,base_addr,max_size):$/;"	m	class:DumpAllocator
+__init__	stubs/ELF/utils.py	/^    def __init__(self,fd,mode):$/;"	m	class:FILE
+__init__	stubs/ELF/utils.py	/^  def __init__(self,mode=SockMode.UKN):$/;"	m	class:NWSock
+__init__	stubs/PE.py	/^    def __init__(self,arch):$/;"	m	class:NullStub
+__init__	stubs/PE.py	/^    def __init__(self,name):$/;"	m	class:StubsX64
+__init__	stubs/PE.py	/^    def __init__(self,name):$/;"	m	class:StubsX86
+__init__	stubs/PE.py	/^   def __init__(self,itnum,arch):$/;"	m	class:RegEnumKeyExW
+__init__	stubs/PE.py	/^  def __init__(self,itnum,arch,helper=None):$/;"	m	class:Stub
+__init__	stubs/allocator.py	/^    def __init__(self,addr,size):$/;"	m	class:DumpAllocator.Chunck
+__init__	stubs/allocator.py	/^  def __init__(self,base_addr,max_size):$/;"	m	class:DumpAllocator
+__init__	stubs/emu/generic.py	/^  def __init__(self,emu,allocator,wsize):$/;"	m	class:StubEngineAbstractor
+__init__	stubs/emu/miasm/sea.py	/^  def __init__(self,emu,allocator,wsize):$/;"	m	class:MiasmSEA
+__init__	stubs/emu/miasm/sea.py	/^  def __init__(self,jitter,allocator,wsize):$/;"	m	class:MiasmArmSEA
+__init__	stubs/emu/unicorn/sea.py	/^  def __init__(self,emu,allocator,wsize):$/;"	m	class:UnicornAarch64SEA
+__init__	stubs/emu/unicorn/sea.py	/^  def __init__(self,emu,allocator,wsize):$/;"	m	class:UnicornArmSEA
+__init__	stubs/emu/unicorn/sea.py	/^  def __init__(self,emu,allocator,wsize):$/;"	m	class:UnicornMipsbSEA
+__init__	stubs/emu/unicorn/sea.py	/^  def __init__(self,emu,allocator,wsize):$/;"	m	class:UnicornMipslSEA
+__init__	stubs/emu/unicorn/sea.py	/^  def __init__(self,emu,allocator,wsize):$/;"	m	class:UnicornSEA
+__init__	stubs/emu/unicorn/sea.py	/^  def __init__(self,emu,allocator,wsize):$/;"	m	class:UnicornX64SEA
+__init__	stubs/emu/unicorn/sea.py	/^  def __init__(self,emu,allocator,wsize):$/;"	m	class:UnicornX86SEA
+__init__	stubs/generic.py	/^  def __init__(self,emu,allocator,wsize):$/;"	m	class:StubEngineAbstractor
+__init__	stubs/stubs_helper.py	/^    def __init__(self,fd,mode):$/;"	m	class:FILE
+__init__	stubs/stubs_helper.py	/^  def __init__(self,mode=SockMode.UKN):$/;"	m	class:NWSock
+__init__	ui/DisplayMem.py	/^        def __init__(self, title, nb=5, flags=ida_kernwin.Choose.CH_MODAL):$/;"	m	class:SelectSegment.segment_chooser
+__init__	ui/DisplayMem.py	/^    def __init__(self):$/;"	m	class:AddrNBPages
+__init__	ui/DisplayMem.py	/^    def __init__(self,$/;"	m	class:MemDisplayer
+__init__	ui/DisplayMem.py	/^  def __init__(self):$/;"	m	class:SelectSegment
+__init__	ui/MemEdit.py	/^    def __init__(self,emu=None):$/;"	m	class:MemEdit
+__init__	ui/aarch64.py	/^  def __init__(self,conf):$/;"	m	class:Aarch64Pannel
+__init__	ui/aarch64_simplified.py	/^  def __init__(self,conf):$/;"	m	class:Aarch64Pannel
+__init__	ui/arm32.py	/^  def __init__(self,conf):$/;"	m	class:Arm32Pannel
+__init__	ui/arm32_simplified.py	/^  def __init__(self,conf):$/;"	m	class:Arm32Pannel
+__init__	ui/generic.py	/^        def __init__(self, title, nb=5, flags=ida_kernwin.Choose.CH_MULTI):$/;"	m	class:Pannel.segment_chooser
+__init__	ui/generic.py	/^        def __init__(self, title, nb=5, flags=ida_kernwin.Choose.CH_MULTI):$/;"	m	class:StubForm.function_chooser
+__init__	ui/generic.py	/^  def __init__(self):$/;"	m	class:AddMapping
+__init__	ui/generic.py	/^  def __init__(self):$/;"	m	class:FileSelector
+__init__	ui/generic.py	/^  def __init__(self):$/;"	m	class:StubForm
+__init__	ui/generic.py	/^  def __init__(self,conf):$/;"	m	class:Pannel
+__init__	ui/mipsl32.py	/^  def __init__(self,conf):$/;"	m	class:Mipsl32Pannel
+__init__	ui/regedit.py	/^    def __init__(self,regs):$/;"	m	class:RegArm32Edit
+__init__	ui/regedit.py	/^    def __init__(self,regs):$/;"	m	class:RegArm64Edit
+__init__	ui/regedit.py	/^    def __init__(self,regs):$/;"	m	class:Regx64Edit
+__init__	ui/regedit.py	/^    def __init__(self,regs):$/;"	m	class:Regx86Edit
+__init__	ui/tag_func_ui.py	/^        def __init__(self, title, tag_list, nb=5):$/;"	m	class:TagForm.tag_chooser
+__init__	ui/tag_func_ui.py	/^  def __init__(self,tag_list):$/;"	m	class:TagForm
+__init__	ui/x64.py	/^  def __init__(self,conf):$/;"	m	class:x64Pannel
+__init__	ui/x64_simplified.py	/^  def __init__(self,conf):$/;"	m	class:x64Pannel
+__init__	ui/x86.py	/^  def __init__(self,conf):$/;"	m	class:x86Pannel
+__init__	ui/x86_simplified.py	/^  def __init__(self,conf):$/;"	m	class:x86Pannel
+__init__	utils/utils.py	/^  def __init__(self):$/;"	m	class:Registers
+__init__	utils/utils.py	/^  def __init__(self,$/;"	m	class:Configuration
+__init__	utils/utils.py	/^  def __init__(self,CF,PF,AF,ZF,SF,TF,EIF,DF,OF):$/;"	m	class:x64RFLAGS
+__init__	utils/utils.py	/^  def __init__(self,CF,PF,AF,ZF,SF,TF,EIF,DF,OF):$/;"	m	class:x86EFLAGS
+__init__	utils/utils.py	/^  def __init__(self,EAX,EBX,ECX,EDX,EDI,ESI,EBP,ESP,EIP):$/;"	m	class:x86Registers
+__init__	utils/utils.py	/^  def __init__(self,N,Z,C,V,I,F):$/;"	m	class:aarch64CPSR
+__init__	utils/utils.py	/^  def __init__(self,N,Z,C,V,I,F):$/;"	m	class:arm32CPSR
+__init__	utils/utils.py	/^  def __init__(self,R0,R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11,R12,R13,R14,R15):$/;"	m	class:ArmRegisters
+__init__	utils/utils.py	/^  def __init__(self,RAX,RBX,RCX,RDX,RDI,RSI,R8,R9,R10,R11,R12,R13,R14,R15,RBP,RSP,RIP):$/;"	m	class:x64Registers
+__init__	utils/utils.py	/^  def __init__(self,VERBOSE,fpath=None):$/;"	m	class:Logger
+__init__	utils/utils.py	/^  def __init__(self,X0,X1,X2,X3,X4,X5,X6,X7,X8,X9,$/;"	m	class:Aarch64Registers
+__init__	utils/utils.py	/^  def __init__(self,at,a0,a1,a2,a3,s0,s1,s2,s3,s4,s5,s6,s7,k0,k1,pc,$/;"	m	class:MipslRegisters
+__init__	utils/utils.py	/^  def __init__(self,mappings):$/;"	m	class:AdditionnalMapping
+__init__	utils/utils.py	/^  def __init__(self,nstubs,$/;"	m	class:StubConfiguration
+__init__	utils/utils.py	/^  def __init__(self,str):$/;"	m	class:ConfigExcption
+__str__	stubs/ELF/allocator.py	/^  def __str__(self):$/;"	m	class:DumpAllocator	file:
+__str__	stubs/allocator.py	/^  def __str__(self):$/;"	m	class:DumpAllocator	file:
+__str__	utils/utils.py	/^  def __str__(self):$/;"	m	class:AdditionnalMapping	file:
+__str__	utils/utils.py	/^  def __str__(self):$/;"	m	class:Configuration	file:
+__str__	utils/utils.py	/^  def __str__(self):$/;"	m	class:Registers	file:
+__str__	utils/utils.py	/^  def __str__(self):$/;"	m	class:StubConfiguration	file:
+__str__	utils/utils.py	/^  def __str__(self):$/;"	m	class:aarch64CPSR	file:
+__str__	utils/utils.py	/^  def __str__(self):$/;"	m	class:arm32CPSR	file:
+__str__	utils/utils.py	/^  def __str__(self):$/;"	m	class:x64RFLAGS	file:
+__str__	utils/utils.py	/^  def __str__(self):$/;"	m	class:x86EFLAGS	file:
+_fprintf_chk	stubs/ELF/ELF.py	/^class _fprintf_chk(Stub):$/;"	c
+aarch64CPSR	utils/utils.py	/^class aarch64CPSR(Registers):$/;"	c
+activate	DevSamples/NewUI/hooks.py	/^    def activate(self, ctx):$/;"	m	class:menu_action_handler_t
+activate	DevSamples/NewUI/menu.py	/^    def activate(self, ctx):$/;"	m	class:Handler
+activate	ews_new.py	/^    def activate(self, ctx):$/;"	m	class:menu_action_handler_t
+add_breakpoint	emu/emubase.py	/^  def add_breakpoint(self,ea,update_conf=True):$/;"	m	class:Emulator
+add_breakpoint	utils/utils.py	/^  def add_breakpoint(self,ea):$/;"	m	class:Configuration
+add_custom_stub	emu/emubase.py	/^  def add_custom_stub(self,ea,func):$/;"	m	class:Emulator
+add_custom_stub	emu/miasm/arm32.py	/^  def add_custom_stub(self,ea,func):$/;"	m	class:Miarm
+add_custom_stub	emu/unicorn/generic.py	/^    def add_custom_stub(self,ea,func):$/;"	m	class:Emucorn
+add_mapping	emu/unicorn/generic.py	/^    def add_mapping(self,addr,mem):$/;"	m	class:Emucorn
+add_null_stub	emu/emubase.py	/^  def add_null_stub(self,ea,fname=None):$/;"	m	class:Emulator
+add_null_stub	emu/miasm/arm32.py	/^  def add_null_stub(self,ea,fname=None):$/;"	m	class:Miarm
+add_null_stub	emu/unicorn/generic.py	/^    def add_null_stub(self,ea):$/;"	m	class:Emucorn
+add_null_stub	utils/utils.py	/^  def add_null_stub(self,ea):$/;"	m	class:Configuration
+add_tag	utils/utils.py	/^  def add_tag(self,ea,stub_name):$/;"	m	class:Configuration
+addr	stubs/ELF/allocator.py	/^  addr= alloc.malloc(100)$/;"	v
+addr	stubs/allocator.py	/^  addr= alloc.malloc(100)$/;"	v
+addr2	stubs/ELF/allocator.py	/^  addr2 = alloc.malloc(200)$/;"	v
+addr2	stubs/allocator.py	/^  addr2 = alloc.malloc(200)$/;"	v
+addr3	stubs/ELF/allocator.py	/^  addr3 = alloc.malloc(100)$/;"	v
+addr3	stubs/allocator.py	/^  addr3 = alloc.malloc(100)$/;"	v
+addr4	stubs/ELF/allocator.py	/^  addr4 = alloc.malloc(240)$/;"	v
+addr4	stubs/allocator.py	/^  addr4 = alloc.malloc(240)$/;"	v
+alloc	stubs/ELF/allocator.py	/^  alloc = DumpAllocator(0x80000000,0x2000)$/;"	v
+alloc	stubs/allocator.py	/^  alloc = DumpAllocator(0x80000000,0x2000)$/;"	v
+arch	stubs/PE.py	/^    arch = 'x64'$/;"	v	class:StubsX64
+arch	stubs/PE.py	/^    arch = 'x86'$/;"	v	class:StubsX86
+arm32CPSR	utils/utils.py	/^class arm32CPSR(Registers):$/;"	c
+asciify	DevSamples/NewUI/DisplayMem.py	/^def asciify(val):$/;"	f
+asciify	ui/DisplayMem.py	/^def asciify(val):$/;"	f
+attach_to_menu	DevSamples/NewUI/menu.py	/^    def attach_to_menu(self, menu):$/;"	m	class:Handler
+b	DevSamples/func_tail.py	/^    b=next(i)$/;"	v
+b	DevSamples/func_tail.py	/^b=True$/;"	v
+bind	stubs/ELF/utils.py	/^  def bind(self):$/;"	m	class:NWSock
+bind	stubs/stubs_helper.py	/^  def bind(self):$/;"	m	class:NWSock
+breakpoints_all_insn_target	utils/utils.py	/^def breakpoints_all_insn_target(insn):$/;"	f
+build_chain	stubs/ELF/utils.py	/^def build_chain(helper,format_l,values):$/;"	f
+build_func_name	utils/utils.py	/^def build_func_name(ea):$/;"	f
+byte_2h	stubs/ELF/ELF.py	/^byte_2h = lambda x: (x >> 16) & 0xFFFF$/;"	v
+byte_2h	stubs/PE.py	/^byte_2h = lambda x: (x >> 16) & 0xFFFF$/;"	v
+byte_2l	stubs/ELF/ELF.py	/^byte_2l = lambda x: x & 0xFFFF$/;"	v
+byte_2l	stubs/PE.py	/^byte_2l = lambda x: x & 0xFFFF$/;"	v
+byte_h	stubs/ELF/ELF.py	/^byte_h = lambda x: (x >> 16) & 0xFF$/;"	v
+byte_h	stubs/PE.py	/^byte_h = lambda x: (x >> 16) & 0xFF$/;"	v
+byte_l	stubs/ELF/ELF.py	/^byte_l = lambda x: x & 0xFF$/;"	v
+byte_l	stubs/PE.py	/^byte_l = lambda x: x & 0xFF$/;"	v
+c	DevSamples/func_tail.py	/^    c=i.chunk()$/;"	v
+callback	DevSamples/NewUI/MemEdit.py	/^    def callback(self,fid):$/;"	f
+callback	ui/MemEdit.py	/^    def callback(self,fid):$/;"	f
+calloc	stubs/ELF/ELF.py	/^class calloc(Stub):$/;"	c
+cb_callback	DevSamples/NewUI/DisplayMem.py	/^  def cb_callback(self,fid):$/;"	f
+cb_callback	DevSamples/NewUI/configloader.py	/^  def cb_callback(self,fid):$/;"	f
+cb_callback	DevSamples/NewUI/tag_func_ui.py	/^  def cb_callback(self,fid):$/;"	f
+cb_callback	ui/DisplayMem.py	/^  def cb_callback(self,fid):$/;"	f
+cb_callback	ui/aarch64.py	/^  def cb_callback(self,fid):$/;"	f
+cb_callback	ui/aarch64_simplified.py	/^  def cb_callback(self,fid):$/;"	f
+cb_callback	ui/arm32.py	/^  def cb_callback(self,fid):$/;"	f
+cb_callback	ui/arm32_simplified.py	/^  def cb_callback(self,fid):$/;"	f
+cb_callback	ui/generic.py	/^  def cb_callback(self,fid):$/;"	f
+cb_callback	ui/mipsl32.py	/^  def cb_callback(self,fid):$/;"	f
+cb_callback	ui/tag_func_ui.py	/^  def cb_callback(self,fid):$/;"	f
+cb_callback	ui/x64.py	/^  def cb_callback(self,fid):$/;"	f
+cb_callback	ui/x64_simplified.py	/^  def cb_callback(self,fid):$/;"	f
+cb_callback	ui/x86.py	/^  def cb_callback(self,fid):$/;"	f
+cb_callback	ui/x86_simplified.py	/^  def cb_callback(self,fid):$/;"	f
+check_mapping	emu/emubase.py	/^  def check_mapping(conf):$/;"	m	class:Emulator
+cleanstuff	stubs/emu/generic.py	/^  def cleanstuff(self,nbytes):$/;"	m	class:StubEngineAbstractor
+cleanstuff	stubs/generic.py	/^  def cleanstuff(self,nbytes):$/;"	m	class:StubEngineAbstractor
+close	stubs/ELF/utils.py	/^    def close(self):$/;"	m	class:FILE
+close	stubs/stubs_helper.py	/^    def close(self):$/;"	m	class:FILE
+colorate_graph	utils/utils.py	/^def colorate_graph(color_map):$/;"	f
+conf	ews.py	/^        conf = Aarch64Pannel.fillconfig() $/;"	v
+conf	ews.py	/^        conf = Arm32Pannel.fillconfig()$/;"	v
+conf	ews.py	/^      conf = x86Pannel.fillconfig()$/;"	v
+conf	ews.py	/^    conf = Mipsl32Pannel.fillconfig()$/;"	v
+conf	ews.py	/^    conf = x64Pannel.fillconfig()$/;"	v
+console	utils/utils.py	/^  def console(self,type,*msg):$/;"	m	class:Logger
+continuee	emu/unicorn/generic.py	/^    def continuee(self):$/;"	m	class:Emucorn
+continuee	ews_new.py	/^    def continuee(self):$/;"	m	class:menu_action_handler_t
+create	DevSamples/NewUI/regedit.py	/^    def create(regs=None):$/;"	m	class:RegArm32Edit
+create	DevSamples/NewUI/tag_func_ui.py	/^  def create(tag_list):$/;"	f
+create	ui/regedit.py	/^    def create(regs=None):$/;"	m	class:RegArm32Edit
+create	ui/regedit.py	/^    def create(regs=None):$/;"	m	class:RegArm64Edit
+create	ui/regedit.py	/^    def create(regs=None):$/;"	m	class:Regx64Edit
+create	ui/regedit.py	/^    def create(regs=None):$/;"	m	class:Regx86Edit
+create	ui/tag_func_ui.py	/^  def create(tag_list):$/;"	f
+create	utils/utils.py	/^  def create():$/;"	m	class:AdditionnalMapping
+create	utils/utils.py	/^  def create():$/;"	m	class:StubConfiguration
+create	utils/utils.py	/^  def create(cls,cpsr):$/;"	m	class:aarch64CPSR
+create	utils/utils.py	/^  def create(cls,cpsr):$/;"	m	class:arm32CPSR
+create	utils/utils.py	/^  def create(cls,eflags):$/;"	m	class:x64RFLAGS
+create	utils/utils.py	/^  def create(cls,eflags):$/;"	m	class:x86EFLAGS
+decode	utils/utils.py	/^    def decode(self,json_txt):$/;"	m	class:ConfigDeserializer
+default	utils/utils.py	/^  def default(self,conf):$/;"	m	class:ConfigSerializer
+del_breakpoint	emu/emubase.py	/^  def del_breakpoint(self,ea,update_conf=True):$/;"	m	class:Emulator
+del_breakpoints	emu/emubase.py	/^  def del_breakpoints(self):$/;"	m	class:Emulator
+deref_format	stubs/ELF/utils.py	/^def deref_format(helper,format,arg_num):$/;"	f
+deref_size	stubs/ELF/utils.py	/^def deref_size(helper,addr,size,delem=None):$/;"	f
+deref_size	stubs/stubs_helper.py	/^def deref_size(helper,addr,size,delem=None):$/;"	f
+deref_string	stubs/ELF/utils.py	/^def deref_string(helper,addr):$/;"	f
+deref_string	stubs/stubs_helper.py	/^def deref_string(helper,addr):$/;"	f
+deref_until	stubs/ELF/utils.py	/^def deref_until(helper,addr,delem):$/;"	f
+deref_until	stubs/stubs_helper.py	/^def deref_until(helper,addr,delem):$/;"	f
+dirent_struct_len	stubs/ELF/conf.py	/^dirent_struct_len = 0xB$/;"	v
+dirent_struct_len	stubs/stubs_conf.py	/^dirent_struct_len = 0xB$/;"	v
+display_addr	utils/utils_ui.py	/^def display_addr(emu):$/;"	f
+display_allocations	emu/emubase.py	/^  def display_allocations(self):$/;"	m	class:Emulator
+display_mem	utils/utils.py	/^def display_mem(mem,ba=None,direction=0):$/;"	f
+display_page	emu/emubase.py	/^  def display_page(self,p_base):$/;"	m	class:Emulator
+display_page	emu/miasm/generic.py	/^  def display_page(self,p_base,size=None):$/;"	m	class:Emuiasm
+display_page	emu/unicorn/generic.py	/^    def display_page(self,p_base,size=None):$/;"	m	class:Emucorn
+display_range	emu/emubase.py	/^  def display_range(self,start_ea,end_ea):$/;"	m	class:Emulator
+display_range	emu/unicorn/generic.py	/^    def display_range(self,start_ea,end_ea):$/;"	m	class:Emucorn
+display_section	utils/utils_ui.py	/^def display_section(emu):$/;"	f
+display_stack	emu/emubase.py	/^  def display_stack(self):$/;"	m	class:Emulator
+display_stack	emu/emubase.py	/^  def display_stack(self,size=None):$/;"	m	class:Emulator
+display_stack	emu/unicorn/generic.py	/^    def display_stack(self,size=None):$/;"	m	class:Emucorn
+display_stack	utils/utils_ui.py	/^def display_stack(emu):$/;"	f
+displayaddr	ews_new.py	/^    def displayaddr(self):$/;"	m	class:menu_action_handler_t
+displaymem	ews_new.py	/^    def displaymem(self):$/;"	m	class:menu_action_handler_t
+displaymem	utils/utils_ui.py	/^def displaymem(emu,content,name,base_addr):$/;"	f
+displaystack	ews_new.py	/^    def displaystack(self):$/;"	m	class:menu_action_handler_t
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:NullStub
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:__errno_location
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:_fprintf_chk
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:calloc
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:fclose
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:fflush
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:fgetc
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:fgets
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:fopen
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:fprintf
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:fread
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:free
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:fseek
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:fwrite
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:g_file_get_contents
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:getpid
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:index
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:malloc
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:memcpy
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:memset
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:printf
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:puts
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:recv
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:scandir
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:send
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:snprintf
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:strcmp
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:strcpy
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:strdup
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:strerror
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:strlen
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:strncat
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:strncmp
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:strncpy
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:strtok
+do_it	stubs/ELF/ELF.py	/^    def do_it(self,*args):$/;"	m	class:strtol
+do_it	stubs/ELF/ELF.py	/^  def do_it(self,*args):$/;"	m	class:socket
+do_it	stubs/ELF/ELF.py	/^  def do_it(self,*args):$/;"	m	class:strchr
+do_it	stubs/ELF/ELF.py	/^  def do_it(self,*args):$/;"	m	class:strfry
+do_it	stubs/ELF/ELF.py	/^  def do_it(self,*args):$/;"	m	class:strstr
+do_it	stubs/PE.py	/^    def do_it(self,*args):$/;"	m	class:NullStub
+do_it	stubs/PE.py	/^   def do_it(self,*args):$/;"	m	class:RegEnumKeyExW
+do_mapping	emu/miasm/generic.py	/^  def do_mapping(self):$/;"	m	class:Emuiasm
+do_mapping	emu/unicorn/generic.py	/^    def do_mapping(uc,conf):$/;"	m	class:Emucorn
+do_required_mapping	emu/emubase.py	/^  def do_required_mapping(emu,s_ea,_e_ea,p_size,perms):$/;"	m	class:Emulator
+do_required_mappng	emu/unicorn/generic.py	/^    def do_required_mappng(uc,s_ea,e_ea,p_size,perms):$/;"	m	class:Emucorn
+dock	DevSamples/test_replace.py	/^dock = ida_kernwin.find_widget("Output window")$/;"	v
+dump_range	emu/unicorn/generic.py	/^    def dump_range(self,start_ea,end_ea,filename):$/;"	m	class:Emucorn
+edit_registers	ews_new.py	/^    def edit_registers(self):$/;"	m	class:menu_action_handler_t
+editconf	ews_new.py	/^    def editconf(self):$/;"	m	class:menu_action_handler_t
+elf_l	DevSamples/loader.py	/^elf_l = ELF.parse(file_path)$/;"	v
+emu	ews.py	/^            emu = Aarch64Corn(conf)$/;"	v
+emu	ews.py	/^          emu = ArmCorn(conf)$/;"	v
+emu	ews.py	/^        emu = x86Corn(conf)$/;"	v
+emu	ews.py	/^      emu = MipsCorn(conf)$/;"	v
+emu	ews.py	/^      emu = x64Corn(conf)$/;"	v
+emu	ews_new.py	/^emu = None$/;"	v
+emul_func	DevSamples/NewUI/hooks.py	/^    def emul_func(self):$/;"	m	class:menu_action_handler_t
+emul_func	ews_new.py	/^    def emul_func(self):$/;"	m	class:menu_action_handler_t
+emul_launcher	ews_new.py	/^    def emul_launcher(self,simplified=True):$/;"	m	class:menu_action_handler_t
+emul_selection	DevSamples/NewUI/hooks.py	/^    def emul_selection(self):$/;"	m	class:menu_action_handler_t
+emul_selection	ews_new.py	/^    def emul_selection(self):$/;"	m	class:menu_action_handler_t
+end_exec	emu/miasm/generic.py	/^    def end_exec(jitter):$/;"	f	function:Emuiasm.start
+end_mapping	emu/miasm/generic.py	/^    def end_mapping(jitter):$/;"	f	function:Emuiasm.start
+errno_location	stubs/ELF/conf.py	/^errno_location = 0x10000 $/;"	v
+errno_location	stubs/stubs_conf.py	/^errno_location = 0x10000 $/;"	v
+eventFilter	DevSamples/test_replace.py	/^            def eventFilter(self, obj, event):$/;"	m	class:filter_t
+expand_markers	DevSamples/test_replace.py	/^            def expand_markers(self, obj):$/;"	m	class:filter_t
+f	DevSamples/func_tail.py	/^f=ida_funcs.get_func(0x40A7F0)$/;"	v
+f	stubs/stubs_helper.py	/^def f(helper,format):$/;"	f
+fclose	stubs/ELF/ELF.py	/^class fclose(Stub):$/;"	c
+fd_list	stubs/ELF/utils.py	/^fd_list = {}$/;"	v
+fd_list	stubs/stubs_helper.py	/^fd_list = {}$/;"	v
+fflush	stubs/ELF/ELF.py	/^class fflush(Stub):$/;"	c
+fflush	stubs/ELF/utils.py	/^    def fflush(self):$/;"	m	class:FILE
+fflush	stubs/stubs_helper.py	/^    def fflush(self):$/;"	m	class:FILE
+fgetc	stubs/ELF/ELF.py	/^class fgetc(Stub):$/;"	c
+fgets	stubs/ELF/ELF.py	/^class fgets(Stub):$/;"	c
+file_path	DevSamples/loader.py	/^file_path = get_path(PATH_TYPE_CMD).split('.')[0:][0] # remove extension $/;"	v
+fillconfig	DevSamples/NewUI/DisplayMem.py	/^  def fillconfig():$/;"	f
+fillconfig	DevSamples/NewUI/MemEdit.py	/^    def fillconfig():$/;"	f
+fillconfig	DevSamples/NewUI/configloader.py	/^  def fillconfig():$/;"	f
+fillconfig	ui/DisplayMem.py	/^    def fillconfig():$/;"	f
+fillconfig	ui/DisplayMem.py	/^  def fillconfig():$/;"	f
+fillconfig	ui/MemEdit.py	/^    def fillconfig(emu=None):$/;"	f
+fillconfig	ui/aarch64.py	/^  def fillconfig(conf=None):$/;"	f
+fillconfig	ui/aarch64_simplified.py	/^  def fillconfig(conf=None):$/;"	f
+fillconfig	ui/arm32.py	/^  def fillconfig(conf=None):$/;"	f
+fillconfig	ui/arm32_simplified.py	/^  def fillconfig(conf=None):$/;"	f
+fillconfig	ui/generic.py	/^  def fillconfig():$/;"	f
+fillconfig	ui/mipsl32.py	/^  def fillconfig(conf=None):$/;"	f
+fillconfig	ui/x64.py	/^  def fillconfig(conf=None):$/;"	f
+fillconfig	ui/x64_simplified.py	/^  def fillconfig(conf=None):$/;"	f
+fillconfig	ui/x86.py	/^  def fillconfig(conf=None):$/;"	f
+fillconfig	ui/x86_simplified.py	/^  def fillconfig(conf=None):$/;"	f
+filter_t	DevSamples/test_replace.py	/^        class filter_t(QtCore.QObject):$/;"	c
+find_adj	stubs/ELF/allocator.py	/^  def find_adj(self,addr):$/;"	m	class:DumpAllocator
+find_adj	stubs/allocator.py	/^  def find_adj(self,addr):$/;"	m	class:DumpAllocator
+finish_populating_widget_popup	DevSamples/NewUI/hooks.py	/^    def finish_populating_widget_popup(self, form, popup):$/;"	m	class:UI_Hook
+finish_populating_widget_popup	ews_new.py	/^    def finish_populating_widget_popup(self, form, popup):$/;"	m	class:UI_Hook
+fopen	stubs/ELF/ELF.py	/^class fopen(Stub):$/;"	c
+fprintf	stubs/ELF/ELF.py	/^class fprintf(Stub):$/;"	c
+fread	stubs/ELF/ELF.py	/^class fread(Stub):$/;"	c
+free	stubs/ELF/ELF.py	/^class free(Stub):$/;"	c
+free	stubs/ELF/allocator.py	/^  def free(self,addr):$/;"	m	class:DumpAllocator
+free	stubs/allocator.py	/^  def free(self,addr):$/;"	m	class:DumpAllocator
+free	stubs/emu/generic.py	/^  def free(self,addr):$/;"	m	class:StubEngineAbstractor
+free	stubs/generic.py	/^  def free(self,addr):$/;"	m	class:StubEngineAbstractor
+fseek	stubs/ELF/ELF.py	/^class fseek(Stub):$/;"	c
+fseek	stubs/ELF/utils.py	/^    def fseek(self,offset,whence):$/;"	m	class:FILE
+fseek	stubs/stubs_helper.py	/^    def fseek(self,offset,whence):$/;"	m	class:FILE
+function_chooser	ui/generic.py	/^  class function_chooser(ida_kernwin.Choose):$/;"	c	class:StubForm
+fwrite	stubs/ELF/ELF.py	/^class fwrite(Stub):$/;"	c
+g	stubs/stubs_helper.py	/^def g(helper,format):$/;"	f
+g_file_get_contents	stubs/ELF/ELF.py	/^class g_file_get_contents(Stub):$/;"	c
+generate_default_config	emu/unicorn/arm32.py	/^  def generate_default_config(s_ea,$/;"	m	class:ArmCorn
+generate_default_config	emu/unicorn/x64.py	/^  def generate_default_config(s_ea,$/;"	m	class:x64Corn
+generate_default_config	emu/unicorn/x86.py	/^  def generate_default_config(s_ea,$/;"	m	class:x86Corn
+get_alu_info	emu/emubase.py	/^  def get_alu_info(self,flags):$/;"	m	class:Emulator
+get_alu_info	emu/unicorn/Olds/x86.py	/^  def get_alu_info(self):$/;"	m	class:x86Corn
+get_alu_info	emu/unicorn/aarch64.py	/^    def get_alu_info(self): $/;"	m	class:Aarch64Corn
+get_alu_info	emu/unicorn/arm32.py	/^  def get_alu_info(self): $/;"	m	class:ArmCorn
+get_alu_info	emu/unicorn/x64.py	/^  def get_alu_info(self):$/;"	m	class:x64Corn
+get_alu_info	emu/unicorn/x86.py	/^  def get_alu_info(self):$/;"	m	class:x86Corn
+get_arg	stubs/emu/generic.py	/^  def get_arg(self,arg_num):$/;"	m	class:StubEngineAbstractor
+get_arg	stubs/emu/miasm/sea.py	/^  def get_arg(self,arg_num):$/;"	m	class:MiasmArmSEA
+get_arg	stubs/emu/unicorn/sea.py	/^  def get_arg(self,arg_num):$/;"	m	class:UnicornAarch64SEA
+get_arg	stubs/emu/unicorn/sea.py	/^  def get_arg(self,arg_num):$/;"	m	class:UnicornArmSEA
+get_arg	stubs/emu/unicorn/sea.py	/^  def get_arg(self,arg_num):$/;"	m	class:UnicornMipsbSEA
+get_arg	stubs/emu/unicorn/sea.py	/^  def get_arg(self,arg_num):$/;"	m	class:UnicornMipslSEA
+get_arg	stubs/emu/unicorn/sea.py	/^  def get_arg(self,arg_num):$/;"	m	class:UnicornSEA
+get_arg	stubs/emu/unicorn/sea.py	/^  def get_arg(self,arg_num):$/;"	m	class:UnicornX64SEA
+get_arg	stubs/emu/unicorn/sea.py	/^  def get_arg(self,arg_num):$/;"	m	class:UnicornX86SEA
+get_arg	stubs/generic.py	/^  def get_arg(self,arg_num):$/;"	m	class:StubEngineAbstractor
+get_emul	DevSamples/NewUI/utils_ui.py	/^def get_emul(s_ea,$/;"	f
+get_emul	utils/utils_ui.py	/^def get_emul(s_ea,$/;"	f
+get_emul_conf	utils/utils_ui.py	/^def get_emul_conf(simplified=True, conf=False):$/;"	f
+get_func_boundaries	DevSamples/NewUI/utils_ui.py	/^def get_func_boundaries():$/;"	f
+get_func_boundaries	utils/utils_ui.py	/^def get_func_boundaries():$/;"	f
+get_func_list	utils/utils.py	/^def get_func_list():$/;"	f
+get_insn_at	utils/utils.py	/^def get_insn_at(ea):$/;"	f
+get_insn_color	utils/utils.py	/^def get_insn_color(eaddr):$/;"	f
+get_max_ea_idb	utils/utils.py	/^def get_max_ea_idb():$/;"	f
+get_min_ea_idb	utils/utils.py	/^def get_min_ea_idb():$/;"	f
+get_new_stub	emu/unicorn/Olds/x86.py	/^  def get_new_stub(self,stub_func):$/;"	m	class:x86Corn
+get_new_stub	emu/unicorn/aarch64.py	/^    def get_new_stub(self,stub_func):$/;"	m	class:Aarch64Corn
+get_new_stub	emu/unicorn/arm32.py	/^  def get_new_stub(self,stub_func):$/;"	m	class:ArmCorn
+get_new_stub	emu/unicorn/x64.py	/^  def get_new_stub(self,stub_func):$/;"	m	class:x64Corn
+get_new_stub	emu/unicorn/x86.py	/^  def get_new_stub(self,stub_func):$/;"	m	class:x86Corn
+get_next_pc	utils/utils.py	/^def get_next_pc(insn):$/;"	f
+get_pc	stubs/emu/generic.py	/^  def get_pc(self):$/;"	m	class:StubEngineAbstractor
+get_pc	stubs/emu/miasm/sea.py	/^  def get_pc(self):$/;"	m	class:MiasmArmSEA
+get_pc	stubs/emu/unicorn/sea.py	/^  def get_pc(self):$/;"	m	class:UnicornAarch64SEA
+get_pc	stubs/emu/unicorn/sea.py	/^  def get_pc(self):$/;"	m	class:UnicornArmSEA
+get_pc	stubs/emu/unicorn/sea.py	/^  def get_pc(self):$/;"	m	class:UnicornMipsbSEA
+get_pc	stubs/emu/unicorn/sea.py	/^  def get_pc(self):$/;"	m	class:UnicornMipslSEA
+get_pc	stubs/emu/unicorn/sea.py	/^  def get_pc(self):$/;"	m	class:UnicornX64SEA
+get_pc	stubs/emu/unicorn/sea.py	/^  def get_pc(self):$/;"	m	class:UnicornX86SEA
+get_pc	stubs/generic.py	/^  def get_pc(self):$/;"	m	class:StubEngineAbstractor
+get_regedit_func	utils/utils_ui.py	/^def get_regedit_func():$/;"	f
+get_regs	emu/unicorn/aarch64.py	/^    def get_regs(self):$/;"	m	class:Aarch64Corn
+get_regs	emu/unicorn/arm32.py	/^  def get_regs(self):$/;"	m	class:ArmCorn
+get_regs	emu/unicorn/x64.py	/^  def get_regs(self):$/;"	m	class:x64Corn
+get_regs	emu/unicorn/x86.py	/^  def get_regs(self):$/;"	m	class:x86Corn
+get_relocs	emu/emubase.py	/^  def get_relocs(self,fpath):$/;"	m	class:Emulator
+get_relocs	emu/unicorn/generic.py	/^    def get_relocs(self,fpath,RTYPE_ID):$/;"	m	class:Emucorn
+get_retn_insn	emu/unicorn/Olds/x86.py	/^  def get_retn_insn(self,ea):$/;"	m	class:x86Corn
+get_retn_insn	emu/unicorn/aarch64.py	/^    def get_retn_insn(self,ea):$/;"	m	class:Aarch64Corn
+get_retn_insn	emu/unicorn/arm32.py	/^  def get_retn_insn(self,ea):$/;"	m	class:ArmCorn
+get_retn_insn	emu/unicorn/x64.py	/^  def get_retn_insn(self,ea):$/;"	m	class:x64Corn
+get_retn_insn	emu/unicorn/x86.py	/^  def get_retn_insn(self,ea):$/;"	m	class:x86Corn
+get_seg_list	utils/utils.py	/^def get_seg_list():$/;"	f
+get_sp	stubs/emu/generic.py	/^  def get_sp(self):$/;"	m	class:StubEngineAbstractor
+get_sp	stubs/emu/miasm/sea.py	/^  def get_sp(self):$/;"	m	class:MiasmArmSEA
+get_sp	stubs/emu/unicorn/sea.py	/^  def get_sp(self):$/;"	m	class:UnicornAarch64SEA
+get_sp	stubs/emu/unicorn/sea.py	/^  def get_sp(self):$/;"	m	class:UnicornArmSEA
+get_sp	stubs/emu/unicorn/sea.py	/^  def get_sp(self):$/;"	m	class:UnicornMipsbSEA
+get_sp	stubs/emu/unicorn/sea.py	/^  def get_sp(self):$/;"	m	class:UnicornMipslSEA
+get_sp	stubs/emu/unicorn/sea.py	/^  def get_sp(self):$/;"	m	class:UnicornX64SEA
+get_sp	stubs/emu/unicorn/sea.py	/^  def get_sp(self):$/;"	m	class:UnicornX86SEA
+get_sp	stubs/generic.py	/^  def get_sp(self):$/;"	m	class:StubEngineAbstractor
+get_tag_name	utils/utils_ui.py	/^def get_tag_name(tag_list):$/;"	f
+get_user_select	DevSamples/NewUI/utils_ui.py	/^def get_user_select():$/;"	f
+get_user_select	utils/utils_ui.py	/^def get_user_select():$/;"	f
+getpid	stubs/ELF/ELF.py	/^class getpid(Stub):$/;"	c
+h	stubs/stubs_helper.py	/^def h(helper,format):$/;"	f
+handler_symb	DevSamples/NewUI/menu.py	/^handler_symb = Handler(test)$/;"	v
+hk_read	emu/unicorn/generic.py	/^    def hk_read(uc,access,addr,size,value,user_data):$/;"	m	class:Emucorn
+hk_write	emu/unicorn/generic.py	/^    def hk_write(uc,access,addr,size,value,user_data):$/;"	m	class:Emucorn
+hook_code	emu/unicorn/generic.py	/^    def hook_code(self,uc,addr,size,user_data): $/;"	m	class:Emucorn
+i	DevSamples/func_tail.py	/^i=ida_funcs.func_tail_iterator_t(f,0x40A7F0)$/;"	v
+ida_jmp_conditional_itype	utils/consts_x86.py	/^ida_jmp_conditional_itype = 0x55$/;"	v
+ida_jmp_itype	utils/consts_x86.py	/^ida_jmp_itype = [ 0x56, 0x58]$/;"	v
+ida_retn_itype	utils/consts_x86.py	/^ida_retn_itype = 0x9F$/;"	v
+index	stubs/ELF/ELF.py	/^class index(Stub):$/;"	c
+initial_stack_offset	utils/consts_aarch64.py	/^initial_stack_offset = 0x20$/;"	v
+initial_stack_offset	utils/consts_arm.py	/^initial_stack_offset=0x10$/;"	v
+initial_stack_offset	utils/consts_x64.py	/^initial_stack_offset=0x20$/;"	v
+initial_stack_offset	utils/consts_x86.py	/^initial_stack_offset=0x10 # in case of pop instructions when starting emulation. $/;"	v
+int2reg	emu/unicorn/aarch64.py	/^    def int2reg(reg_id):$/;"	m	class:Aarch64Corn
+int2reg	emu/unicorn/arm32.py	/^  def int2reg(reg_id):$/;"	m	class:ArmCorn
+int2reg	emu/unicorn/mipsl32.py	/^  def int2reg(reg_id):$/;"	m	class:MipsCorn
+isThumb	emu/unicorn/arm32.py	/^  def isThumb(self):$/;"	m	class:ArmCorn
+is_thumb	utils/utils.py	/^def is_thumb(addr):$/;"	f
+iter_by_func	emu/unicorn/generic.py	/^    def iter_by_func(self,start_ea,end_ea):$/;"	m	class:Emucorn
+iter_by_name	emu/unicorn/generic.py	/^    def iter_by_name(self,start_ea,end_ea):$/;"	m	class:Emucorn
+itnum_arm	stubs/PE.py	/^    itnum_arm = 1$/;"	v	class:StubsX64
+itnum_arm	stubs/PE.py	/^    itnum_arm = 1$/;"	v	class:StubsX86
+jr_ra_nop	utils/consts_mips.py	/^jr_ra_nop = 0x03E0000800000000$/;"	v
+kpf	DevSamples/test_replace.py	/^        kpf = filter_t()$/;"	v
+libc_stubs	stubs/ELF/ELF.py	/^libc_stubs = dict()$/;"	v
+line_edit	DevSamples/test_replace.py	/^    line_edit = py_dock.findChild(QtWidgets.QLineEdit)$/;"	v
+list_breakpoints	emu/emubase.py	/^  def list_breakpoints(self):$/;"	m	class:Emulator
+loadconf	ews_new.py	/^    def loadconf(self):$/;"	m	class:menu_action_handler_t
+loadconfig	utils/utils.py	/^def loadconfig(conf_apath): $/;"	f
+loadconfig	utils/utils_ui.py	/^def loadconfig():$/;"	f
+logfile	utils/utils.py	/^  def logfile(type,*msg):$/;"	m	class:Logger
+logger	utils/utils.py	/^logger = Logger(2)$/;"	v
+lol	DevSamples/NewUI/DisplayMem.py	/^    lol = SelectSegment.fillconfig()$/;"	v
+malloc	stubs/ELF/ELF.py	/^class malloc(Stub):$/;"	c
+malloc	stubs/ELF/allocator.py	/^  def malloc(self,size):$/;"	m	class:DumpAllocator
+malloc	stubs/allocator.py	/^  def malloc(self,size):$/;"	m	class:DumpAllocator
+malloc	stubs/emu/generic.py	/^  def malloc(self,size):$/;"	m	class:StubEngineAbstractor
+malloc	stubs/generic.py	/^  def malloc(self,size):$/;"	m	class:StubEngineAbstractor
+mem_read	emu/emubase.py	/^  def mem_read(emu,addr,size):$/;"	m	class:Emulator
+mem_read	emu/miasm/generic.py	/^  def mem_read(jitter,addr,size):$/;"	m	class:Emuiasm
+mem_read	emu/miasm/generic.py	/^  def mem_read(self,addr,size):$/;"	m	class:Emuiasm
+mem_read	emu/unicorn/generic.py	/^    def mem_read(self,addr,size):$/;"	m	class:Emucorn
+mem_read	stubs/emu/generic.py	/^  def mem_read(self,addr,size):$/;"	m	class:StubEngineAbstractor
+mem_read	stubs/emu/miasm/sea.py	/^  def mem_read(self,addr,size):$/;"	m	class:MiasmSEA
+mem_read	stubs/emu/unicorn/sea.py	/^  def mem_read(self,addr,size):$/;"	m	class:UnicornSEA
+mem_read	stubs/generic.py	/^  def mem_read(self,addr,size):$/;"	m	class:StubEngineAbstractor
+mem_write	emu/emubase.py	/^  def mem_write(emu,addr,data):$/;"	m	class:Emulator
+mem_write	emu/miasm/generic.py	/^  def mem_write(jitter,addr,data):$/;"	m	class:Emuiasm
+mem_write	emu/miasm/generic.py	/^  def mem_write(self,addr,data):$/;"	m	class:Emuiasm
+mem_write	emu/unicorn/generic.py	/^    def mem_write(self,addr,data):$/;"	m	class:Emucorn
+mem_write	stubs/emu/generic.py	/^  def mem_write(self,addr,value): $/;"	m	class:StubEngineAbstractor
+mem_write	stubs/emu/miasm/sea.py	/^  def mem_write(self,addr,data):$/;"	m	class:MiasmSEA
+mem_write	stubs/emu/unicorn/sea.py	/^  def mem_write(self,addr,data):$/;"	m	class:UnicornSEA
+mem_write	stubs/generic.py	/^  def mem_write(self,addr,value): $/;"	m	class:StubEngineAbstractor
+memcpy	stubs/ELF/ELF.py	/^class memcpy(Stub):$/;"	c
+memset	stubs/ELF/ELF.py	/^class memset(Stub):$/;"	c
+menu_action_handler_t	DevSamples/NewUI/hooks.py	/^class menu_action_handler_t(idaapi.action_handler_t):$/;"	c
+menu_action_handler_t	ews_new.py	/^class menu_action_handler_t(idaapi.action_handler_t):$/;"	c
+menu_actions	DevSamples/NewUI/hooks.py	/^menu_actions = [$/;"	v
+menu_actions	ews_new.py	/^menu_actions = [$/;"	v
+mov_pc_lr	utils/consts_arm.py	/^mov_pc_lr = 0xe1a0f00e # big end. $/;"	v
+mov_pc_lr_thumb	utils/consts_arm.py	/^mov_pc_lr_thumb = 0x46f7  # big end. $/;"	v
+nop	utils/consts_aarch64.py	/^nop=0x1f2003d5$/;"	v
+nop	utils/consts_arm.py	/^nop=0x00000000$/;"	v
+nop	utils/consts_mips.py	/^nop=0x00000000$/;"	v
+nop	utils/consts_x86.py	/^nop = 0x90$/;"	v
+nop_insn	emu/unicorn/Olds/x86.py	/^  def nop_insn(uc,insn):$/;"	m	class:x86Corn
+nop_insn	emu/unicorn/aarch64.py	/^    def nop_insn(self,insn):$/;"	m	class:Aarch64Corn
+nop_insn	emu/unicorn/arm32.py	/^  def nop_insn(self,insn):$/;"	m	class:ArmCorn
+nop_insn	emu/unicorn/x86.py	/^  def nop_insn(self,insn):$/;"	m	class:x86Corn
+nop_thumb	utils/consts_arm.py	/^nop_thumb = 0xBF00$/;"	v
+nsock_list	stubs/ELF/utils.py	/^nsock_list = {} $/;"	v
+nsock_list	stubs/stubs_helper.py	/^nsock_list = {} $/;"	v
+onCallback	ui/regedit.py	/^    def onCallback(self,fid):$/;"	m	class:RegArm32Edit
+onCallback	ui/regedit.py	/^    def onCallback(self,fid):$/;"	m	class:Regx64Edit
+onCallback	ui/regedit.py	/^    def onCallback(self,fid):$/;"	m	class:Regx86Edit
+onLoadButton	ui/aarch64.py	/^  def onLoadButton(self,code): $/;"	f
+onLoadButton	ui/aarch64_simplified.py	/^  def onLoadButton(self,code): $/;"	f
+onLoadButton	ui/arm32.py	/^  def onLoadButton(self,code):$/;"	f
+onLoadButton	ui/arm32_simplified.py	/^  def onLoadButton(self,code): $/;"	f
+onLoadButton	ui/generic.py	/^  def onLoadButton(self,code):$/;"	m	class:Pannel
+onLoadButton	ui/mipsl32.py	/^  def onLoadButton(self,code): $/;"	f
+onLoadButton	ui/x64.py	/^  def onLoadButton(self,code): $/;"	f
+onLoadButton	ui/x64_simplified.py	/^  def onLoadButton(self,code): $/;"	f
+onLoadButton	ui/x86.py	/^  def onLoadButton(self,code): $/;"	f
+onLoadButton	ui/x86_simplified.py	/^  def onLoadButton(self,code): $/;"	f
+onRefreshButton	DevSamples/NewUI/regedit.py	/^    def onRefreshButton(self,code):$/;"	m	class:RegArm32Edit
+onRefreshButton	ui/arm32.py	/^  def onRefreshButton(self,code):$/;"	f
+onSaveButton	ui/aarch64.py	/^  def onSaveButton(self,code):$/;"	f
+onSaveButton	ui/aarch64_simplified.py	/^  def onSaveButton(self,code):$/;"	f
+onSaveButton	ui/arm32.py	/^  def onSaveButton(self,code):$/;"	f
+onSaveButton	ui/arm32_simplified.py	/^  def onSaveButton(self,code):$/;"	f
+onSaveButton	ui/generic.py	/^  def onSaveButton(self,code):$/;"	m	class:Pannel
+onSaveButton	ui/mipsl32.py	/^  def onSaveButton(self,code):$/;"	f
+onSaveButton	ui/x64.py	/^  def onSaveButton(self,code):$/;"	f
+onSaveButton	ui/x64_simplified.py	/^  def onSaveButton(self,code):$/;"	f
+onSaveButton	ui/x86.py	/^  def onSaveButton(self,code):$/;"	f
+onSaveButton	ui/x86_simplified.py	/^  def onSaveButton(self,code):$/;"	f
+onStubButton	ui/generic.py	/^  def onStubButton(self,code):$/;"	m	class:Pannel
+onaMapButton	ui/generic.py	/^  def onaMapButton(self,code):$/;"	m	class:Pannel
+patch_mem	utils/utils_ui.py	/^def patch_mem(emu):$/;"	f
+patchmem	ews_new.py	/^    def patchmem(self):$/;"	m	class:menu_action_handler_t
+path	DevSamples/add_stubs.py	/^  path = input()$/;"	v
+pid	stubs/ELF/conf.py	/^pid = 0x666$/;"	v
+pid	stubs/stubs_conf.py	/^pid = 0x666$/;"	v
+pop	stubs/emu/generic.py	/^  def pop(self,sp_id,reg_return):$/;"	m	class:StubEngineAbstractor
+pop	stubs/emu/miasm/sea.py	/^  def pop(self,sp_id,reg_return,endianness='little'):$/;"	m	class:MiasmSEA
+pop	stubs/emu/unicorn/sea.py	/^  def pop(self,sp_id,reg_return,endianness='little'):$/;"	m	class:UnicornSEA
+pop	stubs/generic.py	/^  def pop(self,sp_id,reg_return):$/;"	m	class:StubEngineAbstractor
+print_registers	emu/unicorn/Olds/x86.py	/^  def print_registers(self):$/;"	m	class:x86Corn
+print_registers	emu/unicorn/aarch64.py	/^    def print_registers(self):$/;"	m	class:Aarch64Corn
+print_registers	emu/unicorn/arm32.py	/^  def print_registers(self):$/;"	m	class:ArmCorn
+print_registers	emu/unicorn/mipsl32.py	/^  def print_registers(self):$/;"	m	class:MipsCorn
+print_registers	emu/unicorn/x64.py	/^  def print_registers(self):$/;"	m	class:x64Corn
+print_registers	emu/unicorn/x86.py	/^  def print_registers(self):$/;"	m	class:x86Corn
+printf	stubs/ELF/ELF.py	/^class printf(Stub):$/;"	c
+proc_inf	utils/utils.py	/^def proc_inf(arch,addr):$/;"	f
+procname	ews.py	/^  procname = get_idp_name()$/;"	v
+push	stubs/emu/generic.py	/^  def push(self,sp_id,value):$/;"	m	class:StubEngineAbstractor
+push	stubs/emu/miasm/sea.py	/^  def push(self,sp_id,value,endianness='little'):$/;"	m	class:MiasmSEA
+push	stubs/emu/unicorn/sea.py	/^  def push(self,sp_id,value,endianness='little'):$/;"	m	class:UnicornSEA
+push	stubs/generic.py	/^  def push(self,sp_id,value):$/;"	m	class:StubEngineAbstractor
+puts	stubs/ELF/ELF.py	/^class puts(Stub):$/;"	c
+py_dock	DevSamples/test_replace.py	/^    py_dock = ida_kernwin.PluginForm.FormToPyQtWidget(dock)$/;"	v
+r_map	DevSamples/loader.py	/^r_map = dict()$/;"	v
+read	stubs/ELF/utils.py	/^    def read(self,size):$/;"	m	class:FILE
+read	stubs/stubs_helper.py	/^    def read(self,size):$/;"	m	class:FILE
+read_after	emu/unicorn/mipsl32.py	/^  def read_after(uc,access,addr,value,size,user_data):$/;"	m	class:MipsCorn
+readline	stubs/ELF/utils.py	/^    def readline(self):$/;"	m	class:FILE
+readline	stubs/stubs_helper.py	/^    def readline(self):$/;"	m	class:FILE
+recv	stubs/ELF/ELF.py	/^class recv(Stub):$/;"	c
+recv_broker	stubs/ELF/utils.py	/^  def recv_broker(len,fd=0):$/;"	m	class:NWSock
+recv_broker	stubs/stubs_helper.py	/^  def recv_broker(len,fd=0):$/;"	m	class:NWSock
+reg_conv	stubs/emu/unicorn/sea.py	/^  def reg_conv(self,r_id):$/;"	m	class:UnicornAarch64SEA
+reg_conv	stubs/emu/unicorn/sea.py	/^  def reg_conv(self,r_id):$/;"	m	class:UnicornArmSEA
+reg_conv	stubs/emu/unicorn/sea.py	/^  def reg_conv(self,r_id):$/;"	m	class:UnicornMipsbSEA
+reg_conv	stubs/emu/unicorn/sea.py	/^  def reg_conv(self,r_id):$/;"	m	class:UnicornMipslSEA
+reg_conv	stubs/emu/unicorn/sea.py	/^  def reg_conv(self,r_id):$/;"	m	class:UnicornX64SEA
+reg_conv	stubs/emu/unicorn/sea.py	/^  def reg_conv(self,r_id):$/;"	m	class:UnicornX86SEA
+reg_conv	stubs/emu/unicorn/sea.py	/^  def reg_conv(self,reg_id):$/;"	m	class:UnicornSEA
+reg_convert	emu/emubase.py	/^  def reg_convert(r_id):$/;"	m	class:Emulator
+reg_convert	emu/unicorn/Olds/x86.py	/^  def reg_convert(r_id):$/;"	m	class:x86Corn
+reg_convert	emu/unicorn/aarch64.py	/^    def reg_convert(reg_id):$/;"	m	class:Aarch64Corn
+reg_convert	emu/unicorn/arm32.py	/^  def reg_convert(reg_id):$/;"	m	class:ArmCorn
+reg_convert	emu/unicorn/mipsl32.py	/^  def reg_convert(reg_id):$/;"	m	class:MipsCorn
+reg_convert	emu/unicorn/x64.py	/^  def reg_convert(r_id):$/;"	m	class:x64Corn
+reg_convert	emu/unicorn/x86.py	/^  def reg_convert(r_id):$/;"	m	class:x86Corn
+reg_read	emu/emubase.py	/^  def reg_read(emu,r_id):$/;"	m	class:Emulator
+reg_read	emu/miasm/arm32.py	/^  def reg_read(jitter,r_id):$/;"	m	class:Miarm
+reg_read	emu/miasm/arm32.py	/^  def reg_read(self,r_id):$/;"	m	class:Miarm
+reg_read	emu/unicorn/generic.py	/^    def reg_read(self,r_id):$/;"	m	class:Emucorn
+reg_read	stubs/emu/generic.py	/^  def reg_read(self,reg_id): $/;"	m	class:StubEngineAbstractor
+reg_read	stubs/emu/miasm/sea.py	/^  def reg_read(self,reg_id):$/;"	m	class:MiasmSEA
+reg_read	stubs/emu/unicorn/sea.py	/^  def reg_read(self,reg_id):$/;"	m	class:UnicornSEA
+reg_read	stubs/generic.py	/^  def reg_read(self,reg_id): $/;"	m	class:StubEngineAbstractor
+reg_write	emu/emubase.py	/^  def reg_write(emu,r_id,data):$/;"	m	class:Emulator
+reg_write	emu/miasm/arm32.py	/^  def reg_write(jitter,r_id,data):$/;"	m	class:Miarm
+reg_write	emu/miasm/arm32.py	/^  def reg_write(self,r_id,data):$/;"	m	class:Miarm
+reg_write	emu/unicorn/generic.py	/^    def reg_write(self,r_id,value):$/;"	m	class:Emucorn
+reg_write	stubs/emu/generic.py	/^  def reg_write(self,reg_id,value):$/;"	m	class:StubEngineAbstractor
+reg_write	stubs/emu/miasm/sea.py	/^  def reg_write(self,reg_id,data):$/;"	m	class:MiasmSEA
+reg_write	stubs/emu/unicorn/sea.py	/^  def reg_write(self,reg_id,data):$/;"	m	class:UnicornSEA
+reg_write	stubs/generic.py	/^  def reg_write(self,reg_id,value):$/;"	m	class:StubEngineAbstractor
+register	DevSamples/NewUI/menu.py	/^    def register(self, name, label, shortcut=None, tooltip=None, icon=-1):$/;"	m	class:Handler
+regs	DevSamples/NewUI/regedit.py	/^    regs = RegArm32Edit.create()$/;"	v	class:RegArm32Edit
+regs	DevSamples/NewUI/regedit.py	/^    regs = RegArm32Edit.create(regs) $/;"	v	class:RegArm32Edit
+regs	DevSamples/NewUI/regedit.py	/^    regs = RegArm32Edit.create(regs)$/;"	v	class:RegArm32Edit
+relocs	DevSamples/loader.py	/^relocs = elf_l.relocations$/;"	v
+remove_breakpoint	utils/utils.py	/^  def remove_breakpoint(self,ea):$/;"	m	class:Configuration
+remove_custom_stub	emu/emubase.py	/^  def remove_custom_stub(self,ea,func):$/;"	m	class:Emulator
+remove_custom_stub	emu/miasm/arm32.py	/^  def remove_custom_stub(self,ea):$/;"	m	class:Miarm
+remove_custom_stub	emu/unicorn/generic.py	/^    def remove_custom_stub(self,ea):$/;"	m	class:Emucorn
+remove_null_stub	emu/emubase.py	/^  def remove_null_stub(self,ea):$/;"	m	class:Emulator
+remove_null_stub	emu/miasm/arm32.py	/^  def remove_null_stub(self,ea,fname=None):$/;"	m	class:Miarm
+remove_null_stub	emu/unicorn/generic.py	/^    def remove_null_stub(self,ea):$/;"	m	class:Emucorn
+remove_null_stub	utils/utils.py	/^  def remove_null_stub(self,ea):$/;"	m	class:Configuration
+remove_tag	emu/emubase.py	/^  def remove_tag(self,ea):$/;"	m	class:Emulator
+remove_tag	emu/miasm/arm32.py	/^  def remove_tag(self,ea):$/;"	m	class:Miarm
+remove_tag	emu/unicorn/generic.py	/^    def remove_tag(self,ea):$/;"	m	class:Emucorn
+remove_tag	utils/utils.py	/^  def remove_tag(self,ea):$/;"	m	class:Configuration
+repatch	emu/unicorn/Olds/x86.py	/^  def repatch(self):$/;"	m	class:x86Corn
+repatch	emu/unicorn/aarch64.py	/^    def repatch(self):$/;"	m	class:Aarch64Corn
+repatch	emu/unicorn/arm32.py	/^  def repatch(self):$/;"	m	class:ArmCorn
+repatch	emu/unicorn/x86.py	/^  def repatch(self):$/;"	m	class:x86Corn
+reset	stubs/ELF/allocator.py	/^  def reset(self):$/;"	m	class:DumpAllocator
+reset	stubs/allocator.py	/^  def reset(self):$/;"	m	class:DumpAllocator
+reset_regs	emu/unicorn/Olds/x86.py	/^  def reset_regs(self):$/;"	m	class:x86Corn
+reset_regs	emu/unicorn/aarch64.py	/^    def reset_regs(self):$/;"	m	class:Aarch64Corn
+reset_regs	emu/unicorn/arm32.py	/^  def reset_regs(self):$/;"	m	class:ArmCorn
+reset_regs	emu/unicorn/mipsl32.py	/^  def reset_regs(self):$/;"	m	class:MipsCorn
+reset_regs	emu/unicorn/x64.py	/^  def reset_regs(self):$/;"	m	class:x64Corn
+reset_regs	emu/unicorn/x86.py	/^  def reset_regs(self):$/;"	m	class:x86Corn
+restart	emu/emubase.py	/^  def restart(self,conf=None,cnt=0):$/;"	m	class:Emulator
+restart	emu/unicorn/generic.py	/^    def restart(self,conf=None,cnt=0):$/;"	m	class:Emucorn
+restart	ews_new.py	/^    def restart(self):$/;"	m	class:menu_action_handler_t
+restore_graph_color	emu/emubase.py	/^  def restore_graph_color(self,purge_db=False):$/;"	m	class:Emulator
+restore_graph_color	utils/utils.py	/^def restore_graph_color(color_map,purge_db=False):$/;"	f
+ret	utils/consts_aarch64.py	/^ret=0xc0035fd6$/;"	v
+ret	utils/consts_x86.py	/^ret = 0xC3$/;"	v
+save	utils/utils.py	/^  def save(self,path):$/;"	m	class:Configuration
+save_config	emu/emubase.py	/^  def save_config(self,filepath=None):$/;"	m	class:Emulator
+saveconfig	utils/utils.py	/^def saveconfig(conf,conf_apath=None): $/;"	f
+scandir	stubs/ELF/ELF.py	/^class scandir(Stub):$/;"	c
+scanf_string	stubs/ELF/conf.py	/^scanf_string = 'scanf_string_yolo'$/;"	v
+scanf_string	stubs/stubs_conf.py	/^scanf_string = 'scanfstring'$/;"	v
+search_executable	DevSamples/test_search.py	/^def search_executable():$/;"	f
+search_executable	utils/utils.py	/^def search_executable():$/;"	f
+segment_chooser	DevSamples/NewUI/DisplayMem.py	/^  class segment_chooser(ida_kernwin.Choose):$/;"	c	class:SelectSegment
+segment_chooser	ui/DisplayMem.py	/^  class segment_chooser(ida_kernwin.Choose):$/;"	c	class:SelectSegment
+segment_chooser	ui/generic.py	/^  class segment_chooser(ida_kernwin.Choose):$/;"	c	class:Pannel
+send	stubs/ELF/ELF.py	/^class send(Stub):$/;"	c
+send	stubs/ELF/utils.py	/^  def send(msg,fd=0):$/;"	m	class:NWSock
+send	stubs/stubs_helper.py	/^  def send(msg,fd=0):$/;"	m	class:NWSock
+set_helper	stubs/ELF/ELF.py	/^  def set_helper(self,helper):$/;"	m	class:Stub
+set_helper	stubs/PE.py	/^  def set_helper(self,helper):$/;"	m	class:Stub
+set_return	stubs/emu/generic.py	/^  def set_return(self,value):$/;"	m	class:StubEngineAbstractor
+set_return	stubs/emu/miasm/sea.py	/^  def set_return(self,value):$/;"	m	class:MiasmArmSEA
+set_return	stubs/emu/unicorn/sea.py	/^  def set_return(self,value):$/;"	m	class:UnicornAarch64SEA
+set_return	stubs/emu/unicorn/sea.py	/^  def set_return(self,value):$/;"	m	class:UnicornArmSEA
+set_return	stubs/emu/unicorn/sea.py	/^  def set_return(self,value):$/;"	m	class:UnicornMipsbSEA
+set_return	stubs/emu/unicorn/sea.py	/^  def set_return(self,value):$/;"	m	class:UnicornMipslSEA
+set_return	stubs/emu/unicorn/sea.py	/^  def set_return(self,value):$/;"	m	class:UnicornX64SEA
+set_return	stubs/emu/unicorn/sea.py	/^  def set_return(self,value):$/;"	m	class:UnicornX86SEA
+set_return	stubs/generic.py	/^  def set_return(self,value):$/;"	m	class:StubEngineAbstractor
+setup_regs	emu/miasm/arm32.py	/^  def setup_regs(self):$/;"	m	class:Miarm
+setup_regs	emu/unicorn/Olds/x86.py	/^  def setup_regs(self,stk_p):$/;"	m	class:x86Corn
+setup_regs	emu/unicorn/aarch64.py	/^    def setup_regs(self,regs):$/;"	m	class:Aarch64Corn
+setup_regs	emu/unicorn/arm32.py	/^  def setup_regs(self,regs):$/;"	m	class:ArmCorn
+setup_regs	emu/unicorn/mipsl32.py	/^  def setup_regs(self,stk_p):$/;"	m	class:MipsCorn
+setup_regs	emu/unicorn/x64.py	/^  def setup_regs(self,regs):$/;"	m	class:x64Corn
+setup_regs	emu/unicorn/x86.py	/^  def setup_regs(self,regs):$/;"	m	class:x86Corn
+show	DevSamples/NewUI/DisplayMem.py	/^    def show(self):$/;"	m	class:MemDisplayer
+show	ui/DisplayMem.py	/^    def show(self):$/;"	m	class:MemDisplayer
+show_breakpoints	utils/utils.py	/^  def show_breakpoints(self):$/;"	m	class:Configuration
+show_nullstubs	utils/utils.py	/^  def show_nullstubs(self):$/;"	m	class:Configuration
+show_tags	utils/utils.py	/^  def show_tags(self):$/;"	m	class:Configuration
+show_user_mapping	utils/utils.py	/^  def show_user_mapping(self,displayContent=False):$/;"	m	class:Configuration
+skip_intr	emu/unicorn/mipsl32.py	/^  def skip_intr(uc,intno,user_data):$/;"	m	class:MipsCorn
+snprintf	stubs/ELF/ELF.py	/^class snprintf(Stub):$/;"	c
+socket	stubs/ELF/ELF.py	/^class socket(Stub):$/;"	c
+space	DevSamples/NewUI/DisplayMem.py	/^def space(chain):$/;"	f
+space	ui/DisplayMem.py	/^def space(chain):$/;"	f
+sssss	stubs/ELF/utils.py	/^sssss = None $/;"	v
+sssss	stubs/stubs_helper.py	/^sssss = None $/;"	v
+start	emu/emubase.py	/^  def start(self):$/;"	m	class:Emulator
+start	emu/miasm/generic.py	/^  def start(self):$/;"	m	class:Emuiasm
+start	emu/unicorn/aarch64.py	/^    def start(self,cnt=0,saddr=None): $/;"	m	class:Aarch64Corn
+start	emu/unicorn/arm32.py	/^  def start(self,cnt=0,saddr=None): $/;"	m	class:ArmCorn
+start	emu/unicorn/generic.py	/^    def start(self,cnt=0,saddr=None): $/;"	m	class:Emucorn
+step_in	emu/emubase.py	/^  def step_in(self):$/;"	m	class:Emulator
+step_in	emu/unicorn/generic.py	/^    def step_in(self):$/;"	m	class:Emucorn
+step_n	emu/emubase.py	/^  def step_n(self,n):$/;"	m	class:Emulator
+step_n	emu/unicorn/generic.py	/^    def step_n(self,n):$/;"	m	class:Emucorn
+step_over	emu/emubase.py	/^  def step_over(self):$/;"	m	class:Emulator
+step_over	emu/unicorn/arm32.py	/^  def step_over(self):$/;"	m	class:ArmCorn
+step_over	emu/unicorn/generic.py	/^    def step_over(self):$/;"	m	class:Emucorn
+stepin	ews_new.py	/^    def stepin(self):$/;"	m	class:menu_action_handler_t
+stepover	ews_new.py	/^    def stepover(self):$/;"	m	class:menu_action_handler_t
+str2reg	emu/unicorn/aarch64.py	/^    def str2reg(r_str):$/;"	m	class:Aarch64Corn
+str2reg	emu/unicorn/arm32.py	/^  def str2reg(r_str):$/;"	m	class:ArmCorn
+str2reg	emu/unicorn/mipsl32.py	/^  def str2reg(r_str):$/;"	m	class:MipsCorn
+strchr	stubs/ELF/ELF.py	/^class strchr(Stub):$/;"	c
+strcmp	stubs/ELF/ELF.py	/^class strcmp(Stub):$/;"	c
+strcpy	stubs/ELF/ELF.py	/^class strcpy(Stub):$/;"	c
+strdup	stubs/ELF/ELF.py	/^class strdup(Stub):$/;"	c
+strerror	stubs/ELF/ELF.py	/^class strerror(Stub):$/;"	c
+strfry	stubs/ELF/ELF.py	/^class strfry(Stub):$/;"	c
+strlen	stubs/ELF/ELF.py	/^class strlen(Stub):$/;"	c
+strncat	stubs/ELF/ELF.py	/^class strncat(Stub):$/;"	c
+strncmp	stubs/ELF/ELF.py	/^class strncmp(Stub):$/;"	c
+strncpy	stubs/ELF/ELF.py	/^class strncpy(Stub):$/;"	c
+strstr	stubs/ELF/ELF.py	/^class strstr(Stub):$/;"	c
+strtok	stubs/ELF/ELF.py	/^class strtok(Stub):$/;"	c
+strtok_acu	stubs/ELF/ELF.py	/^strtok_acu = 0$/;"	v
+strtok_tokens	stubs/ELF/ELF.py	/^strtok_tokens = []$/;"	v
+strtol	stubs/ELF/ELF.py	/^class strtol(Stub):$/;"	c
+stub_ELF	emu/unicorn/Olds/x86.py	/^  def stub_ELF(self,stubs_l):$/;"	m	class:x86Corn
+stub_by_first_insn	emu/unicorn/generic.py	/^    def stub_by_first_insn(self,ea,stub_func):$/;"	m	class:Emucorn
+stub_func_by_xref	DevSamples/libcstart.py	/^def stub_func_by_xref(ea):$/;"	f
+stub_func_by_xref	emu/unicorn/generic.py	/^    def stub_func_by_xref(self,ea,stub_func):$/;"	m	class:Emucorn
+stubbit	emu/miasm/arm32.py	/^  def stubbit(self,stubs_l):$/;"	m	class:Miarm
+stubbit	emu/unicorn/generic.py	/^    def stubbit(self):$/;"	m	class:Emucorn
+stubbit	emu/unicorn/mipsl32.py	/^  def stubbit(self):$/;"	m	class:MipsCorn
+tag_chooser	DevSamples/NewUI/tag_func_ui.py	/^  class tag_chooser(ida_kernwin.Choose):$/;"	c	class:TagForm
+tag_chooser	ui/tag_func_ui.py	/^  class tag_chooser(ida_kernwin.Choose):$/;"	c	class:TagForm
+tag_func	emu/unicorn/generic.py	/^    def tag_func(self,ea,stub_name): $/;"	m	class:Emucorn
+tag_func	ews_new.py	/^    def tag_func(self):$/;"	m	class:menu_action_handler_t
+tag_function	emu/emubase.py	/^  def tag_function(self,ea,stubname):$/;"	m	class:Emulator
+tag_function	emu/miasm/arm32.py	/^  def tag_function(self,ea,stubname):$/;"	m	class:Miarm
+tail_retn	emu/unicorn/Olds/x86.py	/^  def tail_retn(ea):$/;"	m	class:x86Corn
+tail_retn	emu/unicorn/x86.py	/^  def tail_retn(ea):$/;"	m	class:x86Corn
+ui_hook	DevSamples/NewUI/hooks.py	/^ui_hook = UI_Hook()$/;"	v
+ui_hook	ews_new.py	/^ui_hook = UI_Hook()$/;"	v
+unmp_read	emu/unicorn/generic.py	/^    def unmp_read(uc,access,addr,value,size,user_data):$/;"	m	class:Emucorn
+unmp_read	emu/unicorn/mipsl32.py	/^  def unmp_read(uc,access,addr,value,size,user_data):$/;"	m	class:MipsCorn
+unmp_write	emu/unicorn/generic.py	/^    def unmp_write(uc,access,addr,size,value,user_data):$/;"	m	class:Emucorn
+update	DevSamples/NewUI/hooks.py	/^    def update(self, ctx):$/;"	m	class:menu_action_handler_t
+update	DevSamples/NewUI/menu.py	/^    def update(self, ctx):$/;"	m	class:Handler
+update	ews_new.py	/^    def update(self, ctx):$/;"	m	class:menu_action_handler_t
+update_with_conf	ui/arm32.py	/^  def update_with_conf(self,conf):$/;"	f
+val	DevSamples/NewUI/MemEdit.py	/^  val = binascii.a2b_hex(value.encode('utf-8'))$/;"	v
+verify_valid_elf	utils/utils.py	/^def verify_valid_elf(candidate):$/;"	f
+winx64_stubs	stubs/PE.py	/^winx64_stubs = {} $/;"	v
+winx86_stubs	stubs/PE.py	/^winx86_stubs = {} $/;"	v
+write	stubs/ELF/utils.py	/^    def write(self,data):$/;"	m	class:FILE
+write	stubs/stubs_helper.py	/^    def write(self,data):$/;"	m	class:FILE
+write_to_fd	stubs/ELF/utils.py	/^def write_to_fd(fdnum,fdesc_l,out):$/;"	f
+x64Corn	emu/unicorn/x64.py	/^class x64Corn(Emucorn): $/;"	c
+x64Pannel	ui/x64.py	/^class x64Pannel(Pannel):$/;"	c
+x64Pannel	ui/x64_simplified.py	/^class x64Pannel(Pannel):$/;"	c
+x64RFLAGS	utils/utils.py	/^class x64RFLAGS(Registers):$/;"	c
+x64Registers	utils/utils.py	/^class x64Registers(Registers):$/;"	c
+x86Corn	emu/unicorn/Olds/x86.py	/^class x86Corn(Emucorn): $/;"	c
+x86Corn	emu/unicorn/x86.py	/^class x86Corn(Emucorn): $/;"	c
+x86EFLAGS	utils/utils.py	/^class x86EFLAGS(Registers):$/;"	c
+x86Pannel	ui/x86.py	/^class x86Pannel(Pannel):$/;"	c
+x86Pannel	ui/x86_simplified.py	/^class x86Pannel(Pannel):$/;"	c
+x86Registers	utils/utils.py	/^class x86Registers(Registers):$/;"	c
+xref_g	DevSamples/loader.py	/^    xref_g =  XrefsTo(k)$/;"	v

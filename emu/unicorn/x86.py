@@ -41,7 +41,7 @@ class x86Corn(Emucorn):
     self.pointer_size = 4 
        
     # Setup regs 
-    self.setup_regs(stk_p)
+    self.setup_regs(self.conf.registers)
     self.pcid = UC_X86_REG_EIP 
   
         # Init stubs engine 
@@ -172,17 +172,30 @@ class x86Corn(Emucorn):
     
     return x86EFLAGS.create(self.uc.reg_read(UC_X86_REG_EFLAGS))
 
-  def setup_regs(self,stk_p):
+  def setup_regs(self,regs):
 
     # Segment register might be instancied manually using console
-    self.uc.reg_write(UC_X86_REG_EAX,self.conf.registers.EAX)
-    self.uc.reg_write(UC_X86_REG_EBX,self.conf.registers.EBX)
-    self.uc.reg_write(UC_X86_REG_ECX,self.conf.registers.ECX)
-    self.uc.reg_write(UC_X86_REG_EDX,self.conf.registers.EDX)
-    self.uc.reg_write(UC_X86_REG_EDI,self.conf.registers.EDI)
-    self.uc.reg_write(UC_X86_REG_ESI,self.conf.registers.ESI)
-    self.uc.reg_write(UC_X86_REG_ESP,self.conf.registers.ESP)
-    self.uc.reg_write(UC_X86_REG_EBP,self.conf.registers.EBP)
+    self.uc.reg_write(UC_X86_REG_EAX,regs.EAX)
+    self.uc.reg_write(UC_X86_REG_EBX,regs.EBX)
+    self.uc.reg_write(UC_X86_REG_ECX,regs.ECX)
+    self.uc.reg_write(UC_X86_REG_EDX,regs.EDX)
+    self.uc.reg_write(UC_X86_REG_EDI,regs.EDI)
+    self.uc.reg_write(UC_X86_REG_ESI,regs.ESI)
+    self.uc.reg_write(UC_X86_REG_ESP,regs.ESP)
+    self.uc.reg_write(UC_X86_REG_EBP,regs.EBP)
+    self.uc.reg_write(UC_X86_REG_EIP,regs.EIP)
+
+  def get_regs(self):
+      return x86Registers(
+            EAX=self.uc.reg_read(UC_X86_REG_EAX),
+            EBX=self.uc.reg_read(UC_X86_REG_EBX),
+            ECX=self.uc.reg_read(UC_X86_REG_ECX),
+            EDX=self.uc.reg_read(UC_X86_REG_EDX),
+            EDI=self.uc.reg_read(UC_X86_REG_EDI),
+            ESI=self.uc.reg_read(UC_X86_REG_ESI),
+            ESP=self.uc.reg_read(UC_X86_REG_ESP),
+            EBP=self.uc.reg_read(UC_X86_REG_EBP),
+            EIP=self.uc.reg_read(UC_X86_REG_EIP))
     
   def reset_regs(self):
 
@@ -218,6 +231,26 @@ class x86Corn(Emucorn):
     elif r_id.lower() == 'eip':
       return UC_X86_REG_EIP
     
+  def reg_convert_sn(self,r_id):
+    if r_id.lower() == 'eax':
+      return UC_X86_REG_EAX 
+    elif r_id.lower() == 'ebx':
+      return UC_X86_REG_EBX 
+    elif r_id.lower() == 'ecx':
+      return UC_X86_REG_ECX 
+    elif r_id.lower() == 'edx':
+      return UC_X86_REG_EDX 
+    elif r_id.lower() == 'edi':
+      return UC_X86_REG_EDI
+    elif r_id.lower() == 'esi':
+      return UC_X86_REG_ESI
+    elif r_id.lower() == 'esp':
+      return UC_X86_REG_ESP
+    elif r_id.lower() == 'ebp':
+      return UC_X86_REG_EBP
+    elif r_id.lower() == 'eip':
+      return UC_X86_REG_EIP
+   
 
     
   def print_registers(self):

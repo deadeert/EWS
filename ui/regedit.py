@@ -306,7 +306,6 @@ class Regx64Edit(ida_kernwin.Form):
 
     @staticmethod
     def create(regs=None):
-      print('regs_rax: %x'%regs.RAX)
       regform = Regx64Edit(regs)
       regform.Compile()
       ok = regform.Execute()

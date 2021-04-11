@@ -40,7 +40,8 @@ class ArmCorn(Emucorn):
     if r: 
       logger.console(LogType.WARN,'[+] invalid page size, using default')
       self.conf.p_size = uc.query(UC_QUERY_PAGE_SIZE)
-    stk_p = Emucorn.do_mapping(self.uc,self.conf)
+    Emucorn.do_mapping(self.uc,self.conf)
+
     
     # Init capstone engine
     if conf.useCapstone:
@@ -53,7 +54,7 @@ class ArmCorn(Emucorn):
       self.cs.detail=True
 
     # Setup regs 
-    self.setup_regs(stk_p)
+    self.setup_regs(self.conf.registers)
     self.pcid = UC_ARM_REG_PC 
 
     # Init stubs engine 
@@ -187,31 +188,45 @@ class ArmCorn(Emucorn):
   """  Register specific functions 
   """
 #---------------------------------------------------------------------------------------------
-  def setup_regs(self,stk_p):
+  def setup_regs(self,regs):
 
-    self.uc.reg_write(UC_ARM_REG_R0,self.conf.registers.R0)
-    self.uc.reg_write(UC_ARM_REG_R1,self.conf.registers.R1)
-    self.uc.reg_write(UC_ARM_REG_R2,self.conf.registers.R2)
-    self.uc.reg_write(UC_ARM_REG_R3,self.conf.registers.R3)
-    self.uc.reg_write(UC_ARM_REG_R4,self.conf.registers.R4)
-    self.uc.reg_write(UC_ARM_REG_R5,self.conf.registers.R5)
-    self.uc.reg_write(UC_ARM_REG_R6,self.conf.registers.R6)
-    self.uc.reg_write(UC_ARM_REG_R7,self.conf.registers.R7)
-    self.uc.reg_write(UC_ARM_REG_R8,self.conf.registers.R8)
-    self.uc.reg_write(UC_ARM_REG_R9,self.conf.registers.R9)
-    self.uc.reg_write(UC_ARM_REG_R10,self.conf.registers.R10)
-    self.uc.reg_write(UC_ARM_REG_R11,self.conf.registers.R11)
-    self.uc.reg_write(UC_ARM_REG_R12,self.conf.registers.R12)
-    if self.conf.registers.R13 in range(self.conf.stk_ba,self.conf.stk_ba+stk_p*self.conf.p_size):
-      self.uc.reg_write(UC_ARM_REG_R13,self.conf.registers.R13)
-    else:
-      warn = '[%s] SP value does not belong to the stack'%'ArmCorn'
-      warn += 'using default address : %8X'%(self.conf.stk_ba+stk_p*self.conf.p_size-4)
-      logger.console(LogType.WARN,warn)
-      self.uc.reg_write(UC_ARM_REG_R13,self.conf.stk_ba+stk_p*self.conf.p_size-4)
-    self.uc.reg_write(UC_ARM_REG_R14,self.conf.registers.R14)
-    self.uc.reg_write(UC_ARM_REG_R15,self.conf.registers.R15)
+    self.uc.reg_write(UC_ARM_REG_R0,regs.R0)
+    self.uc.reg_write(UC_ARM_REG_R1,regs.R1)
+    self.uc.reg_write(UC_ARM_REG_R2,regs.R2)
+    self.uc.reg_write(UC_ARM_REG_R3,regs.R3)
+    self.uc.reg_write(UC_ARM_REG_R4,regs.R4)
+    self.uc.reg_write(UC_ARM_REG_R5,regs.R5)
+    self.uc.reg_write(UC_ARM_REG_R6,regs.R6)
+    self.uc.reg_write(UC_ARM_REG_R7,regs.R7)
+    self.uc.reg_write(UC_ARM_REG_R8,regs.R8)
+    self.uc.reg_write(UC_ARM_REG_R9,regs.R9)
+    self.uc.reg_write(UC_ARM_REG_R10,regs.R10)
+    self.uc.reg_write(UC_ARM_REG_R11,regs.R11)
+    self.uc.reg_write(UC_ARM_REG_R12,regs.R12)
+    self.uc.reg_write(UC_ARM_REG_R13,regs.R13)
+    self.uc.reg_write(UC_ARM_REG_R14,regs.R14)
+    self.uc.reg_write(UC_ARM_REG_R15,regs.R15)
 
+
+  def get_regs(self):
+      return ArmRegisters(
+            R0=self.uc.reg_read(UC_ARM_REG_R0),
+            R1=self.uc.reg_read(UC_ARM_REG_R1),
+            R2=self.uc.reg_read(UC_ARM_REG_R2),
+            R3=self.uc.reg_read(UC_ARM_REG_R3),
+            R4=self.uc.reg_read(UC_ARM_REG_R4),
+            R5=self.uc.reg_read(UC_ARM_REG_R5),
+            R6=self.uc.reg_read(UC_ARM_REG_R6),
+            R7=self.uc.reg_read(UC_ARM_REG_R7),
+            R8=self.uc.reg_read(UC_ARM_REG_R8),
+            R9=self.uc.reg_read(UC_ARM_REG_R9),
+            R10=self.uc.reg_read(UC_ARM_REG_R10),
+            R11=self.uc.reg_read(UC_ARM_REG_R11),
+            R12=self.uc.reg_read(UC_ARM_REG_R12),
+            R13=self.uc.reg_read(UC_ARM_REG_R13),
+            R14=self.uc.reg_read(UC_ARM_REG_R14),
+            R15=self.uc.reg_read(UC_ARM_REG_R15)
+      )
 
   def reset_regs(self):
 
@@ -246,6 +261,16 @@ class ArmCorn(Emucorn):
       return ArmCorn.int2reg(reg_id)
     else:
       raise Exception('[reg_convert] unhandled conversion for type %s'%type(reg_id))
+
+  def reg_convert_sn(self,reg_id):
+    if type(reg_id) == type(str()):
+      return self.str2reg(reg_id)
+    elif type(reg_id) == type(int()):
+      return self.int2reg(reg_id)
+    else:
+      raise Exception('[reg_convert] unhandled conversion for type %s'%type(reg_id))
+
+
 
   @staticmethod
   def int2reg(reg_id):

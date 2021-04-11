@@ -115,7 +115,6 @@ class Emucorn(Emulator):
         uc.mem_map(conf.stk_ba,stk_p*conf.p_size)
         logger.console(LogType.INFO,' [%s] mapped stack at 0x%.8X '%('Emucorn',conf.stk_ba))
     
-        return stk_p 
 
 
     """ Emulator reg/mem accesses 
@@ -310,6 +309,11 @@ class Emucorn(Emulator):
             if f == None: 
                 break
 
+
+    
+    def reg_convert_ns(self,rid):
+        pass
+
     def stubbit(self):
 
         i=0
@@ -422,6 +426,7 @@ class Emucorn(Emulator):
         if not saddr:
             saddr = self.conf.exec_saddr 
         try:
+            self.is_running = True
             self.uc.emu_start(saddr,self.conf.exec_eaddr,timeout=0,count=cnt)
             logger.console(LogType.INFO,'End Address specified in configuration reached')
         except UcError as e:    
@@ -498,9 +503,10 @@ class Emucorn(Emulator):
         stk_p = Emucorn.do_mapping(self.uc,self.conf)
 
         self.reset_regs() 
-        self.setup_regs(stk_p)
+        self.setup_regs(stk_p,self.conf.registers)
         
         self.helper.allocator.reset()
+        self.is_running = False
 
         self.repatch()
         

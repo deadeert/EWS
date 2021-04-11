@@ -22,6 +22,7 @@ class Emulator(object):
     self.ida_breakpoints = list()
     self.reloc_map = dict()
     self.last_pc = None
+    self.is_running = False
     for ea in self.conf.breakpoints:
       self.add_breakpoint(ea,update_conf=False)
     

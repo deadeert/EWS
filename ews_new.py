@@ -21,6 +21,10 @@ PATCHMEM=PLUGNAME+":patchmem"
 DISPLAYMEM=PLUGNAME+":displaymem"
 DISPLAYSTK=PLUGNAME+":displaystack"
 DISPLAYADDR=PLUGNAME+":displayaddr"
+STEPIN=PLUGNAME+":stepin"
+STEPOVER=PLUGNAME+":stepover"
+CONTINUE=PLUGNAME+":continue"
+RESTART=PLUGNAME+":restart"
 
 
 emu = None
@@ -59,6 +63,14 @@ class menu_action_handler_t(idaapi.action_handler_t):
             self.displaystack()
         elif self.action == DISPLAYADDR:
             self.displayaddr()
+        elif self.action == STEPIN:
+            self.stepin()
+        elif self.action == STEPOVER:
+            self.stepover()
+        elif self.action == CONTINUE:
+            self.continuee()
+        elif self.action == RESTART:
+            self.restart()
         else:
             logger.console(LogType.ERRR,"Function not yet implemented")
             return 0
@@ -92,9 +104,11 @@ class menu_action_handler_t(idaapi.action_handler_t):
             return
 
         regedit_func  = utils_ui.get_regedit_func()
+        new_regs = regedit_func(emu.get_regs())
+        emu.setup_regs(new_regs)
+        # for restart function
+        emu.conf.registers = new_regs 
 
-#       new_reg = regedit_func(emu.get_regs())
-#        emu.actualize_regs
 
 
     def tag_func(self):
@@ -134,10 +148,12 @@ class menu_action_handler_t(idaapi.action_handler_t):
             logger.console(LogType.ERRR,
                            "Please initiate an emulator before using this function")
             return
-        logger.console(LogType.INFO,
-                       "Please use refresh button to updates values in the UI")
         emu = utils_ui.get_emul_conf(simplified=False,
                                      conf=emu.conf)
+        if emu.is_running:
+            logger.console(LogType.WARN,
+                           "Modification requires to reload emulator")
+        
 
 
     def patchmem(self):
@@ -176,6 +192,59 @@ class menu_action_handler_t(idaapi.action_handler_t):
                            "Please initiate an emulator before using this function")
             return
         utils_ui.display_addr(emu) 
+
+    def stepin(self):
+        global emu
+        if emu == None:
+            logger.console(LogType.ERRR,
+                           "Please initiate an emulator before using this function")
+            return
+
+        if emu.is_running:
+            emu.step_in()
+        else:
+            emu.start()
+
+    def stepover(self):
+        global emu
+        if emu == None:
+            logger.console(LogType.ERRR,
+                           "Please initiate an emulator before using this function")
+            return
+
+        
+        if emu.is_running:
+            emu.step_over()
+        else:
+            emu.start()
+
+    def continuee(self):
+        global emu
+        if emu == None:
+            logger.console(LogType.ERRR,
+                           "Please initiate an emulator before using this function")
+            return
+
+        if emu.is_running:
+            emu.continuee()
+        else:
+            emu.start()
+
+    def restart(self):
+        global emu
+        if emu == None:
+            logger.console(LogType.ERRR,
+                           "Please initiate an emulator before using this function")
+            return
+        if emu.is_running:
+            emu.restart()
+        else:
+            emu.start()
+
+
+       
+
+
 
 
 class UI_Hook(idaapi.UI_Hooks):
@@ -241,6 +310,18 @@ menu_actions = [
                                  "T", 12),
              idaapi.action_desc_t(DISPLAYADDR, "Display Addr",
                                  menu_action_handler_t(DISPLAYADDR), 'Alt+Ctrl+D+S',
+                                 "T", 12),
+             idaapi.action_desc_t(STEPIN, "Start / Step IN",
+                                 menu_action_handler_t(STEPIN), 'Alt+Ctrl+I',
+                                 "T", 12),
+             idaapi.action_desc_t(STEPOVER, "Step OVER",
+                                 menu_action_handler_t(STEPOVER), 'Alt+Ctrl+O',
+                                 "T", 12),
+             idaapi.action_desc_t(CONTINUE, "Continue",
+                                 menu_action_handler_t(CONTINUE), 'Alt+Ctrl+C',
+                                 "T", 12),
+             idaapi.action_desc_t(RESTART, "Continue",
+                                 menu_action_handler_t(RESTART), 'Alt+Ctrl+J',
                                  "T", 12)
 
             ]

@@ -201,7 +201,6 @@ def loadconfig():
 
 def patch_mem(emu):
     ok,addr,bytesval = MemEdit.fillconfig(emu)
-    print(ok,addr,bytesval)
     if ok:
        import binascii
        try:

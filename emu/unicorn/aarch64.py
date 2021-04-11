@@ -28,7 +28,7 @@ class Aarch64Corn(Emucorn):
         if r:
           logger.console(LogType.WARN,'[+] invalid page size, using default')
           self.conf.p_size = uc.query(UC_QUERY_PAGE_SIZE)
-        stk_p = Emucorn.do_mapping(self.uc,self.conf)
+        Emucorn.do_mapping(self.uc,self.conf)
 
         # Init capstone engine
         if conf.useCapstone:
@@ -37,7 +37,7 @@ class Aarch64Corn(Emucorn):
             self.cs.detail=True
 
         # Setup regs 
-        self.setup_regs(stk_p)
+        self.setup_regs(self.conf.registers)
         self.pcid = UC_ARM64_REG_PC 
 
 
@@ -134,49 +134,82 @@ class Aarch64Corn(Emucorn):
 
 #-------------------------------------------------------------------------------------------
 
-    def setup_regs(self,stk_p):
+    def setup_regs(self,regs):
 
-        self.uc.reg_write(UC_ARM64_REG_X0,self.conf.registers.X0)
-        self.uc.reg_write(UC_ARM64_REG_X1,self.conf.registers.X1)
-        self.uc.reg_write(UC_ARM64_REG_X2,self.conf.registers.X2)
-        self.uc.reg_write(UC_ARM64_REG_X3,self.conf.registers.X3)
-        self.uc.reg_write(UC_ARM64_REG_X4,self.conf.registers.X4)
-        self.uc.reg_write(UC_ARM64_REG_X5,self.conf.registers.X5)
-        self.uc.reg_write(UC_ARM64_REG_X6,self.conf.registers.X6)
-        self.uc.reg_write(UC_ARM64_REG_X7,self.conf.registers.X7)
-        self.uc.reg_write(UC_ARM64_REG_X8,self.conf.registers.X8)
+        self.uc.reg_write(UC_ARM64_REG_X0,regs.X0)
+        self.uc.reg_write(UC_ARM64_REG_X1,regs.X1)
+        self.uc.reg_write(UC_ARM64_REG_X2,regs.X2)
+        self.uc.reg_write(UC_ARM64_REG_X3,regs.X3)
+        self.uc.reg_write(UC_ARM64_REG_X4,regs.X4)
+        self.uc.reg_write(UC_ARM64_REG_X5,regs.X5)
+        self.uc.reg_write(UC_ARM64_REG_X6,regs.X6)
+        self.uc.reg_write(UC_ARM64_REG_X7,regs.X7)
+        self.uc.reg_write(UC_ARM64_REG_X8,regs.X8)
 
-        self.uc.reg_write(UC_ARM64_REG_X9,self.conf.registers.X9)
-        self.uc.reg_write(UC_ARM64_REG_X10,self.conf.registers.X10)
-        self.uc.reg_write(UC_ARM64_REG_X11,self.conf.registers.X11)
-        self.uc.reg_write(UC_ARM64_REG_X12,self.conf.registers.X12)
-        self.uc.reg_write(UC_ARM64_REG_X13,self.conf.registers.X13)
-        self.uc.reg_write(UC_ARM64_REG_X14,self.conf.registers.X14)
-        self.uc.reg_write(UC_ARM64_REG_X15,self.conf.registers.X15)
-        self.uc.reg_write(UC_ARM64_REG_X16,self.conf.registers.X16)
-        self.uc.reg_write(UC_ARM64_REG_X17,self.conf.registers.X17)
-        self.uc.reg_write(UC_ARM64_REG_X18,self.conf.registers.X18)
+        self.uc.reg_write(UC_ARM64_REG_X9,regs.X9)
+        self.uc.reg_write(UC_ARM64_REG_X10,regs.X10)
+        self.uc.reg_write(UC_ARM64_REG_X11,regs.X11)
+        self.uc.reg_write(UC_ARM64_REG_X12,regs.X12)
+        self.uc.reg_write(UC_ARM64_REG_X13,regs.X13)
+        self.uc.reg_write(UC_ARM64_REG_X14,regs.X14)
+        self.uc.reg_write(UC_ARM64_REG_X15,regs.X15)
+        self.uc.reg_write(UC_ARM64_REG_X16,regs.X16)
+        self.uc.reg_write(UC_ARM64_REG_X17,regs.X17)
+        self.uc.reg_write(UC_ARM64_REG_X18,regs.X18)
 
-        self.uc.reg_write(UC_ARM64_REG_X19,self.conf.registers.X19)
-        self.uc.reg_write(UC_ARM64_REG_X20,self.conf.registers.X20)
-        self.uc.reg_write(UC_ARM64_REG_X21,self.conf.registers.X21)
-        self.uc.reg_write(UC_ARM64_REG_X22,self.conf.registers.X22)
-        self.uc.reg_write(UC_ARM64_REG_X23,self.conf.registers.X23)
-        self.uc.reg_write(UC_ARM64_REG_X24,self.conf.registers.X24)
-        self.uc.reg_write(UC_ARM64_REG_X25,self.conf.registers.X25)
-        self.uc.reg_write(UC_ARM64_REG_X26,self.conf.registers.X26)
-        self.uc.reg_write(UC_ARM64_REG_X27,self.conf.registers.X27)
-        self.uc.reg_write(UC_ARM64_REG_X28,self.conf.registers.X28)
-        self.uc.reg_write(UC_ARM64_REG_X28,self.conf.registers.X28)
+        self.uc.reg_write(UC_ARM64_REG_X19,regs.X19)
+        self.uc.reg_write(UC_ARM64_REG_X20,regs.X20)
+        self.uc.reg_write(UC_ARM64_REG_X21,regs.X21)
+        self.uc.reg_write(UC_ARM64_REG_X22,regs.X22)
+        self.uc.reg_write(UC_ARM64_REG_X23,regs.X23)
+        self.uc.reg_write(UC_ARM64_REG_X24,regs.X24)
+        self.uc.reg_write(UC_ARM64_REG_X25,regs.X25)
+        self.uc.reg_write(UC_ARM64_REG_X26,regs.X26)
+        self.uc.reg_write(UC_ARM64_REG_X27,regs.X27)
+        self.uc.reg_write(UC_ARM64_REG_X28,regs.X28)
+        self.uc.reg_write(UC_ARM64_REG_FP,regs.FP)
+        self.uc.reg_write(UC_ARM64_REG_LR,regs.LR)
+        self.uc.reg_write(UC_ARM64_REG_SP,regs.SP)
+        self.uc.reg_write(UC_ARM64_REG_PC,regs.PC)
 
-        self.uc.reg_write(UC_ARM64_REG_FP,self.conf.registers.FP)
-        self.uc.reg_write(UC_ARM64_REG_LR,self.conf.registers.LR)
-        if not self.conf.registers.SP in range(self.conf.stk_ba, self.conf.stk_ba + self.conf.stk_size):
-            self.uc.reg_write(UC_ARM64_REG_SP,self.conf.stk_ba+self.conf.stk_size-8)
-        else:
-            self.uc.reg_write(UC_ARM64_REG_SP,self.conf.registers.SP)
-        self.uc.reg_write(UC_ARM64_REG_PC,self.conf.registers.PC)
+    def get_regs(self):
+        return Aarch64Registers(
+                X0=self.uc.reg_read(UC_ARM64_REG_X0),
+                X1=self.uc.reg_read(UC_ARM64_REG_X1),
+                X2=self.uc.reg_read(UC_ARM64_REG_X2),
+                X3=self.uc.reg_read(UC_ARM64_REG_X3),
+                X4=self.uc.reg_read(UC_ARM64_REG_X4),
+                X5=self.uc.reg_read(UC_ARM64_REG_X5),
+                X6=self.uc.reg_read(UC_ARM64_REG_X6),
+                X7=self.uc.reg_read(UC_ARM64_REG_X7),
+                X8=self.uc.reg_read(UC_ARM64_REG_X8),
 
+                X9=self.uc.reg_read(UC_ARM64_REG_X9),
+                X10=self.uc.reg_read(UC_ARM64_REG_X10),
+                X11=self.uc.reg_read(UC_ARM64_REG_X11),
+                X12=self.uc.reg_read(UC_ARM64_REG_X12),
+                X13=self.uc.reg_read(UC_ARM64_REG_X13),
+                X14=self.uc.reg_read(UC_ARM64_REG_X14),
+                X15=self.uc.reg_read(UC_ARM64_REG_X15),
+                X16=self.uc.reg_read(UC_ARM64_REG_X16),
+                X17=self.uc.reg_read(UC_ARM64_REG_X17),
+                X18=self.uc.reg_read(UC_ARM64_REG_X18),
+
+                X19=self.uc.reg_read(UC_ARM64_REG_X19),
+                X20=self.uc.reg_read(UC_ARM64_REG_X20),
+                X21=self.uc.reg_read(UC_ARM64_REG_X21),
+                X22=self.uc.reg_read(UC_ARM64_REG_X22),
+                X23=self.uc.reg_read(UC_ARM64_REG_X23),
+                X24=self.uc.reg_read(UC_ARM64_REG_X24),
+                X25=self.uc.reg_read(UC_ARM64_REG_X25),
+                X26=self.uc.reg_read(UC_ARM64_REG_X26),
+                X27=self.uc.reg_read(UC_ARM64_REG_X27),
+                X28=self.uc.reg_read(UC_ARM64_REG_X28),
+                FP=self.uc.reg_read(UC_ARM64_REG_FP),
+                LR=self.uc.reg_read(UC_ARM64_REG_LR),
+                SP=self.uc.reg_read(UC_ARM64_REG_SP),
+                PC=self.uc.reg_read(UC_ARM64_REG_PC)
+        ) 
 
     def reset_regs(self):
 
@@ -228,6 +261,15 @@ class Aarch64Corn(Emucorn):
           return Aarch64Corn.int2reg(reg_id)
         else:
           raise Exception('[reg_convert] unhandled conversion for type %s'%type(reg_id))
+
+    def reg_convert_sn(self,reg_id):
+        if type(reg_id) == type(str()):
+          return self.str2reg(reg_id)
+        elif type(reg_id) == type(int()):
+          return self.int2reg(reg_id)
+        else:
+          raise Exception('[reg_convert] unhandled conversion for type %s'%type(reg_id))
+
 
 
     @staticmethod
