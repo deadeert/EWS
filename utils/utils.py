@@ -797,8 +797,9 @@ def get_max_ea_idb():
 
 
 def search_executable():
-    """ try to locate binary corresponding to the IDB
-        to parse dynamic information (PT_DYNAMIC segment) 
+    """ 
+    try to locate binary corresponding to the IDB
+    to parse dynamic information (PT_DYNAMIC segment) 
     """
 
     f_path = ida_loader.get_path(ida_loader.PATH_TYPE_CMD)
@@ -824,12 +825,19 @@ def search_executable():
 
 
 def verify_valid_elf(candidate):
-    print(candidate)
     if os.path.exists(candidate):
             if str(lief.ELF.parse(candidate)) != 'None':
                     return True
     return False
-        
+
+def verify_valid_PE(candidate):
+    if os.path.exists(candidate):
+            if str(lief.PE.parse(candidate)) != 'None':
+                    return True
+    return False
+
+
+
 
 def get_next_pc(insn):
 

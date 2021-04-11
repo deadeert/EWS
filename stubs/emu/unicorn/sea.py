@@ -113,7 +113,7 @@ class UnicornAarch64SEA(UnicornSEA):
     self.reg_write(0,value)
   
   def get_pc(self):
-    return self.reg_read('PC')
+    return self.reg_read(260) # pc
 
   def get_sp(self):
     return self.reg_read(31)
@@ -253,7 +253,41 @@ class UnicornX64SEA(UnicornSEA):
       return self.reg_read('r9')
     else:
       rsp = self.reg_read('rsp')
-      return struct.unpack('<Q',self.mem_read(rsp+arg_num*self.wsize,self.wsize)) # call insn is nopped hence ret @ is not pushed on the stack
+      # PLT stubbed, so when the call is performed
+      # at call pomoent looks like:
+      # ret @ <---- rsp
+      # arg(6)
+      return struct.unpack('<Q',self.mem_read(rsp+(arg_num-5)*self.wsize,self.wsize)) 
+  def set_return(self,value):
+    self.reg_write('rax',value)
+  
+  def get_pc(self):
+    return self.reg_read('rip')
+
+  def get_sp(self):
+    return self.reg_read('rsp')
+
+class UnicornX64MSVCSEA(UnicornSEA):
+  def __init__(self,emu,allocator,wsize):
+    super().__init__(emu,allocator,wsize)
+
+  def reg_conv(self,r_id):
+    return emu.unicorn.x64.x64Corn.reg_convert(r_id)
+
+
+  def get_arg(self,arg_num):
+    if arg_num == 0:
+      return self.reg_read('rcx')
+    elif arg_num == 1:
+      return self.reg_read('rdx')
+    elif arg_num == 2:
+      return self.reg_read('r8')
+    elif arg_num == 3:
+      return self.reg_read('r9')
+    else:
+      rsp = self.reg_read('rsp')
+      # call insn is nopped hence ret @ is not pushed on the stack
+      return struct.unpack('<Q',self.mem_read(rsp+(arg_num-4)*self.wsize,self.wsize)) 
 
   def set_return(self,value):
     self.reg_write('rax',value)
@@ -263,5 +297,6 @@ class UnicornX64SEA(UnicornSEA):
 
   def get_sp(self):
     return self.reg_read('rsp')
+
 
 

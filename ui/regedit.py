@@ -188,11 +188,14 @@ class RegArm64Edit(ida_kernwin.Form):
 
 
 
-   
+    def onCallback(self,fid):
+        return True
+
+
 
     @staticmethod
     def create(regs=None):
-      regform = RegArm32Edit(regs)
+      regform = RegArm64Edit(regs)
       regform.Compile()
       ok = regform.Execute()
       if ok:

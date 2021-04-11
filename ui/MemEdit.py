@@ -32,7 +32,8 @@ Edit memory
                     r_id= self.emu.reg_convert_ns(self.GetControlValue(self.iAddr))
                     addr = self.emu.reg_read(r_id)
                     self.SetControlValue(self.iAddr,'0x%x'%addr)
-                except:
+                except Exception as e:
+                    print("error deconding register: %s"%str(e))
                     return 
             else:
                 return

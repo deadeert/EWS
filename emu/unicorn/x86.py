@@ -57,21 +57,21 @@ class x86Corn(Emucorn):
     if self.conf.s_conf.stub_dynamic_func_tab:
       if '(PE)' in self.filetype:
         self.stubs = PE.winx86_stubs
-        self.nstub_obj = PE.NullStub() 
+        self.nstub_obj = PE.NullStub()
         self.loader_type = LoaderType.PE
         self.nstub_obj.set_helper(self.helper)
-      elif 'ELF' in self.filetype: 
-        self.stubs = ELF.libc_stubs 
+      elif 'ELF' in self.filetype:
+        self.stubs = ELF.libc_stubs
         self.nstub_obj = ELF.NullStub()
-        self.loader_type = LoaderType.ELF 
+        self.loader_type = LoaderType.ELF
         self.nstub_obj.set_helper(self.helper)
 
         if verify_valid_elf(self.conf.s_conf.orig_filepath):
           self.get_relocs(self.conf.s_conf.orig_filepath,lief.ELF.RELOCATION_X86_64.JUMP_SLOT)
-
-#          self.libc_start_main_trampoline = consts_x86.LIBCSTARTSTUBADDR
-#          self.uc.mem_map(consts_x86.LIBCSTARTSTUBADDR,consts_x86.PSIZE, UC_PROT_ALL)
-#          self.uc.mem_write(consts_x86.LIBCSTARTSTUBADDR,consts_x86.LIBCSTARTSTUBCODE) 
+          # Stub __libc_start_main (experimental)
+          self.libc_start_main_trampoline = consts_x86.LIBCSTARTSTUBADDR
+          self.uc.mem_map(consts_x86.LIBCSTARTSTUBADDR,consts_x86.PSIZE, UC_PROT_ALL)
+          self.uc.mem_write(consts_x86.LIBCSTARTSTUBADDR,consts_x86.LIBCSTARTSTUBCODE) 
           self.stubbit()
 
     self.uc.hook_add(UC_HOOK_CODE,
@@ -98,6 +98,10 @@ class x86Corn(Emucorn):
   def repatch(self):
     if not self.conf.s_conf.stub_dynamic_func_tab:
       return 
+    # need to remap according to the arch settings 
+    self.uc.mem_map(consts_x86.ALLOC_BA,
+                    self.conf.p_size*consts_x86.ALLOC_PAGES,
+                    UC_PROT_READ | UC_PROT_WRITE)
     self.stubbit()
     
         
@@ -231,7 +235,7 @@ class x86Corn(Emucorn):
     elif r_id.lower() == 'eip':
       return UC_X86_REG_EIP
     
-  def reg_convert_sn(self,r_id):
+  def reg_convert_ns(self,r_id):
     if r_id.lower() == 'eax':
       return UC_X86_REG_EAX 
     elif r_id.lower() == 'ebx':

@@ -66,7 +66,6 @@ def get_emul(s_ea,
                                                    stub_conf,
                                                    amap_config)
 
-        logger.console(LogType.INFO,"Configuration:\n",conf)
         if conf:
             emu = Aarch64Corn(conf)
     else:
@@ -76,7 +75,6 @@ def get_emul(s_ea,
                                                    stub_conf,
                                                    amap_config)
 
-        logger.console(LogType.INFO,"Configuration:\n",conf)
         if conf: 
           emu = ArmCorn(conf)
   elif procname == 'pc':
@@ -86,7 +84,6 @@ def get_emul(s_ea,
                                                  regs,
                                                  stub_conf,
                                                  amap_config)
-          logger.console(LogType.INFO,"Configuration:\n",conf)
           if conf:
               emu = x64Corn(conf)
       else:
@@ -96,7 +93,6 @@ def get_emul(s_ea,
                                                stub_conf,
                                                amap_config)
 
-        logger.console(LogType.INFO,"Configuration:\n",conf)
         if conf:
               emu = x86Corn(conf)
 

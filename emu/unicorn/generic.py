@@ -279,12 +279,13 @@ class Emucorn(Emulator):
      except StopIteration:
         pass         
 
-    def stub_by_first_insn(self,ea,stub_func):
+    def stub_by_first_insn(self,ea,stub_func,stub_payload=None):
         
-        ret_insn = self.get_retn_insn(ea)    # retn X, pop pc, ... 
+        if stub_payload == None:
+            stub_payload = self.get_retn_insn(ea)    # retn X, pop pc, ... 
         stub =    self.get_new_stub(stub_func)    
         self.stub_breakpoints[ea] = stub.do_it
-        self.uc.mem_write(ea,ret_insn)
+        self.uc.mem_write(ea,stub_payload)
         
 
     def iter_by_name(self,start_ea,end_ea):
@@ -316,47 +317,73 @@ class Emucorn(Emulator):
 
     def stubbit(self):
 
-        i=0
+
+       
+        stub_payload = None
         for k,v in self.reloc_map.items():
-                        # enter plt
-                        # TODO change by ida_xref.get_first_dref_to(v) ? 
-                        xref_g = idautils.XrefsTo(v)
-                        try:
-                         while True:
-                            xref = next(xref_g)
-                            if k in self.stubs.keys():
-                                self.stubs[k].set_helper(self.helper)
-                                # stub plt entry
-                                self.stub_by_first_insn(xref.frm,self.stubs[k].do_it)
-                                logger.console(LogType.INFO,"%s is now stubbed"%k)
-                            elif k == '__libc_start_main':
-                                    logger.console(LogType.INFO,'libc_start_main stubbed!')
-                                    self.uc.mem_write(v,
-                                                    int.to_bytes(self.libc_start_main_trampoline,
-                                                    8 if idc.__EA64__ else 4,
-                                                 'little'))
-                            else:
-                                 #TODO add configuration option to automatically null-stub 
-                                 #symbols that are not currently supported 
-                                 if self.conf.s_conf.auto_null_stub:
-                                        logger.console(LogType.INFO,'%s symbol not found. null-stubbing it'%k)
-                                        self.add_null_stub(xref.frm)
-                            i+=1
-                        except StopIteration:
-                                if i>1:
-                                        logger.console(LogType.WARN,'Weird behavior detected. GOT slot referenced by several xref...\n',
-                                                                     'Unwanted behavior might occur')
+            # enter plt
+            # TODO change by ida_xref.get_first_dref_to(v) ? 
+            xref_g = idautils.XrefsTo(v)
+            i=0
+            try:
+             while True:
+                xref = next(xref_g)
+                if k in self.stubs.keys():
+                    self.stubs[k].set_helper(self.helper)
+                    if hasattr(self,'loader_type'):
+                        if self.loader_type == LoaderType.PE:
+                            insn  = get_insn_at(xref.frm)
+                            stub_payload = self.ks.asm('nop',as_bytes=True)[0]*insn.size
+                        self.stub_by_first_insn(xref.frm,
+                                                self.stubs[k].do_it,
+                                                stub_payload=stub_payload)
+#                    logger.console(LogType.INFO,"%s is now stubbed"%k)
+                elif k == '__libc_start_main':
+                        logger.console(LogType.INFO,'libc_start_main stubbed!')
+                        self.uc.mem_write(v,
+                                        int.to_bytes(self.libc_start_main_trampoline,
+                                        8 if idc.__EA64__ else 4,
+                                     'little'))
+                else:
+                     #TODO add configuration option to automatically null-stub 
+                     #symbols that are not currently supported 
+                     if self.conf.s_conf.auto_null_stub:
+                        if hasattr(self,'loader_type'):
+                            if self.loader_type == LoaderType.PE:
+                                insn  = get_insn_at(xref.frm)
+                                stub_payload = self.ks.asm('nop',as_bytes=True)[0]*insn.size
+#                            logger.console(LogType.INFO,'%s symbol not found. null-stubbing it'%k)
+                        self.add_null_stub(xref.frm,stub_payload=stub_payload)
+                            
+                i+=1
+            except StopIteration:
+                    if i>1:
+                            logger.console(LogType.WARN,'Weird behavior detected. GOT slot referenced by several xref...\n',
+                                                         'Unwanted behavior might occur')
         for s_ea in self.conf.s_conf.nstubs.keys():
-                self.add_null_stub(s_ea)
+                if hasattr(self,'loader_type'):
+                    if self.loader_type == LoaderType.PE:
+                        insn  = get_insn_at(xref.frm)
+                        stub_payload = self.ks.asm('nop',as_bytes=True)[0]*insn.size
+                self.add_null_stub(s_ea,stub_payload=stub_payload)
 
         for k,v in self.conf.s_conf.tags.items():
             self.tag_func(k,v)
 
 
+    def get_imports(self,fpath):
+        import ida_nalt
+        info = ida_idaapi.get_inf_structure()
+        PE_obj = lief.PE.parse(fpath)
+        if str(PE_obj) != 'None':
+            for f in PE_obj.imported_functions:
+                self.reloc_map[f.name] = f.address + ida_nalt.get_imagebase()
+        for k,v in self.reloc_map.items():
+            print('[get_imports] added %s at addr %x'%(k,v))
 
     def get_relocs(self,fpath,RTYPE_ID):
                 elf_l = lief.ELF.parse(fpath)
-                if str(elf_l) != None:
+                if str(elf_l) != 'None':
                         # overload get_reloc of emubase
                         relocs = elf_l.relocations
                         for r in relocs:
@@ -410,8 +437,8 @@ class Emucorn(Emulator):
         self.remove_custom_stub(ea)
         self.conf.remove_tag(ea)
 
-    def add_null_stub(self,ea):
-        self.stub_by_first_insn(ea,self.nstub_obj.do_it)
+    def add_null_stub(self,ea,stub_payload=None):
+        self.stub_by_first_insn(ea,self.nstub_obj.do_it,stub_payload)
         logger.console(LogType.INFO,'%x is now null stubbed'%ea)
         self.conf.add_null_stub(ea)
 
@@ -476,25 +503,7 @@ class Emucorn(Emulator):
         else:
             self.step_in()
 
-#    def step_over(self):
-#        # TODO could be used directly in emubase class 
-#        insn = get_insn_at(self.helper.get_pc()) 
-#
-#        if self.helper.get_pc() == self.conf.exec_eaddr: 
-#            self.conf.exec_eaddr+=insn.size
-#        if ida_idp.is_call_insn(insn): 
-#            self.add_breakpoint(insn.ea+insn.size)
-#        # dirty way to assess conditionnal jump, is_conditionnal_jmp would have been appreciated    
-#        elif ida_idp.has_insn_feature(insn.itype,ida_idp.CF_USE1):
-#            if idc.get_operand_type(insn.ea,0) == ida_ua.o_near: 
-#                logger.console(LogType.INFO,'Conditionnal jump detected')
-#                self.add_breakpoint(insn.ea+insn.size)
-#                self.add_breakpoint(idc.get_operand_value(insn.ea,0))
-#        # CF_STOP insn (jump,br,...), indirect jump or simply other insn that does not have cref
-#        else:
-#            logger.console(LogType.WARN,'Could not step_over this kind of insn')
-#        self.continuee()
-#
+
     def restart(self,conf=None,cnt=0):
         # unmap & remap 
         self.nb_insn = 0
@@ -503,7 +512,7 @@ class Emucorn(Emulator):
         stk_p = Emucorn.do_mapping(self.uc,self.conf)
 
         self.reset_regs() 
-        self.setup_regs(stk_p,self.conf.registers)
+        self.setup_regs(self.conf.registers)
         
         self.helper.allocator.reset()
         self.is_running = False

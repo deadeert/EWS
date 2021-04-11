@@ -59,6 +59,7 @@ class Aarch64Corn(Emucorn):
           if verify_valid_elf(self.conf.s_conf.orig_filepath):
               self.get_relocs(self.conf.s_conf.orig_filepath,lief.ELF.RELOCATION_AARCH64.JUMP_SLOT)
               self.stubs = ELF.libc_stubs 
+              self.libc_start_main_trampoline = consts_aarch64.LIBCSTARTSTUBADDR
               self.stubbit()
 
         self.uc.hook_add(UC_HOOK_CODE,
@@ -120,7 +121,7 @@ class Aarch64Corn(Emucorn):
         self.uc.mem_write(insn.ea,struct.pack('<I',consts_aarch64.nop))
 
     def get_retn_insn(self,ea):
-        return struct.pack('<I',consts_aarch64.ret)
+        return struct.pack('>I',consts_aarch64.ret)
 
     def get_new_stub(self,stub_func):
         stub = ELF.Stub(self.helper)
@@ -262,7 +263,7 @@ class Aarch64Corn(Emucorn):
         else:
           raise Exception('[reg_convert] unhandled conversion for type %s'%type(reg_id))
 
-    def reg_convert_sn(self,reg_id):
+    def reg_convert_ns(self,reg_id):
         if type(reg_id) == type(str()):
           return self.str2reg(reg_id)
         elif type(reg_id) == type(int()):
@@ -280,6 +281,8 @@ class Aarch64Corn(Emucorn):
           return UC_ARM64_REG_FP
         elif reg_id == 30: 
           return UC_ARM64_REG_LR
+        elif reg_id == 260:
+          return UC_ARM64_REG_PC
         else: 
             return UC_ARM64_REG_X0 + reg_id
 
@@ -345,7 +348,6 @@ class Aarch64Corn(Emucorn):
           return UC_ARM64_REG_X27
         elif r_str == 'X28':
           return UC_ARM64_REG_X28
-
         elif r_str == 'X29' or 'FP':
           return UC_ARM64_REG_FP
         elif r_str == 'X30' or 'LR':
@@ -398,6 +400,94 @@ class Aarch64Corn(Emucorn):
                                                                self.uc.reg_read(UC_ARM64_REG_LR),
                                                                self.uc.reg_read(UC_ARM64_REG_SP))
         logger.console(LogType.INFO,strout)
+
+
+
+
+    @staticmethod
+    def generate_default_config(s_ea,
+                              e_ea,
+                              regs=None,
+                              s_conf=None,
+                              amap_conf=None):
+
+      if regs==None:
+            registers = Aarch64Registers(0,
+                                         1,
+                                         2,
+                                         3,
+                                         4,
+                                         5,
+                                         6,
+                                         7,
+                                         8,
+                                         9,
+                                         10,
+                                         11,
+                                         12,
+                                         13,
+                                         14,
+                                         15,
+                                         16,
+                                         17,
+                                         18,
+                                         19,
+                                         20,
+                                         21,
+                                         22,
+                                         23,
+                                         24,
+                                         25,
+                                         26,
+                                         27,
+                                         28,
+                                         29,
+                                         e_ea, # LR
+                                         consts_aarch64.STACK_BASEADDR+consts_aarch64.STACK_SIZE-consts_aarch64.initial_stack_offset,
+                                         s_ea # PC
+                                         )
+      else:
+        registers = regs
+
+      if s_conf == None:
+        exec_path = search_executable() 
+        stub_conf = StubConfiguration(nstubs=dict(),
+                                        stub_dynamic_func_tab=True, #True if exec_path != "" else False,
+                                        orig_filepath=exec_path,
+                                        custom_stubs_file=None,
+                                        auto_null_stub=True if exec_path != "" else False,
+                                        tags=dict())
+      else:
+        stub_conf = s_conf
+
+      if amap_conf == None:
+        addmap_conf = AdditionnalMapping.create()
+      else:
+        addmap_conf = amap_conf
+
+
+      return Configuration(path='',
+                              arch='aarch64',
+                              emulator='unicorn',
+                              p_size=consts_aarch64.PSIZE,
+                              stk_ba=consts_aarch64.STACK_BASEADDR,
+                              stk_size=consts_aarch64.STACK_SIZE,
+                              autoMap=False,
+                              showRegisters=True,
+                              exec_saddr=s_ea,
+                              exec_eaddr=e_ea,
+                              mapping_saddr=get_min_ea_idb(),
+                              mapping_eaddr=get_max_ea_idb(),
+                              segms=[],
+                              map_with_segs=False,
+                              use_seg_perms=False,
+                              useCapstone=True,
+                              registers=registers,
+                              showMemAccess=True,
+                              s_conf=stub_conf,
+                              amap_conf=addmap_conf,
+                              color_graph=False,
+                              breakpoints= [])
 
 
 

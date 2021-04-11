@@ -7,7 +7,7 @@ import idc
 import ida_ua
 import ida_funcs
 import idautils
-from stubs.emu.unicorn.sea import UnicornX64SEA
+from stubs.emu.unicorn.sea import UnicornX64SEA, UnicornX64MSVCSEA
 import struct
 from unicorn.x86_const import * 
 from keystone import * 
@@ -19,6 +19,8 @@ from emu.unicorn.x86 import x86Corn
 
 from stubs.ELF.allocator import *
 from stubs.ELF import ELF
+
+from stubs.PE import PE
 
 
 
@@ -55,13 +57,11 @@ class x64Corn(Emucorn):
     self.pcid = UC_X86_REG_RIP 
   
 
-#    self.breakpoints = dict()
-#    self.custom_stubs = dict()
-#
 
 #    for s_ea in conf.s_conf.nstubs.keys():
 #      self.add_null_stub(s_ea)
 #   
+    self.filetype = ida_loader.get_file_type_name()
     # Init stubs engine 
     if self.conf.s_conf.stub_dynamic_func_tab:
 
@@ -70,31 +70,36 @@ class x64Corn(Emucorn):
                       conf.p_size*consts_x64.ALLOC_PAGES,
                       UC_PROT_READ | UC_PROT_WRITE)
       # TODO it is may be a good idea to differ GCC / MSVC here as prolog/epilic might change 
-      self.helper = UnicornX64SEA(emu=self,
+      if '(PE)' in self.filetype: 
+         self.helper = UnicornX64MSVCSEA(emu=self,
+                                  allocator=DumpAllocator(consts_x64.ALLOC_BA,consts_x64.ALLOC_PAGES*conf.p_size),
+                                  wsize=8)
+      else:
+        self.helper = UnicornX64SEA(emu=self,
                                   allocator=DumpAllocator(consts_x64.ALLOC_BA,consts_x64.ALLOC_PAGES*conf.p_size),
                                   wsize=8)
 
-      self.filetype = ida_loader.get_file_type_name()
-      print('filetype: %s'%self.filetype)
+      
       if self.conf.s_conf.stub_dynamic_func_tab:
           if '(PE)' in self.filetype:
-#            self.stubs = PE.winx86_stubs
-#            self.nstub_obj = PE.NullStub() 
-#            self.loader_type = LoaderType.PE
-#            self.nstub_obj.set_helper(self.helper)
-            logger.console(LogType.ERRR,'Stub mechansim does not yet support PE format')
-          elif 'ELF' in self.filetype: 
-            self.stubs = ELF.libc_stubs 
-            self.nstub_obj = ELF.NullStub()
-            self.loader_type = LoaderType.ELF 
+            self.stubs = PE.windows_stubs
+            self.nstub_obj = PE.NullStub()
+            self.loader_type = LoaderType.PE
             self.nstub_obj.set_helper(self.helper)
+            if verify_valid_PE(self.conf.s_conf.orig_filepath):
+                self.get_imports(self.conf.s_conf.orig_filepath)
+                self.stubbit()
+
+
+          elif 'ELF' in self.filetype:
+            self.stubs = ELF.libc_stubs
+            self.nstub_obj = ELF.NullStub(helper)
+            self.loader_type = LoaderType.ELF
+#            self.nstub_obj.set_helper(self.helper)
 
             if verify_valid_elf(self.conf.s_conf.orig_filepath):
               self.get_relocs(self.conf.s_conf.orig_filepath,lief.ELF.RELOCATION_X86_64.JUMP_SLOT)
-
-              self.libc_start_main_trampoline =  0 #cconsts_x86.LIBCSTARTSTUBADDR
-#              self.uc.mem_map(consts_x86.LIBCSTARTSTUBADDR,consts_x86.PSIZE, UC_PROT_ALL)
-#              self.uc.mem_write(consts_x86.LIBCSTARTSTUBADDR,consts_x86.LIBCSTARTSTUBCODE) 
+              self.libc_start_main_trampoline =  consts_x64.LIBCSTARTSTUBADDR
               self.stubbit()
 
          
@@ -122,13 +127,18 @@ class x64Corn(Emucorn):
 
   def get_retn_insn(self,ea):
     f = ida_funcs.get_func(ea)
-    # we can use the same function because itype are the same
-    n = x86Corn.tail_retn(f.start_ea)
-    if n > 0: 
-      try: retn = self.ks.asm('ret %d'%n,as_bytes=True)[0]
-      except: logger.console(LogType.WARN,'could not compile retn insn'); return -1
-    elif n == 0: 
-      retn = self.ks.asm('ret',as_bytes=True)[0]
+
+    if f == None: # WTF ??
+        insn  = get_insn_at(ea)
+        retn = self.ks.asm('nop',as_bytes=True)[0]*insn.size
+  
+    else: 
+        n = x86Corn.tail_retn(f.start_ea)
+        if n > 0: 
+          try: retn = self.ks.asm('ret %d'%n,as_bytes=True)[0]
+          except: logger.console(LogType.WARN,'could not compile retn insn'); return -1
+        elif n == 0: 
+          retn = self.ks.asm('ret',as_bytes=True)[0]
 
     return retn
 
@@ -140,6 +150,26 @@ class x64Corn(Emucorn):
       stub = PE.Stub(self.helper)
       stub.do_it = stub_func
     return stub
+
+
+  def nop_insn(self,ea):
+    insn  = get_insn_at(ea)
+    nops = self.ks.asm('nop',as_bytes=True)[0]*insn.size
+    self.uc.mem_write(ea,nops)
+ 
+
+  def repatch(self):
+    if not self.conf.s_conf.stub_dynamic_func_tab:
+      return 
+    # need to remap according to the arch settings 
+    self.uc.mem_map(consts_x64.ALLOC_BA,
+                      self.conf.p_size*consts_x64.ALLOC_PAGES,
+                      UC_PROT_READ | UC_PROT_WRITE)
+    self.stubbit()
+
+
+    self.stubbit()
+    
 
 
 

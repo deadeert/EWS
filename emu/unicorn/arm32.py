@@ -71,6 +71,7 @@ class ArmCorn(Emucorn):
       self.stubs = ELF.libc_stubs 
       if verify_valid_elf(self.conf.s_conf.orig_filepath):
             self.get_relocs(self.conf.s_conf.orig_filepath,lief.ELF.RELOCATION_ARM.JUMP_SLOT)
+            self.libc_start_main_trampoline = consts_arm.LIBCSTARTSTUBADDR
             self.stubbit()
 
     self.uc.hook_add(UC_HOOK_CODE,
@@ -262,7 +263,7 @@ class ArmCorn(Emucorn):
     else:
       raise Exception('[reg_convert] unhandled conversion for type %s'%type(reg_id))
 
-  def reg_convert_sn(self,reg_id):
+  def reg_convert_ns(self,reg_id):
     if type(reg_id) == type(str()):
       return self.str2reg(reg_id)
     elif type(reg_id) == type(int()):
@@ -323,15 +324,16 @@ class ArmCorn(Emucorn):
 
 
   def repatch(self):
-    """ when using restart() function from debugger 
-        memory is erased, thus stub instruction has be 
-        to be patch again 
+    """ 
+    when using restart() function from debugger 
+    memory is erased, thus stub instruction has be 
+    to be patch again 
     """
 
     if not self.conf.s_conf.stub_dynamic_func_tab:
       return
     self.uc.mem_map(consts_arm.ALLOC_BA,self.conf.p_size*consts_arm.ALLOC_PAGES,UC_PROT_READ | UC_PROT_WRITE)
-
+    # this switch is probably useless, cause reloc list is not populated 
     if verify_valid_elf(self.conf.s_conf.orig_filepath):
         self.stubbit()
 
@@ -406,7 +408,7 @@ class ArmCorn(Emucorn):
     return Configuration(     path='',
                               arch='arml',
                               emulator='unicorn',
-                              p_size=0x400,
+                              p_size=consts_arm.PSIZE,
                               stk_ba=consts_arm.STACK_BASEADDR,
                               stk_size=consts_arm.STACK_SIZE,
                               autoMap=False,
