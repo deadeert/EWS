@@ -265,9 +265,9 @@ class Aarch64Corn(Emucorn):
 
     def reg_convert_ns(self,reg_id):
         if type(reg_id) == type(str()):
-          return self.str2reg(reg_id)
-        elif type(reg_id) == type(int()):
-          return self.int2reg(reg_id)
+          return Aarch64Corn.str2reg(reg_id)
+#        elif type(reg_id) == type(int()):
+#          return self.int2reg(reg_id)
         else:
           raise Exception('[reg_convert] unhandled conversion for type %s'%type(reg_id))
 
@@ -288,73 +288,71 @@ class Aarch64Corn(Emucorn):
 
     @staticmethod           
     def str2reg(r_str):
-        if r_str == 'X0':
+        if r_str.upper() == 'X0':
           return UC_ARM64_REG_X0
-        elif r_str == 'X1':
+        elif r_str.upper() == 'X1':
           return UC_ARM64_REG_X1
-        elif r_str == 'X2':
+        elif r_str.upper() == 'X2':
           return UC_ARM64_REG_X2
-        elif r_str == 'X3':
+        elif r_str.upper() == 'X3':
           return UC_ARM64_REG_X3
-        elif r_str == 'X4':
+        elif r_str.upper() == 'X4':
           return UC_ARM64_REG_X4
-        elif r_str == 'X5':
+        elif r_str.upper() == 'X5':
           return UC_ARM64_REG_X5
-        elif r_str == 'X6':
+        elif r_str.upper() == 'X6':
           return UC_ARM64_REG_X6
-        elif r_str == 'X7':
+        elif r_str.upper() == 'X7':
           return UC_ARM64_REG_X7
-        elif r_str == 'X8':
+        elif r_str.upper() == 'X8':
           return UC_ARM64_REG_X8
-
-        elif r_str == 'X9':
+        elif r_str.upper() == 'X9':
           return UC_ARM64_REG_X9
-        elif r_str == 'X10':
+        elif r_str.upper() == 'X10':
           return UC_ARM64_REG_X10
-        elif r_str == 'X11':
+        elif r_str.upper() == 'X11':
           return UC_ARM64_REG_X11
-        elif r_str == 'X12':
+        elif r_str.upper() == 'X12':
           return UC_ARM64_REG_X12
-        elif r_str == 'X13':
+        elif r_str.upper() == 'X13':
           return UC_ARM64_REG_X13
-        elif r_str == 'X14':
+        elif r_str.upper() == 'X14':
           return UC_ARM64_REG_X14
-        elif r_str == 'X15':
+        elif r_str.upper() == 'X15':
           return UC_ARM64_REG_X15
-        elif r_str == 'X16':
+        elif r_str.upper() == 'X16':
           return UC_ARM64_REG_X16
-        elif r_str == 'X17':
+        elif r_str.upper() == 'X17':
           return UC_ARM64_REG_X17
-        elif r_str == 'X18':
+        elif r_str.upper() == 'X18':
           return UC_ARM64_REG_X18
-
-        elif r_str == 'X19':
+        elif r_str.upper() == 'X19':
           return UC_ARM64_REG_X19
-        elif r_str == 'X20':
+        elif r_str.upper() == 'X20':
           return UC_ARM64_REG_X20
-        elif r_str == 'X21':
+        elif r_str.upper() == 'X21':
           return UC_ARM64_REG_X21
-        elif r_str == 'X22':
+        elif r_str.upper() == 'X22':
           return UC_ARM64_REG_X22
-        elif r_str == 'X23':
+        elif r_str.upper() == 'X23':
           return UC_ARM64_REG_X23
-        elif r_str == 'X24':
+        elif r_str.upper() == 'X24':
           return UC_ARM64_REG_X24
-        elif r_str == 'X25':
+        elif r_str.upper() == 'X25':
           return UC_ARM64_REG_X25
-        elif r_str == 'X26':
+        elif r_str.upper() == 'X26':
           return UC_ARM64_REG_X26
-        elif r_str == 'X27':
+        elif r_str.upper() == 'X27':
           return UC_ARM64_REG_X27
-        elif r_str == 'X28':
+        elif r_str.upper() == 'X28':
           return UC_ARM64_REG_X28
-        elif r_str == 'X29' or 'FP':
+        elif r_str.upper() == 'X29' or  r_str.upper() == 'FP':
           return UC_ARM64_REG_FP
-        elif r_str == 'X30' or 'LR':
+        elif r_str.upper() == 'X30' or r_str.upper() == 'LR':
             return  UC_ARM64_REG_LR
-        elif r_str == 'X31' or 'SP':
+        elif r_str.upper() == 'X31' or r_str.upper() == 'SP':
             return UC_ARM64_REG_SP
-        elif r_str == 'PC':
+        elif r_str.upper() == 'PC':
             return UC_ARM64_REG_PC
 
     def get_alu_info(self): 
