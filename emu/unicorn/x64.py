@@ -401,7 +401,7 @@ class x64Corn(Emucorn):
                               showMemAccess=True,
                               s_conf=stub_conf,
                               amap_conf=addmap_conf,
-                              color_graph=False,
+                              color_graph=True,
                               breakpoints= [])
 
 

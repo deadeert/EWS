@@ -25,6 +25,7 @@ STEPIN=PLUGNAME+":stepin"
 STEPOVER=PLUGNAME+":stepover"
 CONTINUE=PLUGNAME+":continue"
 RESTART=PLUGNAME+":restart"
+ADDMAPPNG=PLUGNAME+":addmapping"
 
 
 emu = None
@@ -71,6 +72,8 @@ class menu_action_handler_t(idaapi.action_handler_t):
             self.continuee()
         elif self.action == RESTART:
             self.restart()
+        elif self.action == ADDMAPPNG:
+            self.add_mapping()
         else:
             logger.console(LogType.ERRR,"Function not yet implemented")
             return 0
@@ -241,6 +244,15 @@ class menu_action_handler_t(idaapi.action_handler_t):
         else:
             emu.start()
 
+    def add_mapping(self):
+        global emu
+
+        if emu == None:
+            logger.console(LogType.ERRR,
+                           "Please initiate an emulator before using this function")
+            return
+        utils_ui.add_mapping(emu)
+        
 
        
 
@@ -268,6 +280,7 @@ class UI_Hook(idaapi.UI_Hooks):
                 idaapi.attach_action_to_popup(form, popup, DISPLAYMEM, None)
                 idaapi.attach_action_to_popup(form, popup, DISPLAYSTK, None)
                 idaapi.attach_action_to_popup(form, popup, DISPLAYADDR, None)
+                idaapi.attach_action_to_popup(form, popup, ADDMAPPNG, None)
 
 
 menu_actions = [
@@ -322,6 +335,9 @@ menu_actions = [
                                  "T", 12),
              idaapi.action_desc_t(RESTART, "Continue",
                                  menu_action_handler_t(RESTART), 'Alt+Ctrl+J',
+                                 "T", 12),
+             idaapi.action_desc_t(ADDMAPPNG, "Continue",
+                                 menu_action_handler_t(ADDMAPPNG), 'Alt+Ctrl+A',
                                  "T", 12)
 
             ]

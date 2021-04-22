@@ -65,6 +65,15 @@ class Emulator(object):
     """ 
     pass
 
+  def add_mapping(self,addr,mem,perms):
+    """ Add mapping
+        params: 
+            addr: base address
+            mem: bytes content
+            perms (optnal) : permissions
+    """
+    pass
+
   @staticmethod
   def reg_convert(r_id):
     """ maps generic register id r_id to the one 
@@ -177,8 +186,12 @@ class Emulator(object):
   def display_allocations(self):
     """ display allocator "chuncks" 
     """
-    self.helper.allocator.__str__() 
-
+#    self.helper.allocator.__str__() 
+    for c in self.helper.allocator.allocs:
+        logger.console(LogType.INFO,"================")
+        logger.console(LogType.INFO,"[+] Chunck(%x,%d)"%(c.addr,c.size))
+        self.display_range(c.addr,c.addr+c.size)
+        logger.console(LogType.INFO,"================")
 
   def restart(self,conf=None,cnt=0):
     """ restart exec engine and execute cnt insns

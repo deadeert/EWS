@@ -1,3 +1,5 @@
+from utils.utils import *
+
 class DumpAllocator(object):
   """ keep tracks of allocation 
   """
@@ -54,8 +56,7 @@ class DumpAllocator(object):
 
   def __str__(self):
     for c in self.allocs:
-      logger.console(LogType.INFO,'Chunck at 0x%x'%c.addr)
-      display_page(c.addr,c.size)
+      logger.console(LogType.INFO,'[+]Chunck at 0x%x with size %d'%(c.addr,c.size))
     return ''
 
   def reset(self):

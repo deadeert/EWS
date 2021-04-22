@@ -56,17 +56,22 @@ class Emucorn(Emulator):
                 uc.mem_map(b_page,p_size,perms)
             b_page += p_size
 
-    def add_mapping(self,addr,mem):
-        """ TODO: handle protection
+    def add_mapping(self,addr,mem,perms=UC_PROT_ALL):
+        """ Add mapping
+            params: 
+                addr: base address
+                mem: bytes content
+                perms (optnal) : permissions
         """
         for rsta,rsto,rpriv in self.uc.mem_regions():
             if addr in range(rsta,rsto):
                 logger.console(LogType.WARN,'0x%x is already map, please use another addr or change mapping using emu.helper.mem_write()'%addr)
-                return 
+                return -1
 
-        Emucorn.do_required_mappng(self.uc,addr,addr+len(mem),self.conf.p_size,UC_PROT_ALL)
+        Emucorn.do_required_mappng(self.uc,addr,addr+len(mem),self.conf.p_size,perms)
         self.uc.mem_write(addr,mem) 
         logger.console(LogType.INFO,'[%s] Additionnal mapping for data at 0x%x'%('Emucorn',addr)) 
+        return 0
 
 
 
@@ -115,6 +120,18 @@ class Emucorn(Emulator):
         uc.mem_map(conf.stk_ba,stk_p*conf.p_size)
         logger.console(LogType.INFO,' [%s] mapped stack at 0x%.8X '%('Emucorn',conf.stk_ba))
     
+
+#    def add_mapping(self,base_addr,size,perms=UC_PROT_ALL):
+#        try:
+#            self.uc.mem_map(base_addr,size,perms)
+#        except UcError:
+#            logger.console(LogType.ERRR,"Could not map (%x:+%x)"%(base_addr,size))
+#            logger.console(LogType.ERRR,"Please ensure there is not mapping in this area")
+#            return -1
+#        logger.console(LogType.INFO,"Mapping at %x successfully added"%base_addr)
+#        return 0
+#
+        
 
 
     """ Emulator reg/mem accesses 
@@ -520,6 +537,9 @@ class Emucorn(Emulator):
         self.repatch()
         
         logger.console(LogType.INFO,'Restart done. You can start exec (emu.start()/emu.step_{in,...))')
+
+        if self.conf.color_graph:
+            self.restore_graph_color()
 
         
     """ MISC 

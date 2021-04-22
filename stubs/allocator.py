@@ -1,3 +1,5 @@
+from utils.utils import *
+
 class DumpAllocator(object):
   """ keep tracks of allocation 
   """
@@ -65,16 +67,5 @@ class DumpAllocator(object):
  
 
 
-if __name__ == '__main__':
-  alloc = DumpAllocator(0x80000000,0x2000)
-  addr= alloc.malloc(100)
-  print('%x'%addr)
-  addr2 = alloc.malloc(200)
-  print('%x'%addr2)
-  alloc.free(addr)
-  addr3 = alloc.malloc(100)
-  print('%x'%addr3)
-  addr4 = alloc.malloc(240)
-  print('%x'%addr4)
-  
+
 

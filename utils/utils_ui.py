@@ -231,6 +231,8 @@ def display_section(emu):
     if r:
         logger.console(LogType.WARN,'Weird segment size to display, should be aligned')
         d+=1
+
+    # todo: replace with emu.helper.mem_read
     content = emu.mem_read(p_base,d*emu.conf.p_size)
     displaymem(emu,
                content,
@@ -241,6 +243,7 @@ def display_addr(emu):
     addr,nbpages = AddrNBPages.fillconfig()
     p_base = addr & ~ (emu.conf.p_size -1)
     try:
+        # todo: replace with emu.helper.mem_read
         content = emu.mem_read(p_base,nbpages*emu.conf.p_size)
     except:
         logger.console(LogType.ERRR,"Invalid parameters for addr displaying.")
@@ -250,8 +253,11 @@ def display_addr(emu):
                "%x Memory"%p_base,
                p_base)
 
+def add_mapping(emu):
 
-
+    addmap = ui.generic.AddMapping.fillconfig()
+    for k,v in addmap.mappings.items():
+        emu.add_mapping(k,v)
 
 
 def display_stack(emu):

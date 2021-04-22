@@ -8,7 +8,8 @@ import os
 from os import path 
 import tempfile
 import struct
-
+import random
+import struct
 
 
 
@@ -131,5 +132,18 @@ class malloc(Stub):
         addr = self.helper.malloc(alloc_size)
         self.helper.set_return(addr)
         logger.console(LogType.INFO,'[stubs] malloc returns addr 0x%x'%addr)
+        return True
+
+@WinStub('rand')
+class rand(Stub):
+
+    def __init__(self,):
+        super().__init__()
+
+    def do_it(self,*args):
+        logger.console(LogType.INFO,'[stubs] rand')
+        r = random.randint(0,0xFFFFFFFF)
+        self.helper.set_return(r)
+        logger.console(LogType.INFO,'[stubs] rand returns %x'%r)
         return True
 
