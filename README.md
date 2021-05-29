@@ -73,9 +73,10 @@ If people are interrested in the project, want to help correct bugs and stuff,
 you are more than welcomed. I won't spend anytime in the near future, but lets 
 see if I find some time later...
 
-## Keywords
-
-IDA PRO (https://hex-rays.com)
-unicorn engine (https://github.com/unicorn-engine/)
-
+## Dependencies
+ 
+- IDA PRO (https://hex-rays.com)
+- unicorn engine (https://github.com/unicorn-engine/)
+- lief (https://github1s.com/lief-project/LIEF/blob/HEAD/fuzzing/elf_fuzzer.cpp)
+- capstone & keystone engines
 
