@@ -2,7 +2,6 @@
 
 Stands for Emulation Wrapper Solution. 
 
-
 ## Description 
 
 Binds IDA PRO to an emulator solution. 
@@ -24,6 +23,8 @@ Works on IDA PRO 7.6
 Copy EWS folder and EWSPlugins.py file inside IDA PRO' directory. 
 
 ## Features
+
+There are the features (non exhaustive). 
 
 ### Stubs
 
