@@ -23,7 +23,6 @@ Works on IDA PRO 7.6
 
 Copy EWS folder and EWSPlugins.py file inside IDA PRO' directory. 
 
-
 ## Features
 
 ### Stubs
@@ -57,10 +56,7 @@ For Windows, an experimental mechanism exist. It should be tested and completed.
 - Can be used either in graphical mode or in UI. 
 - Shortcuts are available to speed up navigation and execution. 
 
-
-
 ## Disclaimer 
-
 
 ** Please backup your IDB before using this tool !!!**
 
