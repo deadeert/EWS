@@ -38,7 +38,8 @@ For Windows, an experimental mechanism exist. It should be tested and completed.
 
 - Basic feature are implemented, start(), step_in(), step_over(), restart(). 
 - Memory patching is also available
-- Memory inspecting is available, but not for the additionnal mapping and stacks, because I mess up with segments and IDA. I have an issue which I don't understand when allocating and deleting segment. 
+- Memory inspecting is available, but not for the additional mapping and stacks, because I mess up with segments and IDA. I have an issue which I don't understand when allocating and deleting segment. 
+- Watchpoints to track data across specific ranges. 
 
 
 ### Loading / Running 
@@ -46,7 +47,7 @@ For Windows, an experimental mechanism exist. It should be tested and completed.
 - Auto loading using IDB content. 
 - Auto configure RAM and associated registers. 
 - Can emulate selection or functions
-- A run from begining exist for x86 architecture, but should be implemented for the others
+- A run from beginning exist for x86 architecture, but should be implemented for the others
 
 ### Save / Load Configuration
 
@@ -63,13 +64,13 @@ For Windows, an experimental mechanism exist. It should be tested and completed.
 
 There is a lot of bugs, and I want now to focus on other topics. 
 This might not work the first time, and might require to tweak a little bit the code. 
-I developped this code on my freetime, but with not really regularity. Because developping such wrapper between two solutions is quite anoying and very rewarding at the end... I think it's time for me to move to other stuff. 
+I developed this code on my freetime, but with not really regularity. Because developing such wrapper between two solutions is quite annoying and very rewarding at the end... I think it's time for me to move to other stuff. 
 
-This project is not maintained anymmore, but it is opensourced because 
+This project is not maintained anymore, but it is open-sourced because 
 it can be a good base to integrate other emulator to IDA PRO, or to emulate/trace/debug program inside IDA PRO.
 
 
-If people are interrested in the project, want to help correct bugs and stuff, 
+If people are interested in the project, want to help correct bugs and stuff, 
 you are more than welcomed. I won't spend anytime in the near future, but lets 
 see if I find some time later...
 

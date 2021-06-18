@@ -467,12 +467,19 @@ class Emucorn(Emulator):
     """
 #---------------------------------------------------------------------------------------------
     def start(self,cnt=0,saddr=None): 
+        stop_addr=self.conf.exec_eaddr
         if not saddr:
             saddr = self.conf.exec_saddr 
+        if saddr >= stop_addr:
+            logger.console(LogType.WARN,"Specified address to stop emulation already reached", 
+                           "Use arbitrary tweaked address")
+            stop_addr = saddr + 0x1000
         try:
             self.is_running = True
-            self.uc.emu_start(saddr,self.conf.exec_eaddr,timeout=0,count=cnt)
-            logger.console(LogType.INFO,'End Address specified in configuration reached')
+            idaapi.show_wait_box("Running...")
+            self.uc.emu_start(saddr,stop_addr,timeout=0,count=cnt)
+            idaapi.hide_wait_box()
+            #logger.console(LogType.INFO,'End Address specified in configuration reached')
         except UcError as e:    
             logger.console(LogType.ERRR,'Error in unicorn engine')
             raise e 
@@ -580,3 +587,36 @@ class Emucorn(Emulator):
 
 
  
+    def add_watchpoint(self,base_addr, rang, mode=0x3):
+
+        def hk_read_wp(uc,access,addr,size,value,user_data):
+            if addr >= base_addr and addr < base_addr + rang:
+                logger.console(LogType.INFO,"----------------------------------------------------------------")
+                logger.console(LogType.INFO,"Watchpoint read access for addr" 
+                               "%x reached at pc %x"% (addr,self.helper.get_pc()))
+                logger.console(LogType.INFO,"----------------------------------------------------------------")
+
+        def hk_write_wp(uc,access,addr,size,value,user_data):
+            if addr >= base_addr and addr < base_addr + rang:
+                logger.console(LogType.INFO,"----------------------------------------------------------------")
+                logger.console(LogType.INFO,"Watchpoint write access for addr" 
+                               "%x reached at pc %x"% (addr,self.helper.get_pc()))
+                logger.console(LogType.INFO,"----------------------------------------------------------------")
+            
+        if mode & 0x1:
+            
+            self.uc.hook_add(UC_HOOK_MEM_READ,
+                       hk_read_wp,
+                       self)
+            logger.console(LogType.INFO,"Add read watchpoint "
+                           "for [%x: %x]"%(base_addr,(base_addr+rang)))
+        if (mode >> 1) & 0x1: 
+            self.uc.hook_add(UC_HOOK_MEM_WRITE,
+                       hk_write_wp,
+                       self)
+
+            logger.console(LogType.INFO,"Add write watchpoint "
+                           "for [%x: %x]"%(base_addr,(base_addr+rang)))
+           
+           
+

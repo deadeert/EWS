@@ -26,6 +26,7 @@ STEPOVER=PLUGNAME+":stepover"
 CONTINUE=PLUGNAME+":continue"
 RESTART=PLUGNAME+":restart"
 ADDMAPPNG=PLUGNAME+":addmapping"
+WATCHPOINT=PLUGNAME+":watchpoint"
 
 
 emu = None
@@ -74,6 +75,8 @@ class menu_action_handler_t(idaapi.action_handler_t):
             self.restart()
         elif self.action == ADDMAPPNG:
             self.add_mapping()
+        elif self.action == WATCHPOINT:
+            self.watchpoint()
         else:
             logger.console(LogType.ERRR,"Function not yet implemented")
             return 0
@@ -86,15 +89,13 @@ class menu_action_handler_t(idaapi.action_handler_t):
         global emu
         s_ea, e_ea = utils_ui.get_func_boundaries()
         emu = utils_ui.get_emul(s_ea,e_ea)
-
-        logger.console(LogType.INFO,'[+] Ready to start, type emu.start() to launch')
+        logger.console(LogType.INFO,'[+] Ready to start')
 
     def emul_selection(self):
         global emu
         s_ea, e_ea = utils_ui.get_user_select()
         emu = utils_ui.get_emul(s_ea,e_ea)
-
-        logger.console(LogType.INFO,'[+] Ready to start, type emu.start() to launch')
+        return 1
 
     def emul_launcher(self,simplified=True):
         global emu
@@ -251,8 +252,20 @@ class menu_action_handler_t(idaapi.action_handler_t):
             logger.console(LogType.ERRR,
                            "Please initiate an emulator before using this function")
             return
+        idaapi.show_wait_box("Adding mapping, could take time")
         utils_ui.add_mapping(emu)
-        
+        idaapi.hide_wait_box()
+
+    def watchpoint(self):
+        global emu
+
+        if emu == None:
+            logger.console(LogType.ERRR,
+                           "Please initiate an emulator before using this function")
+            return
+
+
+        utils_ui.watchpoint(emu)
 
        
 
@@ -285,6 +298,7 @@ class UI_Hook(idaapi.UI_Hooks):
                 idaapi.attach_action_to_popup(form, popup, RESTART, None)
                 idaapi.attach_action_to_popup(form, popup, STEPIN, None)
                 idaapi.attach_action_to_popup(form, popup, STEPOVER, None)
+                idaapi.attach_action_to_popup(form, popup, WATCHPOINT, None)
                 
 
 
@@ -323,26 +337,29 @@ menu_actions = [
             idaapi.action_desc_t(DISPLAYMEM, "Display Mem",
                                  menu_action_handler_t(DISPLAYMEM), 'Alt+Ctrl+D',
                                  "T", 12),
-             idaapi.action_desc_t(DISPLAYSTK, "Display Stack",
+            idaapi.action_desc_t(DISPLAYSTK, "Display Stack",
                                  menu_action_handler_t(DISPLAYSTK), 'Alt+Ctrl+D+S',
                                  "T", 12),
-             idaapi.action_desc_t(DISPLAYADDR, "Display Addr",
+            idaapi.action_desc_t(DISPLAYADDR, "Display Addr",
                                  menu_action_handler_t(DISPLAYADDR), 'Alt+Ctrl+D+S',
                                  "T", 12),
-             idaapi.action_desc_t(STEPIN, "Start / Step IN",
+            idaapi.action_desc_t(STEPIN, "Start / Step IN",
                                  menu_action_handler_t(STEPIN), 'Alt+Ctrl+I',
                                  "T", 12),
-             idaapi.action_desc_t(STEPOVER, "Step OVER",
+            idaapi.action_desc_t(STEPOVER, "Step OVER",
                                  menu_action_handler_t(STEPOVER), 'Alt+Ctrl+O',
                                  "T", 12),
-             idaapi.action_desc_t(CONTINUE, "Continue",
+            idaapi.action_desc_t(CONTINUE, "Continue",
                                  menu_action_handler_t(CONTINUE), 'Alt+Ctrl+C',
                                  "T", 12),
-             idaapi.action_desc_t(RESTART, "Restart",
+            idaapi.action_desc_t(RESTART, "Restart",
                                  menu_action_handler_t(RESTART), 'Alt+Ctrl+J',
                                  "T", 12),
-    idaapi.action_desc_t(ADDMAPPNG, "Add Mapping",
+            idaapi.action_desc_t(ADDMAPPNG, "Add Mapping",
                                  menu_action_handler_t(ADDMAPPNG), 'Alt+Ctrl+A',
+                                 "T", 12),
+            idaapi.action_desc_t(WATCHPOINT, "Watchpoint",
+                                 menu_action_handler_t(WATCHPOINT), 'Alt+Ctrl+W',
                                  "T", 12)
 
             ]

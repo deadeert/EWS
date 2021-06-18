@@ -4,6 +4,7 @@ import ida_funcs
 import ida_idp
 import ida_ua
 import ida_segment
+import ida_kernwin
 from EWS.ui.arm32_simplified import Arm32Pannel
 from EWS.ui.mipsl32 import Mipsl32Pannel
 from EWS.ui.x86_simplified import x86Pannel
@@ -17,6 +18,7 @@ from EWS.ui.regedit import RegArm32Edit, RegArm64Edit, Regx86Edit, Regx64Edit
 from EWS.ui.MemEdit import MemEdit
 from EWS.ui.tag_func_ui import TagForm
 from EWS.ui.DisplayMem import SelectSegment, MemDisplayer, asciify, space, AddrNBPages
+from EWS.ui.Watchpoint import WatchPoint
 import EWS.ui
 import binascii
 
@@ -195,12 +197,14 @@ def loadconfig():
         return None
 
 def patch_mem(emu):
-    ok,addr,bytesval = MemEdit.fillconfig(emu)
+    ok,addr,bytesvalstr = MemEdit.fillconfig(emu)
     if ok:
        import binascii
        try:
-            emu.mem_write(addr,binascii.a2b_hex(bytesval))
-       except:
+            bytesval = binascii.a2b_hex(bytesvalstr)
+            emu.mem_write(int(addr,16),bytes(bytesval))
+       except Exception as e:
+            print(e.__str__())
             ok=False
     return ok
 
@@ -268,5 +272,10 @@ def display_stack(emu):
                emu.conf.stk_ba)
 
 
+    
 
+
+
+def watchpoint(emu):
+    return WatchPoint.fillconfig(emu)
 

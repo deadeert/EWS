@@ -144,9 +144,10 @@ class MemDisplayer(idaapi.Choose):
         val = ida_kernwin.ask_str(self.items[n][1],
                                   False,
                                   self.items[n][0])
-        hexx=binascii.a2b_hex(val.replace(' ',''))
-        self.emu.mem_write(int(self.items[n][0],16),hexx)
-        row = space(binascii.b2a_hex(hexx).decode('utf-8'))
+        if val!= None:
+            hexx=binascii.a2b_hex(val.replace(' ',''))
+            self.emu.mem_write(int(self.items[n][0],16),hexx)
+            row = space(binascii.b2a_hex(hexx).decode('utf-8'))
 
         
         

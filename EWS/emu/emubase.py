@@ -255,6 +255,13 @@ class Emulator(object):
       """
       pass
 
+  def add_watchpoint(self,base_addr, rang, mode=0x3):
+      """
+      add watchpoint for [base_addr:base_addr+range]
+      mode & 0x1 : read
+      mode >> 1 & 0x1: write
+      """
+      pass
 
 
     
