@@ -520,7 +520,7 @@ class ConfigSerializer(json.JSONEncoder):
 
   def default(self,conf):
     if isinstance(conf, Configuration):
-      segs = [ ida_segment.get_segm_name(seg) for seg in conf.segms ] 
+      segs = [ seg.start_ea for seg in conf.segms ] 
 #       funcs = [ conf.s_conf.nstubs[fname].start_ea for fname in conf.s_conf.nstubs.keys() ] 
       funcs = conf.s_conf.nstubs
 
@@ -609,7 +609,7 @@ class ConfigDeserializer(json.JSONDecoder): #PASS ClassType for register parsing
                            jdict['exec_eaddr'],
                            jdict['mapping_saddr'],
                            jdict['mapping_eaddr'],
-                           [ ida_segment.get_segm_by_name(segname) for segname in jdict['segms'] ],
+                           [ ida_segment.getseg(segea) for segea in jdict['segms'] ],
                            jdict['map_with_segs'],
                            jdict['use_seg_perms'],
                            jdict['useCapstone'],

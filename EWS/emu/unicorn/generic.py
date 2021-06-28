@@ -79,6 +79,7 @@ class Emucorn(Emulator):
     def do_mapping(uc,conf):
 
         inf = ida_idaapi.get_inf_structure()
+        last_vb = 0xFFFFFFFF
 
         # Maps program segment
         if conf.map_with_segs:
@@ -87,26 +88,46 @@ class Emucorn(Emulator):
                 uc.mem_write(seg.start_ea,ida_bytes.get_bytes(seg.start_ea,seg.end_ea-seg.start_ea))
                 logger.console(LogType.INFO,'[%s] Mapping seg %s\n'%('EmuCorn',ida_segment.get_segm_name(seg)))
         else:
-                if not Emulator.check_mapping(conf):
-                    raise ConfigExcption('Invalid mapping for code section')
-                vbase=conf.mapping_saddr&~(conf.p_size-1)
-                nb_pages = ((conf.mapping_eaddr - vbase) // conf.p_size) + 1
-                uc.mem_map(vbase,nb_pages*conf.p_size)
-                uc.mem_write(conf.mapping_saddr,ida_bytes.get_bytes(conf.mapping_saddr,conf.mapping_eaddr-conf.mapping_saddr))
-                logger.console(LogType.INFO,'[%s] Mapping memory\n\tvbase : 0x%.8X\n\tcode size: 0x%.8X\n\tpage:    %d'%('EmuCorn',
-                                                                                                                                                                                                        vbase,
-                                                                                                                                                                                                        conf.mapping_eaddr-conf.mapping_saddr,
-                                                                                                                                                                                                        nb_pages))
-        # Map user provided areas 
+            for seg in get_seg_list():
+
+                idaapi.show_wait_box("Mapping %s"%ida_segment.get_segm_name(seg))
+                vbase=seg.start_ea&~(conf.p_size-1)
+
+                                # Some weird loader overlap page-unaligned segment. 
+                if vbase == last_vb:
+                    vbase = last_vb+conf.p_size
+                nb_pages = ((seg.end_ea- vbase) // conf.p_size) + 1
+                try:
+                    uc.mem_map(vbase,nb_pages*conf.p_size)
+                except Exception as e:
+                    logger.console(LogType.ERRR,"mapping returns : %s"%str(e))
+                try:
+                    uc.mem_write(seg.start_ea,ida_bytes.get_bytes(seg.start_ea,seg.size()))
+                except Exception as e:
+                    logger.console(LogType.ERRR,"writing segment content returns : %s"%str(e))
+
+                logger.console(LogType.INFO,'Mapped segment %s [%x:%x]'%(ida_segment.get_segm_name(seg),
+                                                                         seg.start_ea,
+                                                                         seg.end_ea))
+                last_vb = vbase
+
+                idaapi.hide_wait_box()
+
+                
+        #Map user provided areas 
         for m_ea,content in conf.amap_conf.mappings.items():
+            idaapi.show_wait_box("Mapping user content")
             Emucorn.do_required_mappng(uc,m_ea,m_ea+len(content),conf.p_size,UC_PROT_ALL)
             uc.mem_write(m_ea,content) 
             logger.console(LogType.INFO,'[%s] Additionnal mapping for data at %8X'%('Emucorn',m_ea)) 
+            idaapi.hide_wait_box()
 
+        idaapi.show_wait_box("Mapping stack") 
         stk_p,r = divmod(conf.stk_size,conf.p_size)
         if r: stk_p+=1 
         print('stk_ba = %x\n'%conf.stk_ba,
               'stk_end = %x'%(conf.stk_ba + stk_p * conf.p_size))
+        idaapi.hide_wait_box()
 #        s = ida_segment.getseg(conf.stk_ba)
 #        if not s:
 #           ida_segment.del_segm(conf.stk_ba+1,ida_segment.SEGMOD_KILL)
@@ -117,8 +138,11 @@ class Emucorn(Emulator):
 #                                    'Stack',
 #                                    'STACK',
 #                                    add_flags)
+        
+        idaapi.show_wait_box("Mapping additionnal sections")
         uc.mem_map(conf.stk_ba,stk_p*conf.p_size)
         logger.console(LogType.INFO,' [%s] mapped stack at 0x%.8X '%('Emucorn',conf.stk_ba))
+        idaapi.hide_wait_box()
     
 
 #    def add_mapping(self,base_addr,size,perms=UC_PROT_ALL):
@@ -130,8 +154,6 @@ class Emucorn(Emulator):
 #            return -1
 #        logger.console(LogType.INFO,"Mapping at %x successfully added"%base_addr)
 #        return 0
-#
-        
 
 
     """ Emulator reg/mem accesses 
