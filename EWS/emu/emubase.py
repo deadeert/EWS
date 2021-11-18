@@ -23,6 +23,7 @@ class Emulator(object):
     self.reloc_map = dict()
     self.last_pc = None
     self.is_running = False
+    self.stubbed_bytes = dict() # records of {ea : original instruction
     for ea in self.conf.breakpoints:
       self.add_breakpoint(ea,update_conf=False)
     
@@ -264,12 +265,11 @@ class Emulator(object):
       pass
 
 
-    
 
-    
 
-  
-  
 
-  
-  
+
+
+
+
+

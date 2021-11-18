@@ -8,7 +8,8 @@ from EWS.stubs.ELF import ELF
 from EWS.stubs.emu.unicorn.sea import UnicornAarch64SEA
 import struct
 import lief
-
+from EWS.utils.configuration import *
+from EWS.utils.registers import *
 
 
 class Aarch64Corn(Emucorn):
@@ -42,26 +43,16 @@ class Aarch64Corn(Emucorn):
 
 
         # Init stubs engine
-        if self.conf.s_conf.stub_dynamic_func_tab :
+        if self.conf.s_conf.activate_stub_mechanism:
+            self.setup_stub_mechanism()
 
-          
-          self.uc.mem_map(consts_aarch64.ALLOC_BA,
-                          conf.p_size*consts_aarch64.ALLOC_PAGES,
-                          UC_PROT_READ | UC_PROT_WRITE)
+        self.install_hooks()
+     
+        for k,v in self.conf.memory_init.mappings.items():
+            self.uc.mem_write(k,v)
 
-          self.helper = UnicornAarch64SEA(emu=self,
-                                          allocator=DumpAllocator(consts_aarch64.ALLOC_BA,
-                                                                  consts_aarch64.ALLOC_PAGES*conf.p_size),
-                                          wsize=4)
-          self.nstub_obj = ELF.NullStub()
-          self.nstub_obj.set_helper(self.helper) 
 
-          if verify_valid_elf(self.conf.s_conf.orig_filepath):
-              self.get_relocs(self.conf.s_conf.orig_filepath,lief.ELF.RELOCATION_AARCH64.JUMP_SLOT)
-              self.stubs = ELF.libc_stubs 
-              self.libc_start_main_trampoline = consts_aarch64.LIBCSTARTSTUBADDR
-              self.stubbit()
-
+    def install_hooks(self):
         self.uc.hook_add(UC_HOOK_CODE,
                          self.hook_code,
                          user_data=self.conf)
@@ -80,21 +71,44 @@ class Aarch64Corn(Emucorn):
                            Emucorn.hk_read,
                            self.conf)
 
-    def repatch(self):
-        """ when using restart() function from debugger 
-            memory is erased, thus stub instruction has be 
-            to be patch again 
-        """ 
 
-        if not self.conf.s_conf.stub_dynamic_func_tab: 
-          return 
+    def setup_stub_mechanism(self):
         self.uc.mem_map(consts_aarch64.ALLOC_BA,
-                        self.conf.p_size*consts_aarch64.ALLOC_PAGES,
-                        UC_PROT_READ | UC_PROT_WRITE)
+                          self.conf.p_size*consts_aarch64.ALLOC_PAGES,
+                          UC_PROT_READ | UC_PROT_WRITE)
+
+        self.helper = UnicornAarch64SEA(emu=self,
+                                          allocator=DumpAllocator(consts_aarch64.ALLOC_BA,
+                                                                  consts_aarch64.ALLOC_PAGES*self.conf.p_size),
+                                          wsize=4)
+        self.nstub_obj = ELF.NullStub()
+        self.nstub_obj.set_helper(self.helper) 
 
         if verify_valid_elf(self.conf.s_conf.orig_filepath):
-            self.stubbit()
+          self.reloc_map = get_relocs(self.conf.s_conf.orig_filepath,
+                                      lief.ELF.RELOCATION_AARCH64.JUMP_SLOT)
+          self.stubs = ELF.libc_stubs 
+          self.libc_start_main_trampoline = consts_aarch64.LIBCSTARTSTUBADDR
+          self.stubbit()
 
+
+   # DEPRECATED, use reset() plugin function
+
+#    def repatch(self):
+#        """ when using restart() function from debugger 
+#            memory is erased, thus stub instruction has be 
+#            to be patch again 
+#        """ 
+#
+#        if not self.conf.s_conf.stub_dynamic_func_tab: 
+#          return 
+#        self.uc.mem_map(consts_aarch64.ALLOC_BA,
+#                        self.conf.p_size*consts_aarch64.ALLOC_PAGES,
+#                        UC_PROT_READ | UC_PROT_WRITE)
+#
+#        self.unstub_all()
+#        self.stubbit()
+#
 
 
 
@@ -123,8 +137,8 @@ class Aarch64Corn(Emucorn):
     def get_retn_insn(self,ea):
         return struct.pack('>I',consts_aarch64.ret)
 
-    def get_new_stub(self,stub_func):
-        stub = ELF.Stub(self.helper)
+    def get_new_stub(self,stub_func,stub_type):
+        stub = ELF.Stub(self.helper,stub_type=stub_type)
         stub.do_it = stub_func
         return stub
 
@@ -397,19 +411,36 @@ class Aarch64Corn(Emucorn):
                                                                self.uc.reg_read(UC_ARM64_REG_FP),
                                                                self.uc.reg_read(UC_ARM64_REG_LR),
                                                                self.uc.reg_read(UC_ARM64_REG_SP))
-        logger.console(LogType.INFO,strout)
-
+        return strout
 
 
 
     @staticmethod
-    def generate_default_config(s_ea,
-                              e_ea,
-                              regs=None,
-                              s_conf=None,
-                              amap_conf=None):
+    def generate_default_config(path=None,
+                       arch=None,
+                       emulator=None,
+                       p_size=None,
+                       stk_ba=None,
+                       stk_size=None,
+                       autoMap=None,
+                       showRegisters=None,
+                       exec_saddr=None,
+                       exec_eaddr=None,
+                       mapping_saddr=None,
+                       mapping_eaddr=None,
+                       segms=None,
+                       map_with_segs=None,
+                       use_seg_perms=None,
+                       useCapstone=None,
+                       registers=None,
+                       showMemAccess=None,
+                       s_conf=None,
+                       amap_conf=None,
+                       memory_init=None,
+                       color_graph=None,
+                        breakpoints=None):
 
-      if regs==None:
+      if registers == None:
             registers = Aarch64Registers(0,
                                          1,
                                          2,
@@ -442,7 +473,7 @@ class Aarch64Corn(Emucorn):
                                          29,
                                          e_ea, # LR
                                          consts_aarch64.STACK_BASEADDR+consts_aarch64.STACK_SIZE-consts_aarch64.initial_stack_offset,
-                                         s_ea # PC
+                                         exec_saddr # PC
                                          )
       else:
         registers = regs
@@ -462,31 +493,36 @@ class Aarch64Corn(Emucorn):
         addmap_conf = AdditionnalMapping.create()
       else:
         addmap_conf = amap_conf
+      if memory_init == None:
+        meminit = AdditionnalMapping.create()
+      else:
+        meminit = memory_init
 
 
-      return Configuration(path='',
+
+      return Configuration(     path=path if path else '',
                               arch='aarch64',
                               emulator='unicorn',
-                              p_size=consts_aarch64.PSIZE,
-                              stk_ba=consts_aarch64.STACK_BASEADDR,
-                              stk_size=consts_aarch64.STACK_SIZE,
-                              autoMap=False,
-                              showRegisters=True,
-                              exec_saddr=s_ea,
-                              exec_eaddr=e_ea,
-                              mapping_saddr=get_min_ea_idb(),
-                              mapping_eaddr=get_max_ea_idb(),
-                              segms=[],
-                              map_with_segs=False,
-                              use_seg_perms=False,
-                              useCapstone=True,
+                              p_size=p_size if p_size else consts_aarch64.PSIZE,
+                              stk_ba=stk_ba if stk_ba else consts_aarch64.STACK_BASEADDR,
+                              stk_size=stk_size if stk_size else consts_aarch64.STACK_SIZE,
+                              autoMap=autoMap if autoMap else False,
+                              showRegisters=showRegisters if showRegisters else True,
+                              exec_saddr=exec_saddr if exec_saddr else 0,
+                              exec_eaddr=exec_eaddr if exec_eaddr else 0xFFFFFFFF,
+                              mapping_saddr=get_min_ea_idb() if not mapping_saddr else mapping_saddr,
+                              mapping_eaddr=get_max_ea_idb() if not mapping_eaddr else mapping_eaddr,
+                              segms=segms if segms else [],
+                              map_with_segs=map_with_segs if map_with_segs else False,
+                              use_seg_perms=use_seg_perms if use_seg_perms else False,
+                              useCapstone=useCapstone if useCapstone else True,
                               registers=registers,
-                              showMemAccess=True,
+                              showMemAccess=showMemAccess if showMemAccess else True,
                               s_conf=stub_conf,
                               amap_conf=addmap_conf,
+                              memory_init=meminit,
                               color_graph=False,
-                              breakpoints= [])
-
+                              breakpoints=breakpoints if breakpoints else [])
 
 
 

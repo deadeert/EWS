@@ -15,7 +15,8 @@ from unicorn.x86_const import *
 from keystone import * 
 from EWS. stubs.ELF import ELF
 from EWS. stubs import PE
-
+from EWS.utils.configuration import *
+from EWS.utils.registers import *
 
 class x86Corn(Emucorn): 
 
@@ -24,13 +25,13 @@ class x86Corn(Emucorn):
     super().__init__(conf) 
 
     self.uc = Uc(UC_ARCH_X86,UC_MODE_32)
-    
+
     if self.conf.p_size != self.uc.query(UC_QUERY_PAGE_SIZE):
       logger.console(LogType.WARN,' invalid page size, using default')
       self.conf.p_size = self.uc.query(UC_QUERY_PAGE_SIZE)
 
     stk_p = Emucorn.do_mapping(self.uc,self.conf)
-    
+
     if conf.useCapstone:
       from capstone import Cs, CS_ARCH_X86, CS_MODE_32
       self.cs=Cs(CS_ARCH_X86, CS_MODE_32)
@@ -39,45 +40,28 @@ class x86Corn(Emucorn):
 
     self.ida_jmp_itype = consts_x86.ida_jmp_itype 
     self.pointer_size = 4 
-       
+
     # Setup regs 
     self.setup_regs(self.conf.registers)
-    self.pcid = UC_X86_REG_EIP 
-  
-        # Init stubs engine 
-    if self.conf.s_conf.stub_dynamic_func_tab:
-      self.uc.mem_map(consts_x86.ALLOC_BA,conf.p_size*consts_x86.ALLOC_PAGES,UC_PROT_READ | UC_PROT_WRITE)
 
-      self.helper = UnicornX86SEA(emu=self,
-                                  allocator=DumpAllocator(consts_x86.ALLOC_BA,consts_x86.ALLOC_PAGES*conf.p_size),
-                                  wsize=4)
-      
+    self.pcid = UC_X86_REG_EIP
 
-    self.filetype = ida_loader.get_file_type_name()
-    if self.conf.s_conf.stub_dynamic_func_tab:
-      if '(PE)' in self.filetype:
-        self.stubs = PE.winx86_stubs
-        self.nstub_obj = PE.NullStub()
-        self.loader_type = LoaderType.PE
-        self.nstub_obj.set_helper(self.helper)
-      elif 'ELF' in self.filetype:
-        self.stubs = ELF.libc_stubs
-        self.nstub_obj = ELF.NullStub()
-        self.loader_type = LoaderType.ELF
-        self.nstub_obj.set_helper(self.helper)
+    # Init stubs engine 
+    if self.conf.s_conf.activate_stub_mechanism:
+        self.setup_stub_mechanism()
 
-        if verify_valid_elf(self.conf.s_conf.orig_filepath):
-          self.get_relocs(self.conf.s_conf.orig_filepath,lief.ELF.RELOCATION_X86_64.JUMP_SLOT)
-          # Stub __libc_start_main (experimental)
-          self.libc_start_main_trampoline = consts_x86.LIBCSTARTSTUBADDR
-          self.uc.mem_map(consts_x86.LIBCSTARTSTUBADDR,consts_x86.PSIZE, UC_PROT_ALL)
-          self.uc.mem_write(consts_x86.LIBCSTARTSTUBADDR,consts_x86.LIBCSTARTSTUBCODE) 
-          self.stubbit()
+    self.install_hooks()
 
+    for k,v in self.conf.memory_init.mappings.items():
+        self.uc.mem_write(k,v)
+
+
+
+  def install_hooks(self):
     self.uc.hook_add(UC_HOOK_CODE,
                      self.hook_code,
                      user_data=self.conf)
-        
+
     self.uc.hook_add(UC_HOOK_MEM_READ_UNMAPPED,
                      Emucorn.unmp_read,
                      user_data=self.conf)
@@ -94,16 +78,55 @@ class x86Corn(Emucorn):
                        Emucorn.hk_read,
                        self.conf)
 
+  def setup_stub_mechanism(self):
+        self.uc.mem_map(consts_x86.ALLOC_BA,
+                        self.conf.p_size*consts_x86.ALLOC_PAGES,
+                        UC_PROT_READ | UC_PROT_WRITE)
 
-  def repatch(self):
-    if not self.conf.s_conf.stub_dynamic_func_tab:
-      return 
-    # need to remap according to the arch settings 
-    self.uc.mem_map(consts_x86.ALLOC_BA,
-                    self.conf.p_size*consts_x86.ALLOC_PAGES,
-                    UC_PROT_READ | UC_PROT_WRITE)
-    self.stubbit()
-    
+        self.helper = UnicornX86SEA(emu=self,
+                                      allocator=DumpAllocator(consts_x86.ALLOC_BA,
+                                                              consts_x86.ALLOC_PAGES*self.conf.p_size),
+                                      wsize=4)
+          
+
+        
+        if self.conf.s_conf.activate_stub_mechanism:
+
+          if '(PE)' in self.filetype:
+            self.stubs = PE.winx86_stubs
+            self.nstub_obj = PE.NullStub()
+            self.loader_type = LoaderType.PE
+            self.nstub_obj.set_helper(self.helper)
+          elif 'ELF' in self.filetype:
+            self.stubs = ELF.libc_stubs
+            self.nstub_obj = ELF.NullStub()
+            self.loader_type = LoaderType.ELF
+            self.nstub_obj.set_helper(self.helper)
+
+            if verify_valid_elf(self.conf.s_conf.orig_filepath):
+              self.reloc_map = get_relocs(self.conf.s_conf.orig_filepath,
+                                          lief.ELF.RELOCATION_X86_64.JUMP_SLOT)
+              # Stub __libc_start_main (experimental)
+              self.libc_start_main_trampoline = consts_x86.LIBCSTARTSTUBADDR
+              self.uc.mem_map(consts_x86.LIBCSTARTSTUBADDR,consts_x86.PSIZE, UC_PROT_ALL)
+              self.uc.mem_write(consts_x86.LIBCSTARTSTUBADDR,consts_x86.LIBCSTARTSTUBCODE) 
+              self.stub_PLT()
+
+
+
+   # DEPRECATED, use reset() plugin function
+
+#  def repatch(self):
+#    if not self.conf.s_conf.activate_stub_mechanism:
+#      return 
+#    # need to remap according to the arch settings 
+#    self.uc.mem_map(consts_x86.ALLOC_BA,
+#                    self.conf.p_size*consts_x86.ALLOC_PAGES,
+#                    UC_PROT_READ | UC_PROT_WRITE)
+#
+#    self.unstub_all()
+#    self.stubbit()
+#    
         
 
   """ Instructions specifics functions 
@@ -157,12 +180,16 @@ class x86Corn(Emucorn):
     return retn
 
 
-  def get_new_stub(self,stub_func):
+  def get_new_stub(self,
+                   stub_func,
+                   stub_type,
+                   name:str=''):
+
     if 'ELF' in self.filetype:
-      stub = ELF.Stub(self.helper)
+      stub = ELF.Stub(self.helper,stub_type=stub_type)
       stub.do_it = stub_func
     elif 'PE' in self.filetype:
-      stub = PE.Stub(self.helper)
+      stub = PE.Stub(self.helper,stub_type=stub_type)
       stub.do_it = stub_func
     return stub
 
@@ -267,36 +294,58 @@ class x86Corn(Emucorn):
                                                          self.uc.reg_read(UC_X86_REG_ESI),
                                                          self.uc.reg_read(UC_X86_REG_EBP),
                                                          self.uc.reg_read(UC_X86_REG_ESP))
-    logger.console(LogType.INFO,strout)
+    return strout
 
 
   @staticmethod
-  def generate_default_config(s_ea,
-                              e_ea,
-                              regs=None,
-                              s_conf=None,
-                              amap_conf=None):
-    if regs == None:
+  def generate_default_config(path=None,
+                       arch=None,
+                       emulator=None,
+                       p_size=None,
+                       stk_ba=None,
+                       stk_size=None,
+                       autoMap=None,
+                       showRegisters=None,
+                       exec_saddr=None,
+                       exec_eaddr=None,
+                       mapping_saddr=None,
+                       mapping_eaddr=None,
+                       segms=None,
+                       map_with_segs=None,
+                       use_seg_perms=None,
+                       useCapstone=None,
+                       registers=None,
+                       showMemAccess=None,
+                       s_conf=None,
+                       amap_conf=None,
+                        memory_init=None,
+                       color_graph=None,
+                        breakpoints=None):
+
+    if registers == None:
         registers = x86Registers(EAX=0,
                                 EBX=1,
                                 ECX=2,
                                 EDX=3,
                                 EDI=4,
                                 ESI=5,
-                                EBP=consts_x86.STACK_BASEADDR+consts_x86.STACK_SIZE-consts_x86.initial_stack_offset,
-                                ESP=consts_x86.STACK_BASEADDR+consts_x86.STACK_SIZE-consts_x86.initial_stack_offset,
-                                EIP=s_ea)
+                                EBP=consts_x86.STACK_BASEADDR+consts_x86.STACK_SIZE-\
+                                 consts_x86.initial_stack_offset,
+                                ESP=consts_x86.STACK_BASEADDR+consts_x86.STACK_SIZE-\
+                                 consts_x86.initial_stack_offset,
+                                EIP=exec_saddr)
     else:
         registers = regs
 
     if s_conf == None:
         exec_path = search_executable()
         stub_conf = StubConfiguration(nstubs=dict(),
-                                        stub_dynamic_func_tab=True if exec_path != "" else False,
-                                        orig_filepath=exec_path,
-                                        custom_stubs_file=None,
-                                        auto_null_stub=True if exec_path != "" else False,
-                                        tags=dict())
+                                      activate_stub_mechanism=True if exec_path != ""
+                                      else False,
+                                      orig_filepath=exec_path,
+                                      custom_stubs_file=None,
+                                      auto_null_stub=True if exec_path != "" else False,
+                                      tags=dict())
     else:
         stub_conf = s_conf
 
@@ -306,27 +355,33 @@ class x86Corn(Emucorn):
         addmap_conf = amap_conf
 
 
-    return Configuration(     path='',
+    if memory_init == None:
+        meminit = AdditionnalMapping.create()
+    else:
+        meminit = memory_init
+
+    return Configuration(     path=path if path else '',
                               arch='x86',
                               emulator='unicorn',
-                              p_size=consts_x86.PSIZE,
-                              stk_ba=consts_x86.STACK_BASEADDR,
-                              stk_size=consts_x86.STACK_SIZE,
-                              autoMap=False,
-                              showRegisters=True,
-                              exec_saddr=s_ea,
-                              exec_eaddr=e_ea,
-                              mapping_saddr=get_min_ea_idb(),
-                              mapping_eaddr=get_max_ea_idb(),
-                              segms=[],
-                              map_with_segs=False,
-                              use_seg_perms=False,
-                              useCapstone=True,
+                              p_size=p_size if p_size else consts_x86.PSIZE,
+                              stk_ba=stk_ba if stk_ba else consts_x86.STACK_BASEADDR,
+                              stk_size=stk_size if stk_size else consts_x86.STACK_SIZE,
+                              autoMap=autoMap if autoMap else False,
+                              showRegisters=showRegisters if showRegisters else True,
+                              exec_saddr=exec_saddr if exec_saddr else 0,
+                              exec_eaddr=exec_eaddr if exec_eaddr else 0xFFFFFFFF,
+                              mapping_saddr=get_min_ea_idb() if not mapping_saddr else mapping_saddr,
+                              mapping_eaddr=get_max_ea_idb() if not mapping_eaddr else mapping_eaddr,
+                              segms=segms if segms else [],
+                              map_with_segs=map_with_segs if map_with_segs else False,
+                              use_seg_perms=use_seg_perms if use_seg_perms else False,
+                              useCapstone=useCapstone if useCapstone else True,
                               registers=registers,
-                              showMemAccess=True,
+                              showMemAccess=showMemAccess if showMemAccess else True,
                               s_conf=stub_conf,
                               amap_conf=addmap_conf,
+                              memory_init=meminit,
                               color_graph=False,
-                              breakpoints= [])
+                              breakpoints=breakpoints if breakpoints else [])
 
 

@@ -1,5 +1,7 @@
 from EWS.ui.generic import * 
 from EWS.utils.consts_arm import STACK_BASEADDR, STACK_SIZE 
+from EWS.utils.configuration import *
+from EWS.utils.registers import * 
 
 class Arm32Pannel(Pannel):
 

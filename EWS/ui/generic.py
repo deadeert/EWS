@@ -7,6 +7,7 @@ import ida_idp
 import time
 import os 
 from EWS.utils.utils import *
+from EWS.utils.configuration import *
 
 """                   """
 "         GENERIC       "
@@ -53,7 +54,7 @@ class Pannel(ida_kernwin.Form):
 
   def onStubButton(self,code):
      
-    s_conf = StubForm.fillconfig()
+    s_conf = StubForm.fillconfig(self.conf)
     self.s_conf += s_conf
 
   def onaMapButton(self,code):
@@ -196,7 +197,7 @@ class StubForm(ida_kernwin.Form):
             return n
 
 
-  def __init__(self):
+  def __init__(self, conf=None):
     self.invert = False
     self.clicked_ns = False
     self.clicked_ds = False
@@ -204,24 +205,46 @@ class StubForm(ida_kernwin.Form):
     self.custom_stubs_file = None
     self.tags = dict()
     self.orig_fpath = ""
+    if conf == None:
+        Form.__init__(self, r"""STARTITEM 
+    BUTTON YES Yeah
+    BUTTON NO Nope
+    BUTTON CANCEL* Nevermind
+    Stubbing confiugration
+    {cbCallback}
+    <##Stub dynamic func tab No:      {sfNo}> <Yes:{sfYes}>{sfC}>
+    <##Original filepath:{origFpath}>
+    <##Auto null stub missing symbols: {asNo}>< Yes:{asYes}>{saC}>
+    <##Add custom stubs file: {customStubFile}>
+    """,{
+                'sfC': Form.RadGroupControl(("sfNo","sfYes")),
+                'customStubFile': Form.ButtonInput(self.CustomStubFile),
+                'origFpath': Form.FileInput(open=True,save=False),
+                'saC': Form.RadGroupControl(("asNo","asYes")),
+                'cbCallback': Form.FormChangeCb(self.cb_callback)
+    })
+    else:
+        Form.__init__(self, r"""STARTITEM 
+        BUTTON YES Yeah
+        BUTTON NO Nope
+        BUTTON CANCEL* Nevermind
+        Stubbing confiugration
+        {cbCallback}
+        <##Stub dynamic func tab No:      {sfNo}> <Yes:{sfYes}>{sfC}>
+        <##Original filepath:{origFpath}>
+        <##Auto null stub missing symbols: {asNo}>< Yes:{asYes}>{saC}>
+        <##Add custom stubs file: {customStubFile}>
+        """,{
+                    'sfC': Form.RadGroupControl(("sfNo","sfYes"),
+                                                value=1 if conf.s_conf.stub_dynamic_func_tab else 0),
+                    'customStubFile': Form.ButtonInput(self.CustomStubFile),
+                    'origFpath': Form.FileInput(open=True,save=False,
+                                                value=conf.s_conf.orig_filepath),
+                    'saC': Form.RadGroupControl(("asNo","asYes"),
+                                                value=1 if conf.s_conf.auto_null_stub else 0),
+                    'cbCallback': Form.FormChangeCb(self.cb_callback)
+        })
 
-    Form.__init__(self, r"""STARTITEM 
-BUTTON YES Yeah
-BUTTON NO Nope
-BUTTON CANCEL* Nevermind
-Stubbing confiugration
-{cbCallback}
-<##Stub dynamic func tab No:      {sfNo}> <Yes:{sfYes}>{sfC}>
-<##Original filepath:{origFpath}>
-<##Auto null stub missing symbols: {asNo}>< Yes:{asYes}>{saC}>
-<##Add custom stubs file: {customStubFile}>
-""",{
-            'sfC': Form.RadGroupControl(("sfNo","sfYes")),
-            'customStubFile': Form.ButtonInput(self.CustomStubFile),
-            'origFpath': Form.FileInput(open=True,save=False),
-            'saC': Form.RadGroupControl(("asNo","asYes")),
-            'cbCallback': Form.FormChangeCb(self.cb_callback)
-})
 
   def cb_callback(self,fid):
     if fid == self.sfC.id:

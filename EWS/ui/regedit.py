@@ -1,6 +1,7 @@
 import ida_kernwin
 from ida_kernwin import Form
 from EWS.utils.utils import * 
+from EWS.utils.registers import *
 
 DescFormARM = r"""STARTITEM 
 BUTTON YES Yeah

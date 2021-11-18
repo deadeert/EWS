@@ -75,7 +75,6 @@ class AddrNBPages(ida_kernwin.Form):
 BUTTON YES Yeah
 BUTTON NO Nope
 BUTTON CANCEL* Nevermind
-EWS ARML32
 Show Memory
 <Address : {iAddr}> <Number of Pages : {iValue}>
 """,{
@@ -116,9 +115,9 @@ class MemDisplayer(idaapi.Choose):
         idaapi.Choose.__init__(self,
                                title,
                                [
-                                   ["Address", idaapi.Choose.CHCOL_HEX|10],
-                                   ["Hex", idaapi.Choose.CHCOL_PLAIN|12],
-                                   ["ASCII", idaapi.Choose.CHCOL_PLAIN|12]
+                                   ["Address", idaapi.Choose.CHCOL_HEX|8],
+                                   ["Hex", idaapi.Choose.CHCOL_PLAIN|20],
+                                   ["ASCII", idaapi.Choose.CHCOL_PLAIN|20]
                                ],
                                flags=flags,
                                width=width,
@@ -156,6 +155,14 @@ class MemDisplayer(idaapi.Choose):
     def OnGetSize(self):
         n = len(self.items)
         return n
+
+    def test(self,extra=None):
+        print('%s: %s'%(self.title,extra))
+
+    def OnPopup(self,form, popup_handle):
+        actname = "test:%s" % self.title
+        desc = ida_kernwin.action_desc_t(actname, "Test: %s" % self.title, self.test)
+        ida_kernwin.attach_dynamic_action_to_popup(form, popup_handle, desc,'ews_action/')
 
     def show(self):
         return self.Show() >= 0

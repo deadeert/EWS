@@ -15,7 +15,6 @@ Edit memory
 <## Addr: {iAddr}> 
 <## Value: {iValue}> 
 """,{
-#  'iAddr': ida_kernwin.Form.NumericInput(ida_kernwin.Form.FT_ADDR),
   'iAddr': ida_kernwin.Form.StringInput(ida_kernwin.Form.FT_ASCII),
   'iValue': ida_kernwin.Form.StringInput(ida_kernwin.Form.FT_ASCII),
   'callback': ida_kernwin.Form.FormChangeCb(self.callback),
@@ -42,7 +41,6 @@ Edit memory
             try:
 
                 val = self.emu.mem_read(addr,8)
-#                val = self.emu.mem_read(self.GetControlValue(self.iAddr),8)
                 self.ok = True
             except:
                 val=b'\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF'

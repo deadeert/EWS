@@ -5,6 +5,7 @@ import ida_idp
 import ida_ua
 import ida_segment
 import ida_kernwin
+import ida_bytes
 from EWS.ui.arm32_simplified import Arm32Pannel
 from EWS.ui.mipsl32 import Mipsl32Pannel
 from EWS.ui.x86_simplified import x86Pannel
@@ -16,17 +17,20 @@ from EWS.ui.x86 import x86Pannel as x86PannelFull
 from EWS.ui.x64 import x64Pannel as x64PannelFull
 from EWS.ui.regedit import RegArm32Edit, RegArm64Edit, Regx86Edit, Regx64Edit
 from EWS.ui.MemEdit import MemEdit
+from EWS.ui.MemOperations import ExportMemory, ImportMemory 
 from EWS.ui.tag_func_ui import TagForm
 from EWS.ui.DisplayMem import SelectSegment, MemDisplayer, asciify, space, AddrNBPages
 from EWS.ui.Watchpoint import WatchPoint
 import EWS.ui
 import binascii
-
+from unicorn import UcError
 from EWS.emu.unicorn.arm32 import ArmCorn
 from EWS.emu.unicorn.aarch64 import Aarch64Corn
 from EWS.emu.unicorn.mipsl32 import MipsCorn
 from EWS.emu.unicorn.x86 import x86Corn
 from EWS.emu.unicorn.x64 import x64Corn
+from EWS.utils.configuration import *
+
 
 from EWS.utils.utils import *
 import os.path
@@ -51,94 +55,77 @@ def get_func_boundaries():
 
 
 
-def get_emul(s_ea,
-             e_ea,
-             regs=None,
-             stub_conf=None,
-             amap_config=None):
 
-  emu = None
+def get_conf_for_area(s_ea,
+                      e_ea):
+
   procname = idaapi.get_idp_name()
   if procname == 'arm':
     if idc.__EA64__:
-        conf = Aarch64Corn.generate_default_config(s_ea,
-                                                   e_ea,
-                                                   regs,
-                                                   stub_conf,
-                                                   amap_config)
-
-        if conf:
-            emu = Aarch64Corn(conf)
+        return Aarch64Corn.generate_default_config(exec_saddr=s_ea,
+                                                   exec_eaddr=e_ea)
     else:
-        conf = ArmCorn.generate_default_config(s_ea,
-                                                   e_ea,
-                                                   regs,
-                                                   stub_conf,
-                                                   amap_config)
+        return ArmCorn.generate_default_config(exec_saddr=s_ea,
+                                                   exec_eaddr=e_ea)
 
-        if conf: 
-          emu = ArmCorn(conf)
   elif procname == 'pc':
       if idc.__EA64__:
-          conf = x64Corn.generate_default_config(s_ea,
-                                                 e_ea,
-                                                 regs,
-                                                 stub_conf,
-                                                 amap_config)
-          if conf:
-              emu = x64Corn(conf)
+          return x64Corn.generate_default_config(exec_saddr=s_ea,
+                                                 exec_eaddr=e_ea)
       else:
-        conf = x86Corn.generate_default_config(s_ea,
-                                               e_ea,
-                                               regs,
-                                               stub_conf,
-                                               amap_config)
-
-        if conf:
-              emu = x86Corn(conf)
-
+        return x86Corn.generate_default_config(exec_saddr=s_ea,
+                                               exec_eaddr=e_ea)
   else:
     logger.console(LogType.ERRR,"Sorry %s is not currently supported at this stage" % procname)
 
   return emu
 
-def get_emul_conf(simplified=True, conf=False):
+def get_emul_from_conf(conf):
+
+
+  procname = idaapi.get_idp_name()
+  if procname == 'arm':
+    if idc.__EA64__:
+        return Aarch64Corn(conf)
+    else:
+        return ArmCorn(conf)
+
+  elif procname == 'pc':
+      if idc.__EA64__:
+          return x64Corn(conf)
+      else:
+          return x86Corn(conf)
+
+
+
+def get_emul_conf(simplified=True, conf=None):
 
   emu = None
   procname = idaapi.get_idp_name()
   if procname == 'arm':
     if idc.__EA64__:
         if simplified:
-            conf = Aarch64Pannel.fillconfig() 
+            return Aarch64Pannel.fillconfig() 
         else:
-            conf = Aarch64CornFull.fillconfig(conf)
-        if conf:
-            emu = Aarch64Corn(conf)
+            return Aarch64CornFull.fillconfig(conf)
     else:
         if simplified:
-            conf = Arm32Pannel.fillconfig()
+            return Arm32Pannel.fillconfig()
         else:
-            conf = Arm32PannelFull.fillconfig(conf)
-        if conf: 
-            emu = ArmCorn(conf)
+            return Arm32PannelFull.fillconfig(conf)
   elif procname == 'pc':
    if idc.__EA64__: # assess if ida is running in 64bits
      if simplified:
-        conf = x64Pannel.fillconfig()
+        return x64Pannel.fillconfig()
      else:
-         conf = x64PannelFull.fillconfig(conf)
-     if conf:
-       emu = x64Corn(conf)
+        return x64PannelFull.fillconfig(conf)
    else:
        if simplified:
-        conf = x86Pannel.fillconfig()
+            return x86Pannel.fillconfig()
        else:
-        conf = x86PannelFull.fillconfig(conf)
-       if conf:
-         emu = x86Corn(conf)
+            return x86PannelFull.fillconfig(conf)
   else:
       logger.console(LogType.ERRR,"Current architecture not yet supported")
-
 
   return emu
 
@@ -178,23 +165,23 @@ def get_tag_name(tag_list):
 
 def loadconfig():
     conf_path = EWS.ui.generic.FileSelector.fillconfig()
-    if os.path.exists(conf_path):
-        import utils
-        conf = utils.utils.loadconfig(conf_path)
+    if does_file_exist(conf_path):
+        return  EWS.utils.configuration.loadconfig(conf_path)
+
     else:
         logger.console(LogType.ERRR,'Config file does not exist')
 
-    if conf.arch == 'arm':
-        return ArmCorn(conf)
-    elif conf.arch == 'aarch64':
-        return Aarch64Corn(conf)
-    elif conf.arch == 'x86':
-        return x86Corn(conf)
-    elif conf.arch == 'x64':
-        return x64Corn(conf)
-    else:
-        logger.console(LogType.ERRR,'Specified architecture not valid')
-        return None
+#    if conf.arch == 'arm':
+#        return ArmCorn(conf)
+#    elif conf.arch == 'aarch64':
+#        return Aarch64Corn(conf)
+#    elif conf.arch == 'x86':
+#        return x86Corn(conf)
+#    elif conf.arch == 'x64':
+#        return x64Corn(conf)
+#    else:
+#        logger.console(LogType.ERRR,'Specified architecture not valid')
+#        return None
 
 def patch_mem(emu):
     ok,addr,bytesvalstr = MemEdit.fillconfig(emu)
@@ -204,7 +191,6 @@ def patch_mem(emu):
             bytesval = binascii.a2b_hex(bytesvalstr)
             emu.mem_write(int(addr,16),bytes(bytesval))
        except Exception as e:
-            print(e.__str__())
             ok=False
     return ok
 
@@ -221,14 +207,17 @@ def displaymem(emu,content,name,base_addr):
     md = MemDisplayer("%s Memory"%name,
                       values,
                       emu)
+    view_to_dock_with = idaapi.get_widget_title(idaapi.get_current_viewer())
     md.show()
+    idaapi.set_dock_pos('%s Memory'%name,view_to_dock_with,idaapi.DP_RIGHT)
+
 
 
 def display_section(emu):
     seg = SelectSegment.fillconfig()
     if seg == None:
         return False
-    p_base = seg.start_ea & ~ (emu.conf.p_size -1)
+    p_base = seg.start_ea & ~(emu.conf.p_size -1)
     seg_size = seg.end_ea - p_base
     d,r = divmod(seg_size,emu.conf.p_size)
     if r:
@@ -241,6 +230,18 @@ def display_section(emu):
                content,
                ida_segment.get_segm_name(seg),
                p_base)
+
+def display_exec_trace():
+    """
+    view_to_dock_with idaapi.get_widget_title(idaapi.get_current_viewer())
+    # create dock object (exec_trace XXXX)
+    Python>widt=idaapi.find_widget('exec_trace XXXX')
+    #idview=idaapi.find_widget('IDA View-A')
+    Python>idaapi.set_dock_pos('exec_trace XXXX',view_to_dock_with,idaapi.DP_RIGHT)
+    True
+    """
+    pass
+
 
 def display_addr(emu):
     addr,nbpages = AddrNBPages.fillconfig()
@@ -256,9 +257,11 @@ def display_addr(emu):
                "%x Memory"%p_base,
                p_base)
 
-def add_mapping(emu):
 
-    addmap = EWS.ui.generic.AddMapping.fillconfig()
+def get_add_mappings():
+    return EWS.ui.generic.AddMapping.fillconfig()
+
+def add_mapping(emu,addmap):
     for k,v in addmap.mappings.items():
         emu.add_mapping(k,v)
 
@@ -271,11 +274,53 @@ def display_stack(emu):
                "Stack",
                emu.conf.stk_ba)
 
+def export_mem(emu):
+    (addr,size,f_path) = EWS.ui.MemOperations.ExportMemory.fillconfig()
+    try:
+        with open(f_path,'wb+') as fout:
+            fout.write(emu.mem_read(addr,size))
+        logger.console(LogType.INFO,'[+] exported %x (size: %d) to file %s '%(addr,size,f_path))
+    except UcError:
+        logger.console(LogType.ERRR,"Error accessing memory for range [%x : %x]"%(addr,
+                                                                                  addr+size))
+    except Exception as e:
+        logger.console(LogType.ERRR,"Error opening file: %s"%str(e))
 
-    
 
+def import_mem(emu):
+    (addr,f_path) = EWS.ui.MemOperations.ImportMemory.fillconfig()
+    content_b = None
+    if not does_file_exist(f_path) : 
+        logger.console(LogType.ERRR,"Could not import: file %s not found"%f_path)
+        return
+    try:
+        with open(f_path,'rb') as fin:
+            content_b = fin.read()
+    except:
+        logger.console(LogType.ERRR,"Could not import %s: check permissions ?"%f_path)
+        return 
+    try:
+        emu.mem_read(addr,len(content_b))
+    except:
+        logger.console(LogType.ERRR,"Could not import %s: memory unmapped?",f_path)
+        return
+    try:
+        emu.mem_write(addr,content_b)
+    except:
+        logger.console(LogType.ERRR,"Could not import %s: unproper permission?",f_path)
+        return
+    logger.console(LogType.INFO,"File %s imported into [%x %x]"%(f_path,addr,addr+len(content_b)))
+
+    emu.conf.memory_init += AdditionnalMapping({addr:content_b})
 
 
 def watchpoint(emu):
     return WatchPoint.fillconfig(emu)
 
+def is_arch_supported():
+    return idaapi.get_idp_name() in ['pc', 'arm']
+
+
+def is_code(ea):
+    return ida_bytes.is_code(ida_bytes.get_flags(ea))
+    

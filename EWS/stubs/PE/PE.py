@@ -10,6 +10,7 @@ import tempfile
 import struct
 import random
 import struct
+from EWS.stubs.ELF.utils import * 
 
 
 
@@ -19,17 +20,23 @@ import struct
 """                                 """
 # -----------------------------------------------------------------------------
 
+ 
 class Stub(object):
     """
     stub object
     """
-    def __init__(self,helper=None):
+
+    def __init__(self,helper=None,
+                 stub_type=StubType.BUILTIN,
+                 name:str='undef stub'):
         """
         constructor of Stub object
         param:
             helper: abstraction of all emulator operations
         """
         self.helper = helper
+        self.stub_type = stub_type
+        self.name = name
 
     def set_helper(self,helper):
         """
@@ -96,6 +103,21 @@ class NullStub(Stub):
 "     STUBBED FUNCTIONS     "
 """                                     """
 # -----------------------------------------------------------------------------
+
+@WinStub('lstrlenA')
+class lstrlenA(Stub):
+    def __init__(self):
+        super().__init__()
+
+    def do_it(self,*args):
+        print(self.helper)
+        str_addr = self.helper.get_arg(0)
+        str_ = deref_string(self.helper,str_addr)
+        self.helper.set_return(len(str_))
+
+        return True
+
+        
 
 @WinStub('RegEnumKeyExW')
 class RegEnumKeyExW(Stub):

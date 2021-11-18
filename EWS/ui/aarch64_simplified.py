@@ -1,5 +1,6 @@
 from EWS.ui.generic import * 
-
+from EWS.utils.configuration import *
+from EWS.utils.registers import * 
 
 class Aarch64Pannel(Pannel):
 

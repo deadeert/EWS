@@ -1,10 +1,7 @@
-#from fuzr.unicorn import *
-#from fuzr.unicorn.arm_const import *
-#
-#from fuzr import conf
 import socket
 
 from EWS.utils.utils import *
+from EWS.utils.utils import LogType
 import struct
 
 #-------------------------------------------------------------

@@ -1,4 +1,7 @@
 from EWS.ui.generic import * 
+from EWS.utils.configuration import *
+from EWS.utils.registers import * 
+from EWS.utils import consts_x64
 
 class x64Pannel(Pannel):
 
@@ -138,14 +141,14 @@ Display Configuration
       self.SetControlValue(self.RBP,conf.registers.RBP)
       self.SetControlValue(self.RSP,conf.registers.RSP)
       self.SetControlValue(self.RIP,conf.registers.RIP)
-      self.SetControlValue(self.RIP,conf.registers.R8)
-      self.SetControlValue(self.RIP,conf.registers.R9)
-      self.SetControlValue(self.RIP,conf.registers.R10)
-      self.SetControlValue(self.RIP,conf.registers.R11)
-      self.SetControlValue(self.RIP,conf.registers.R12)
-      self.SetControlValue(self.RIP,conf.registers.R13)
-      self.SetControlValue(self.RIP,conf.registers.R14)
-      self.SetControlValue(self.RIP,conf.registers.R15)
+      self.SetControlValue(self.R8,conf.registers.R8)
+      self.SetControlValue(self.R9,conf.registers.R9)
+      self.SetControlValue(self.R10,conf.registers.R10)
+      self.SetControlValue(self.R11,conf.registers.R11)
+      self.SetControlValue(self.R12,conf.registers.R12)
+      self.SetControlValue(self.R13,conf.registers.R13)
+      self.SetControlValue(self.R14,conf.registers.R14)
+      self.SetControlValue(self.R15,conf.registers.R15)
       self.SetControlValue(self.maGrp,conf.showMemAccess)
       self.s_conf = conf.s_conf 
       self.amap_conf = conf.amap_conf 
@@ -171,7 +174,7 @@ Display Configuration
           ret = Configuration(path=f.conf_path, arch='x64',
                               emulator='unicorn',
                               p_size=consts_x64.PSIZE,
-                              stk_ba=f.consts_x64.STACK_BASEADDR,
+                              stk_ba=consts_x64.STACK_BASEADDR,
                               stk_size=consts_x64.STACK_SIZE,
                               autoMap=f.cAGrp.value,
                               showRegisters=f.cRGrp.value,
@@ -183,22 +186,23 @@ Display Configuration
                               map_with_segs=False,
                               use_seg_perms=False,
                               useCapstone=f.cCGrp.value,
-                              registers=x64Registers(f.RAX.value,
-                                                        f.RBX.value,
-                                                        f.RCX.value,
-                                                        f.RDX.value,
-                                                        f.RSI.value,
-                                                        f.R8.value,
-                                                        f.R9.value,
-                                                        f.R10.value,
-                                                        f.R11.value,
-                                                        f.R12.value,
-                                                        f.R13.value,
-                                                        f.R14.value,
-                                                        f.R15.value,
-                                                        f.RBP.value,
-                                                        f.RSP.value,
-                                                        f.RIP.value),
+                              registers=x64Registers(RAX=f.RAX.value,
+                                                        RBX=f.RBX.value,
+                                                        RCX=f.RCX.value,
+                                                        RDX=f.RDX.value,
+                                                        RSI=f.RSI.value,
+                                                        RDI=f.RDI.value,
+                                                        R8=f.R8.value,
+                                                        R9=f.R9.value,
+                                                        R10=f.R10.value,
+                                                        R11=f.R11.value,
+                                                        R12=f.R12.value,
+                                                        R13=f.R13.value,
+                                                        R14=f.R14.value,
+                                                        R15=f.R15.value,
+                                                        RBP=f.RBP.value,
+                                                        RSP=f.RSP.value,
+                                                        RIP=f.RIP.value),
 
                               showMemAccess=f.maGrp.value,
                               s_conf=f.s_conf,

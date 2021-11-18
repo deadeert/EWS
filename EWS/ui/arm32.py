@@ -1,5 +1,6 @@
 from EWS.ui.generic import * 
-
+from EWS.utils.configuration import *
+from EWS.utils.registers import * 
 
 FormDesc = r"""STARTITEM 
 BUTTON YES Yeah
@@ -28,6 +29,10 @@ Display Configuration
 <## Refresh values: {refreshButton}>
 """
 
+
+
+
+
 class Arm32Pannel(Pannel):
 
   def __init__(self,conf):
@@ -36,6 +41,7 @@ class Arm32Pannel(Pannel):
     self.segs = [] 
     self.s_conf = StubConfiguration.create() 
     self.amap_conf = AdditionnalMapping({})#AdditionnalMapping.create()
+    self.memory_init = AdditionnalMapping({}) 
     if self.conf == None:
         Form.__init__(self, FormDesc,{
             'iPageSize': Form.NumericInput(tp=Form.FT_RAWHEX), 
@@ -128,6 +134,9 @@ class Arm32Pannel(Pannel):
 })
 
 
+        self.s_conf = conf.s_conf
+        self.amap_conf = conf.amap_conf
+        self.memory_init = conf.memory_init
 
 
   def onSaveButton(self,code):
@@ -166,6 +175,7 @@ class Arm32Pannel(Pannel):
                               showMemAccess=self.GetControlValue(self.maGrp),
                               s_conf=self.s_conf,
                               amap_conf=self.amap_conf,
+                              memory_init=self.memory_init,
                               color_graph=self.GetControlValue(self.cgGrp),
                               breakpoints= self.breakpoints)
 
@@ -253,6 +263,7 @@ class Arm32Pannel(Pannel):
       self.SetControlValue(self.maGrp,conf.showMemAccess)
       self.s_conf = conf.s_conf 
       self.amap_conf = conf.amap_conf 
+      self.memory_init = conf.memory_init
       self.breakpoints = conf.breakpoints
       self.SetControlValue(self.cgGrp,conf.color_graph)
 
@@ -307,6 +318,7 @@ class Arm32Pannel(Pannel):
                               showMemAccess=f.maGrp.value,
                               s_conf=f.s_conf,
                               amap_conf=f.amap_conf,
+                              memory_init=f.memory_init,
                               color_graph=f.cgGrp.value,
                               breakpoints = f.breakpoints)
     

@@ -25,8 +25,14 @@ byte_2h = lambda x: (x >> 16) & 0xFFFF
 """                 """
 # -----------------------------------------------------------------------------
 class Stub(object):
-  def __init__(self,helper=None):
+  def __init__(self,
+               helper=None,
+               stub_type=StubType.BUILTIN,
+               name: str = 'undef stub'):
+               
     self.helper = helper
+    self.stub_type = stub_type
+    self.name = name
 
   def set_helper(self,helper):
     self.helper = helper

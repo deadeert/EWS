@@ -1,5 +1,7 @@
 from EWS.ui.generic import * 
 from EWS.utils import consts_x86 
+from EWS.utils.configuration import *
+from EWS.utils.registers import * 
 
 class x86Pannel(Pannel):
 
