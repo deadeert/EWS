@@ -17,6 +17,7 @@ from EWS. stubs.ELF import ELF
 from EWS. stubs import PE
 from EWS.utils.configuration import *
 from EWS.utils.registers import *
+from EWS.asm.assembler import *
 
 class x86Corn(Emucorn): 
 
@@ -56,27 +57,36 @@ class x86Corn(Emucorn):
         self.uc.mem_write(k,v)
 
 
+    self.assembler = assemblers['x86'][0]
+
+
+    for k,v in self.conf.patches.items():
+            self.patch_insn(k,v,update_conf=False)
+
+
+
+
 
   def install_hooks(self):
     self.uc.hook_add(UC_HOOK_CODE,
                      self.hook_code,
-                     user_data=self.conf)
+                     user_data=self)
 
     self.uc.hook_add(UC_HOOK_MEM_READ_UNMAPPED,
                      Emucorn.unmp_read,
-                     user_data=self.conf)
+                     user_data=self)
 
     self.uc.hook_add(UC_HOOK_MEM_WRITE_UNMAPPED,
                      Emucorn.unmp_write,
-                     user_data=self.conf)
+                     user_data=self)
 
     if self.conf.showMemAccess:
       self.uc.hook_add(UC_HOOK_MEM_WRITE,
                 Emucorn.hk_write,
-                self.conf)
+                self)
       self.uc.hook_add(UC_HOOK_MEM_READ,
                        Emucorn.hk_read,
-                       self.conf)
+                       self)
 
   def setup_stub_mechanism(self):
         self.uc.mem_map(consts_x86.ALLOC_BA,
@@ -297,91 +307,144 @@ class x86Corn(Emucorn):
     return strout
 
 
-  @staticmethod
-  def generate_default_config(path=None,
-                       arch=None,
-                       emulator=None,
-                       p_size=None,
-                       stk_ba=None,
-                       stk_size=None,
-                       autoMap=None,
-                       showRegisters=None,
-                       exec_saddr=None,
-                       exec_eaddr=None,
-                       mapping_saddr=None,
-                       mapping_eaddr=None,
-                       segms=None,
-                       map_with_segs=None,
-                       use_seg_perms=None,
-                       useCapstone=None,
-                       registers=None,
-                       showMemAccess=None,
-                       s_conf=None,
-                       amap_conf=None,
-                        memory_init=None,
-                       color_graph=None,
-                        breakpoints=None):
 
-    if registers == None:
-        registers = x86Registers(EAX=0,
-                                EBX=1,
-                                ECX=2,
-                                EDX=3,
-                                EDI=4,
-                                ESI=5,
-                                EBP=consts_x86.STACK_BASEADDR+consts_x86.STACK_SIZE-\
+  @staticmethod
+  def generate_default_config(
+                                 path: str = None,
+                                 arch: str = None,
+                                 emulator: str = None,
+                                 p_size: int = None,
+                                 stk_ba: int = None,
+                                 stk_size: int = None,
+                                 autoMap: bool = None,
+                                 showRegisters: bool = None,
+                                 exec_saddr: int =None,
+                                 exec_eaddr: int =None,
+                                 mapping_saddr: int =None,
+                                 mapping_eaddr: int =None,
+                                 segms: list =None,
+                                 map_with_segs: bool = None,
+                                 use_seg_perms: bool =None,
+                                 useCapstone: bool = None,
+                                 registers: Registers = None,
+                                 showMemAccess: bool =None,
+                                 s_conf: StubConfiguration = None,
+                                 amap_conf: AdditionnalMapping = None,
+                                 memory_init: AdditionnalMapping =None,
+                                 color_graph: bool =None,
+                                 breakpoints: list =None,
+                                 watchpoints: dict =None) -> Configuration:
+      """this method get called by:
+            - ui **emulate_function**
+            - ui **emulate_selection**
+      """
+
+      if not registers: 
+        registers = x86Registers.get_default_object(EBP=consts_x86.STACK_BASEADDR+consts_x86.STACK_SIZE-\
                                  consts_x86.initial_stack_offset,
                                 ESP=consts_x86.STACK_BASEADDR+consts_x86.STACK_SIZE-\
                                  consts_x86.initial_stack_offset,
                                 EIP=exec_saddr)
-    else:
-        registers = regs
-
-    if s_conf == None:
-        exec_path = search_executable()
-        stub_conf = StubConfiguration(nstubs=dict(),
-                                      activate_stub_mechanism=True if exec_path != ""
-                                      else False,
-                                      orig_filepath=exec_path,
-                                      custom_stubs_file=None,
-                                      auto_null_stub=True if exec_path != "" else False,
-                                      tags=dict())
-    else:
-        stub_conf = s_conf
-
-    if amap_conf == None:
-        addmap_conf = AdditionnalMapping.create()
-    else:
-        addmap_conf = amap_conf
+      return Configuration.generate_default_config(stk_ba=stk_ba if stk_ba\
+                                                    else consts_x86.STACK_BASEADDR,
+                                                    stk_size=stk_size if stk_size\
+                                                    else consts_x86.STACK_SIZE,
+                                                    registers=registers,
+                                                    exec_saddr=exec_saddr,
+                                                    exec_eaddr=exec_eaddr)
 
 
-    if memory_init == None:
-        meminit = AdditionnalMapping.create()
-    else:
-        meminit = memory_init
-
-    return Configuration(     path=path if path else '',
-                              arch='x86',
-                              emulator='unicorn',
-                              p_size=p_size if p_size else consts_x86.PSIZE,
-                              stk_ba=stk_ba if stk_ba else consts_x86.STACK_BASEADDR,
-                              stk_size=stk_size if stk_size else consts_x86.STACK_SIZE,
-                              autoMap=autoMap if autoMap else False,
-                              showRegisters=showRegisters if showRegisters else True,
-                              exec_saddr=exec_saddr if exec_saddr else 0,
-                              exec_eaddr=exec_eaddr if exec_eaddr else 0xFFFFFFFF,
-                              mapping_saddr=get_min_ea_idb() if not mapping_saddr else mapping_saddr,
-                              mapping_eaddr=get_max_ea_idb() if not mapping_eaddr else mapping_eaddr,
-                              segms=segms if segms else [],
-                              map_with_segs=map_with_segs if map_with_segs else False,
-                              use_seg_perms=use_seg_perms if use_seg_perms else False,
-                              useCapstone=useCapstone if useCapstone else True,
-                              registers=registers,
-                              showMemAccess=showMemAccess if showMemAccess else True,
-                              s_conf=stub_conf,
-                              amap_conf=addmap_conf,
-                              memory_init=meminit,
-                              color_graph=False,
-                              breakpoints=breakpoints if breakpoints else [])
 
 
+
+
+
+
+#  @staticmethod
+#  def generate_default_config(path=None,
+#                       arch=None,
+#                       emulator=None,
+#                       p_size=None,
+#                       stk_ba=None,
+#                       stk_size=None,
+#                       autoMap=None,
+#                       showRegisters=None,
+#                       exec_saddr=None,
+#                       exec_eaddr=None,
+#                       mapping_saddr=None,
+#                       mapping_eaddr=None,
+#                       segms=None,
+#                       map_with_segs=None,
+#                       use_seg_perms=None,
+#                       useCapstone=None,
+#                       registers=None,
+#                       showMemAccess=None,
+#                       s_conf=None,
+#                       amap_conf=None,
+#                        memory_init=None,
+#                       color_graph=None,
+#                        breakpoints=None):
+#
+#    if registers == None:
+#        registers = x86Registers(EAX=0,
+#                                EBX=1,
+#                                ECX=2,
+#                                EDX=3,
+#                                EDI=4,
+#                                ESI=5,
+#                                EBP=consts_x86.STACK_BASEADDR+consts_x86.STACK_SIZE-\
+#                                 consts_x86.initial_stack_offset,
+#                                ESP=consts_x86.STACK_BASEADDR+consts_x86.STACK_SIZE-\
+#                                 consts_x86.initial_stack_offset,
+#                                EIP=exec_saddr)
+#    else:
+#        registers = regs
+#
+#    if s_conf == None:
+#        exec_path = search_executable()
+#        stub_conf = StubConfiguration(nstubs=dict(),
+#                                      activate_stub_mechanism=True if exec_path != ""
+#                                      else False,
+#                                      orig_filepath=exec_path,
+#                                      custom_stubs_file=None,
+#                                      auto_null_stub=True if exec_path != "" else False,
+#                                      tags=dict())
+#    else:
+#        stub_conf = s_conf
+#
+#    if amap_conf == None:
+#        addmap_conf = AdditionnalMapping.create()
+#    else:
+#        addmap_conf = amap_conf
+#
+#
+#    if memory_init == None:
+#        meminit = AdditionnalMapping.create()
+#    else:
+#        meminit = memory_init
+#
+#    return Configuration(     path=path if path else '',
+#                              arch='x86',
+#                              emulator='unicorn',
+#                              p_size=p_size if p_size else consts_x86.PSIZE,
+#                              stk_ba=stk_ba if stk_ba else consts_x86.STACK_BASEADDR,
+#                              stk_size=stk_size if stk_size else consts_x86.STACK_SIZE,
+#                              autoMap=autoMap if autoMap else False,
+#                              showRegisters=showRegisters if showRegisters else True,
+#                              exec_saddr=exec_saddr if exec_saddr else 0,
+#                              exec_eaddr=exec_eaddr if exec_eaddr else 0xFFFFFFFF,
+#                              mapping_saddr=get_min_ea_idb() if not mapping_saddr else mapping_saddr,
+#                              mapping_eaddr=get_max_ea_idb() if not mapping_eaddr else mapping_eaddr,
+#                              segms=segms if segms else [],
+#                              map_with_segs=map_with_segs if map_with_segs else False,
+#                              use_seg_perms=use_seg_perms if use_seg_perms else False,
+#                              useCapstone=useCapstone if useCapstone else True,
+#                              registers=registers,
+#                              showMemAccess=showMemAccess if showMemAccess else True,
+#                              s_conf=stub_conf,
+#                              amap_conf=addmap_conf,
+#                              memory_init=meminit,
+#                              color_graph=False,
+#                              breakpoints=breakpoints if breakpoints else [])
+#
+#

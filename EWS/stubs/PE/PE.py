@@ -110,7 +110,6 @@ class lstrlenA(Stub):
         super().__init__()
 
     def do_it(self,*args):
-        print(self.helper)
         str_addr = self.helper.get_arg(0)
         str_ = deref_string(self.helper,str_addr)
         self.helper.set_return(len(str_))

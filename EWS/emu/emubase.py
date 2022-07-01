@@ -214,7 +214,7 @@ class Emulator(object):
     """ setup a breakpoint for insn x 
     """
     self.user_breakpoints.append(ea)
-    if update_conf: self.conf.add_breakpoint(ea)
+    self.conf.add_breakpoint(ea)
     logger.console(LogType.INFO,'Breakpoint added to %x'%ea)
     
       

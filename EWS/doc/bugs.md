@@ -18,3 +18,6 @@ instructions. Not planned to be supported in next versions. Please
 reload the emulator. 
 Warning configuration object keep track of the stubbed function.
 
+# Bug3 
+
+Reseting the plugin, do not clean the olds exec_trace. 

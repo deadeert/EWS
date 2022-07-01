@@ -28,6 +28,8 @@ Export Memory
       ok = f.Execute()
       if ok:
          return f.iAddr.value,f.iSize.value,f.iFile.value
+      else:
+          raise Exception('[ExportMem]Invalid input parameters.')
 
 class ImportMemory(ida_kernwin.Form): 
 

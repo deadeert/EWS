@@ -1,3 +1,8 @@
+from EWS.utils import consts_arm
+from EWS.utils import consts_aarch64
+from EWS.utils import consts_x86
+from EWS.utils import consts_x64
+
 class Registers(object):
 
   def __init__(self):
@@ -63,7 +68,30 @@ class ArmRegisters(Registers):
 
       return out
 
-
+  @classmethod
+  def get_default_object(cls,
+                         r13=0,
+                         r14=0,
+                         r15=0):
+        return ArmRegisters(  0x0,
+                              0x1,
+                              0x2,
+                              0x3,
+                              0x4,
+                              0x5,
+                              0x6,
+                              0x7,
+                              0x8,
+                              0x9,
+                              0xA,
+                              0xB,
+                              0xC,
+                              consts_arm.STACK_BASEADDR+\
+                              consts_arm.STACK_SIZE-\
+                              consts_arm.initial_stack_offset if r13 ==0\
+                            else r13,
+                              r14,
+                              r15)
 
 
 class arm32CPSR(Registers):
@@ -89,8 +117,6 @@ class arm32CPSR(Registers):
     out = '[N=%d Z=%d C=%d V=%d I=%d F=%d] '%(self.N,self.Z,self.C,self.V,self.I,self.F)
     return out
 
-
-  
 
 
 class Aarch64Registers(Registers):
@@ -134,6 +160,49 @@ class Aarch64Registers(Registers):
 
   def get_program_counter(self):
       return self.PC
+
+
+  @classmethod
+  def get_default_object(cls,X0=0,X1=0,X2=0,X3=0,X4=0,X5=0,X6=0,X7=0,X8=0,X9=0,
+                    X10=0,X11=0,X12=0,X13=0,X14=0,X15=0,X16=0,X17=0,X18=0,X19=0,
+                    X20=0,X21=0,X22=0,X23=0,X24=0,X25=0,X26=0,X27=0,X28=0,FP=0,
+                         LR=0,SP=0,PC=0):
+      return Aarch64Registers(   X0,
+                                 X1,
+                                 X2,
+                                 X3,
+                                 X4,
+                                 X5,
+                                 X6,
+                                 X7,
+                                 X8,
+                                 X9,
+                                 X10,
+                                 X11,
+                                 X12,
+                                 X13,
+                                 X14,
+                                 X15,
+                                 X16,
+                                 X17,
+                                 X18,
+                                 X19,
+                                 X20,
+                                 X21,
+                                 X22,
+                                 X23,
+                                 X24,
+                                 X25,
+                                 X26,
+                                 X27,
+                                 X28,
+                                 FP,
+                                 LR, # LR
+                                 consts_aarch64.STACK_BASEADDR+\
+                                 consts_aarch64.STACK_SIZE-\
+                                 consts_aarch64.initial_stack_offset if SP==0 else SP,
+                                 PC)
+
 
 class aarch64CPSR(Registers):
   def __init__(self,N,Z,C,V,I,F):
@@ -247,8 +316,19 @@ class x86Registers(Registers):
 
     return out
 
-
-
+  @classmethod
+  def et_default_object(cls):
+      return x86Registers(EAX=0,
+                            EBX=1,
+                            ECX=2,
+                            EDX=3,
+                            EDI=4,
+                            ESI=5,
+                            EBP=consts_x86.STACK_BASEADDR+consts_x86.STACK_SIZE-\
+                             consts_x86.initial_stack_offset,
+                            ESP=consts_x86.STACK_BASEADDR+consts_x86.STACK_SIZE-\
+                             consts_x86.initial_stack_offset,
+                            EIP=0)
 
 class x86EFLAGS(Registers):
   def __init__(self,CF,PF,AF,ZF,SF,TF,EIF,DF,OF):
@@ -355,6 +435,28 @@ class x64Registers(Registers):
 
       return out
 
+  @classmethod
+  def get_default_object(cls):
+      return x64Registers(RAX=0,
+                                         RBX=1,
+                                         RCX=2,
+                                         RDX=3,
+                                         RDI=4,
+                                         RSI=5,
+                                         R8=6,
+                                         R9=7,
+                                         R10=8,
+                                         R11=9,
+                                         R12=10,
+                                         R13=11,
+                                         R14=12,
+                                         R15=13,
+                                         RBP=consts_x64.STACK_BASEADDR+consts_x64.STACK_SIZE-\
+                                         consts_x64.initial_stack_offset,
+                                         RSP=consts_x64.STACK_BASEADDR+consts_x64.STACK_SIZE-\
+                                         consts_x64.initial_stack_offset,
+                                         RIP=0)
+    
 
 
 

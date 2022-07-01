@@ -1,13 +1,14 @@
 #from utils.consts_arm import SVC_INSN_ARM 
 #from utils.consts_mips import BREAK_INSN_MIPS  
+import ida_kernwin
 from EWS.stubs.ELF import conf
-from EWS.stubs.ELF.utils import *  
+from EWS.stubs.ELF.utils import *
 from EWS.utils.utils import *
 import codecs
 import re
 from enum import Enum
 import os
-from os import path 
+from os import path
 import tempfile
 import struct
 
@@ -29,14 +30,14 @@ class Stub(object):
                helper=None,
                stub_type=StubType.BUILTIN,
                name: str = 'undef stub'):
-               
+
     self.helper = helper
     self.stub_type = stub_type
     self.name = name
 
   def set_helper(self,helper):
     self.helper = helper
-  
+
 libc_stubs = dict()
 
 class LibcStub():
@@ -55,7 +56,7 @@ class NullStub(Stub):
 
     def __init__(self):
         super().__init__()
-      
+
     def do_it(self,*args):
         logger.console(LogType.INFO,'[stubs] null stub is called')
         self.helper.set_return(0)
@@ -74,7 +75,7 @@ class memset(Stub):
 
     def __init__(self):
         super().__init__()
-        
+
     def do_it(self,*args):
         dst = self.helper.get_arg(0)
         data = byte_l (self.helper.get_arg(1)) 
@@ -90,7 +91,7 @@ class malloc(Stub):
 
     def __init__(self):
         super().__init__()
-        
+
 
     def do_it(self,*args):
 #         if not fromStub:
@@ -111,7 +112,7 @@ class free(Stub):
 
     def __init__(self):
         super().__init__()
-        
+
 
     def do_it(self,*args):
         addr = self.helper.get_arg(0)
@@ -125,7 +126,7 @@ class calloc(Stub):
 
     def __init__(self):
         super().__init__()
-        
+
 
     def do_it(self,*args):
         req_size = self.helper.get_arg(0)
@@ -157,7 +158,6 @@ class puts(Stub):
 
     def __init__(self):
         super().__init__()
-        
 
     def do_it(self,*args):
         logger.console(LogType.INFO,'[puts] called at 0x%.8X'%self.helper.get_pc())
@@ -223,7 +223,6 @@ class printf(Stub):
         p2  = re.compile('(%+[dpsx]+)') # 08/11/2020:  ajout du + 
         chain_addr = self.helper.get_arg(0)
         chain = deref_string(self.helper,chain_addr)
-        print('chain_addr:%x, '%chain_addr,chain)
         reformat = [i for i in p.findall(chain.strip().decode('utf-8')) if i != '']
         deref_list = deref_format(self.helper,reformat,1) 
         deref_list.reverse()
@@ -1085,5 +1084,65 @@ class strerror(Stub):
         self.helper.set_return(conf.errno_location)
         return True
 
+@LibcStub('_scanf')
+@LibcStub('scanf')
+class scanf(Stub):
+
+    def __init__(self):
+        super().__init__()
+
+    def do_it(self,*args):
+        format_addr = self.helper.get_arg(0)
+
+        format = deref_string(self.helper,
+                              format_addr).decode('utf-8')
+
+        patt=re.compile('%[sd]')
+        fmts = patt.findall(format)
+        if not fmts:
+            logger.console(LogType.WARN,
+                           "[stub] scanf unsupported format: %s"%format)
+            return True
+
+        fmt_vals = list()
+        target_addr = self.helper.get_arg(1)
+        for i,f in enumerate(fmts):
+            
+            if f == '%d':
+                val = ida_kernwin.ask_str('0xFFFFFFFF',False,'scanf("%d")=')
+                fmt_vals.append(('%d',struct.pack('>I',int(val,16))))
+            elif f == '%s':
+                val = ida_kernwin.ask_str('scanf string',False,'scanf("%s")=')
+                fmt_vals.append(('%s',val))
+
+        outter = patt.split(format)
+        out_chain = b''
+        fmt_vals.reverse()
+        for i,f in enumerate(outter):
+            if f == '':
+                try:
+                    k,v = fmt_vals.pop()
+                except:
+                    break
+
+                if k == '%d':
+                    out_chain += v
+                elif k == '%s':
+                    out_chain += v.encode('utf-8')
+
+            else:
+                out_chain += f.encode('utf-8')
+        logger.console(LogType.INFO,"[stub] scanf(%s) write %s at %x"%(format,
+                                                                out_chain.decode('utf-8'),
+                                                                target_addr))
+
+               
+
+
+
+
+        return True
+
        
+      
 

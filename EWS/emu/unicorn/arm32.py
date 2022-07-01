@@ -8,6 +8,7 @@ from EWS.stubs.ELF import ELF
 from EWS.stubs.emu.unicorn.sea import UnicornArmSEA
 from EWS.utils.configuration import *
 from EWS.utils.registers import *
+from EWS.asm.assembler import *
 import struct
 
 
@@ -51,7 +52,7 @@ class ArmCorn(Emucorn):
       from capstone import Cs, CS_ARCH_ARM, CS_MODE_THUMB, CS_MODE_ARM, CS_MODE_LITTLE_ENDIAN, CS_MODE_BIG_ENDIAN
       if pinf['proc_mode'] == 16:
         self.cs=Cs(CS_ARCH_ARM, CS_MODE_THUMB + CS_MODE_LITTLE_ENDIAN if pinf['endianness'] else CS_MODE_THUMB + CS_MODE_BIG_ENDIAN)
-         
+
       elif pinf['proc_mode'] == 32:
         self.cs=Cs(CS_ARCH_ARM, CS_MODE_ARM + CS_MODE_LITTLE_ENDIAN if pinf['endianness'] else CS_MODE_ARM + CS_MODE_BIG_ENDIAN)
       self.cs.detail=True
@@ -66,11 +67,20 @@ class ArmCorn(Emucorn):
 
     self.install_hooks()
 
+
     for k,v in self.conf.memory_init.mappings.items():
         self.uc.mem_write(k,v)
 
 
+    # TODO handle CPU working on two mode
+    # TODO handle endianess as well? 
+    if pinf['proc_mode'] == 16:
+        self.assembler = assemblers['armt'][0]
+    elif pinf['proc_mode'] == 32:
+        self.assembler = assemblers['arm'][0]
 
+    for k,v in self.conf.patches.items():
+        self.patch_insn(k,v,update_conf=False)
 
 
 
@@ -78,22 +88,22 @@ class ArmCorn(Emucorn):
 
     self.uc.hook_add(UC_HOOK_CODE,
                      self.hook_code,
-                     user_data=self.conf)
+                     user_data=self)
     self.uc.hook_add(UC_HOOK_MEM_READ_UNMAPPED,
                      Emucorn.unmp_read,
-                     user_data=self.conf)
+                     user_data=self)
 
     self.uc.hook_add(UC_HOOK_MEM_WRITE_UNMAPPED,
                      Emucorn.unmp_write,
-                     user_data=self.conf)
+                     user_data=self)
 
     if self.conf.showMemAccess:
       self.uc.hook_add(UC_HOOK_MEM_WRITE,
                 Emucorn.hk_write,
-                self.conf)
+                self)
       self.uc.hook_add(UC_HOOK_MEM_READ,
                        Emucorn.hk_read,
-                       self.conf)
+                       self)
 
 
 
@@ -115,7 +125,7 @@ class ArmCorn(Emucorn):
       self.nstub_obj = ELF.NullStub()
       self.nstub_obj.set_helper(self.helper)
  
-      self.stubs = ELF.libc_stubs 
+      self.stubs = ELF.libc_stubs
       if verify_valid_elf(self.conf.s_conf.orig_filepath):
             self.reloc_map = get_relocs(self.conf.s_conf.orig_filepath,
                                         lief.ELF.RELOCATION_ARM.JUMP_SLOT)
@@ -167,6 +177,8 @@ class ArmCorn(Emucorn):
 #    if self.conf.color_graph:
 #        colorate_graph(self.exec_trace.generate_color_map())
 
+    Exec_Trace_Serializer.dump_to_file(self.exec_trace,'/tmp/exec_trace.txt')
+
 
 
 
@@ -208,6 +220,7 @@ class ArmCorn(Emucorn):
 
     i = get_insn_at(insn.ea) 
     if i.size == 2:
+        #TODO add new assembler method instead of const
       if self.endns == 'little':
         self.uc.mem_write(insn.ea,struct.pack('<H',consts_arm.nop_thumb))
       else:
@@ -229,6 +242,7 @@ class ArmCorn(Emucorn):
     i = get_insn_at(f.start_ea) 
     if i.size == 2:
       if self.endns == 'little':
+        #TODO: use new assebmler feature
         retn = struct.pack('<H',consts_arm.mov_pc_lr_thumb)
       else:
         retn = struct.pack('>H',consts_arm.mov_pc_lr_thumb)
@@ -315,7 +329,6 @@ class ArmCorn(Emucorn):
     self.uc.reg_write(UC_ARM_REG_R13,0)
     self.uc.reg_write(UC_ARM_REG_R14,0)
     self.uc.reg_write(UC_ARM_REG_R15,0)
-   
 
   def isThumb(self):
       # somehow unicorn does not query properly
@@ -433,97 +446,55 @@ class ArmCorn(Emucorn):
     return strout
 
 
+
   @staticmethod
-  def generate_default_config(path=None,
-                       arch=None,
-                       emulator=None,
-                       p_size=None,
-                       stk_ba=None,
-                       stk_size=None,
-                       autoMap=None,
-                       showRegisters=None,
-                       exec_saddr=None,
-                       exec_eaddr=None,
-                       mapping_saddr=None,
-                       mapping_eaddr=None,
-                       segms=None,
-                       map_with_segs=None,
-                       use_seg_perms=None,
-                       useCapstone=None,
-                       registers=None,
-                       showMemAccess=None,
-                       s_conf=None,
-                       amap_conf=None,
-                       memory_init=None,
-                       color_graph=None,
-                        breakpoints=None):
+  def generate_default_config(
+                                 path: str = None,
+                                 arch: str = None,
+                                 emulator: str = None,
+                                 p_size: int = None,
+                                 stk_ba: int = None,
+                                 stk_size: int = None,
+                                 autoMap: bool = None,
+                                 showRegisters: bool = None,
+                                 exec_saddr: int =None,
+                                 exec_eaddr: int =None,
+                                 mapping_saddr: int =None,
+                                 mapping_eaddr: int =None,
+                                 segms: list =None,
+                                 map_with_segs: bool = None,
+                                 use_seg_perms: bool =None,
+                                 useCapstone: bool = None,
+                                 registers: Registers = None,
+                                 showMemAccess: bool =None,
+                                 s_conf: StubConfiguration = None,
+                                 amap_conf: AdditionnalMapping = None,
+                                 memory_init: AdditionnalMapping =None,
+                                 color_graph: bool =None,
+                                 breakpoints: list =None,
+                                 watchpoints: dict =None) -> Configuration:
+      """this method get called by:
+            - ui **emulate_function**
+            - ui **emulate_selection**
+      """
+
+      if not registers: 
+        registers = ArmRegisters.get_default_object(r13= consts_arm.STACK_BASEADDR+\
+                                                      consts_arm.STACK_SIZE-\
+                                                      consts_arm.initial_stack_offset, #SP
+                                                      r14=exec_eaddr,
+                                                      r15=exec_saddr)
+
+      return Configuration.generate_default_config(stk_ba=stk_ba if stk_ba\
+                                                    else consts_arm.STACK_BASEADDR,
+                                                    stk_size=stk_size if stk_size\
+                                                    else consts_arm.STACK_SIZE,
+                                                    registers=registers,
+                                                    exec_saddr=exec_saddr,
+                                                    exec_eaddr=exec_eaddr)
 
 
-    if registers == None:
-
-        registers = ArmRegisters(0x0,
-                                  0x1,
-                                  0x2,
-                                  0x3,
-                                  0x4,
-                                  0x5,
-                                  0x6,
-                                  0x7,
-                                  0x8,
-                                  0x9,
-                                  0x10,
-                                  0x11,
-                                  0x12,
-                                  consts_arm.STACK_BASEADDR+consts_arm.STACK_SIZE-consts_arm.initial_stack_offset, #SP
-                                  exec_eaddr, #LR
-                                  exec_saddr) # PC
-    else:
-        registers = regs
-
-    if s_conf == None:
-        exec_path = search_executable() 
-        stub_conf = StubConfiguration(nstubs=dict(),
-                                        activate_stub_mechanism=True, #True if exec_path != "" else False,
-                                        orig_filepath=exec_path,
-                                        custom_stubs_file=None,
-                                        auto_null_stub=True if exec_path != "" else False,
-                                        tags=dict())
-    else:
-        stub_conf = s_conf
-
-    if amap_conf == None:
-        addmap_conf = AdditionnalMapping.create()
-    else:
-        addmap_conf = amap_conf
-
-    if memory_init == None:
-        meminit = AdditionnalMapping.create()
-    else:
-        meminit = memory_init
 
 
-    return Configuration(     path=path if path else '',
-                              arch='arm',
-                              emulator='unicorn',
-                              p_size=p_size if p_size else consts_arm.PSIZE,
-                              stk_ba=stk_ba if stk_ba else consts_arm.STACK_BASEADDR,
-                              stk_size=stk_size if stk_size else consts_arm.STACK_SIZE,
-                              autoMap=autoMap if autoMap else False,
-                              showRegisters=showRegisters if showRegisters else True,
-                              exec_saddr=exec_saddr if exec_saddr else 0,
-                              exec_eaddr=exec_eaddr if exec_eaddr else 0xFFFFFFFF,
-                              mapping_saddr=get_min_ea_idb() if not mapping_saddr else mapping_saddr,
-                              mapping_eaddr=get_max_ea_idb() if not mapping_eaddr else mapping_eaddr,
-                              segms=segms if segms else [],
-                              map_with_segs=map_with_segs if map_with_segs else False,
-                              use_seg_perms=use_seg_perms if use_seg_perms else False,
-                              useCapstone=useCapstone if useCapstone else True,
-                              registers=registers,
-                              showMemAccess=showMemAccess if showMemAccess else True,
-                              s_conf=stub_conf,
-                              amap_conf=addmap_conf,
-                              memory_init=meminit,
-                              color_graph=False,
-                              breakpoints=breakpoints if breakpoints else [])
 
 

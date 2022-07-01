@@ -18,9 +18,18 @@ class Exec_Trace(object):
                         assembly:str,
                         regs:Registers,
                         color:int,
-                        tainted:bool):
+                        tainted:bool,
+                        count:int):
 
-        self.addr[addr] = { 'assembly': assembly,
+        # TODO the current key for **addr** dict 
+        # is crapy. The data set should be moved. 
+        # add a count variable that will be used 
+        # to reference all inst and their addresses. 
+        # this change should be done in a new branch. 
+ 
+        addr_str = '%x_%d'%(addr,count)
+
+        self.addr[addr_str] = { 'assembly': assembly,
                             'regs': regs,
                             'color': color,
                             'tainted': tainted
@@ -64,9 +73,9 @@ class Exec_Trace_Serializer(json.JSONEncoder):
         out['arch'] =  exec_trace.arch,
         out['addr'] = dict()
         for k,v in exec_trace.addr.items():
-            out['addr'][hex(k)]=dict()
+            out['addr'][k]=dict()
 
-            out['addr'][hex(k)] = { 'assembly':v['assembly'], 
+            out['addr'][k] = { 'assembly':v['assembly'], 
                                   'regs': v['regs'].__dict__,
                                   'color':v['color'],
                                  'tainted':v['tainted']
@@ -84,9 +93,6 @@ class Exec_Trace_Serializer(json.JSONEncoder):
             print(e.__str__())
 
 
-
-
-            
 
 
 

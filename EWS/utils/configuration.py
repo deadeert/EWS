@@ -5,52 +5,61 @@ import json
 
 
 class AdditionnalMapping():
-        
+
     @staticmethod
     def create():
-        return AdditionnalMapping({})
+        return AdditionnalMapping(mappings={})
 
     def __init__(self,mappings):
         self.mappings = mappings
 
     def __str__(self):
-        return '\n'.join(['{}: {}'.format(x,self.__dict__[x]) for x in self.__dict__])
+        return '\n'.join(['{}: {}'.format(x,self.__dict__[x])
+                          for x in self.__dict__])
 
     def __add__(self,addm):
         ret = {**self.mappings, **addm.mappings}
         return AdditionnalMapping(ret)
-            
 
-
-        
+ 
 class StubConfiguration():
 
     @staticmethod #should move to classmethod see https://www.geeksforgeeks.org/classmethod-in-python/
     def create():
-        cls = StubConfiguration({},False,None,{})
-        return cls 
+        cls = StubConfiguration(nstubs={},
+                                activate_stub_mechanism=True,
+                                tag_func_tab=True,
+                                orig_filepath=None,
+                                custom_stubs_file=None,
+                                auto_null_stub=False,
+                                tags={})
+        return cls
 
     def __init__(self,nstubs,
-                             activate_stub_mechanism,
-                             orig_filepath,
-                             custom_stubs_file=None,
-                             auto_null_stub=False,
-                             tags=None):
-        """ nstubs                             : null stub dictionnary 
-                activate_stub_mechanism: stub sections such as plt/iat ...    
-                orig_filepath                : name of the original binary
-                custom_stubs_file        : file that specify special behavior for certain function
-                autonull stub                : null stubs symbols that are not currently supported
-                tags : mapping ea:stub_name 
+                 activate_stub_mechanism: bool,
+                 tag_func_tab: bool,
+                 orig_filepath: str,
+                 custom_stubs_file: str =None,
+                 auto_null_stub: bool=False,
+                 tags: dict = None):
         """
-        
-        self.nstubs = nstubs 
+        activate_stub_mechanism: create helper for stubs
+        tag_func_tab:            stub ELF(GOT)/PE(IAT) table (when available)
+        orig_filepath:           name of the original binary
+        custom_stubs_file:       file that specify special behavior for certain function
+        autonull stub:           null stubs symbols that are not currently supported
+        tags :                   dict {ea:stub_name}
+        nstubs                   null stub dictionnary
+        """
+
+        self.tag_func_tab = tag_func_tab
         self.activate_stub_mechanism = activate_stub_mechanism
-        self.orig_filepath = orig_filepath 
-        self.custom_stubs_file = custom_stubs_file 
-        self.auto_null_stub = auto_null_stub 
+        self.orig_filepath = orig_filepath
+        self.custom_stubs_file = custom_stubs_file
+        self.auto_null_stub = auto_null_stub
+        self.nstubs = nstubs
         if tags == None:
-            self.tags = dict() 
+            self.tags = dict()
         else: self.tags = tags
 
     def __str__(self):
@@ -59,13 +68,14 @@ class StubConfiguration():
 
     def __add__(self,sconf):
         nstubs = {**self.nstubs, **sconf.nstubs}
-        tags = {**self.tags, **sconf.tags} 
-        return StubConfiguration(nstubs,
-                                                         sconf.activate_stub_mechanism,
-                                                         sconf.orig_filepath,
-                                                         sconf.custom_stubs_file,
-                                                         sconf.auto_null_stub,
-                                                         tags)
+        tags = {**self.tags, **sconf.tags}
+        return StubConfiguration(nstubs=nstubs,
+                                 activate_stub_mechanism=sconf.activate_stub_mechanism,
+                                 tag_func_tab=sconf.tag_func_tab,
+                                 orig_filepath=sconf.orig_filepath,
+                                 custom_stubs_file=sconf.custom_stubs_file,
+                                 auto_null_stub=sconf.auto_null_stub,
+                                 tags=tags)
 
 
 
@@ -91,33 +101,39 @@ class Configuration():
                                                                 usefull for arguments mapping etc... 
             memory_init         [mapping] allow to store memory initialization
             filepath:             str             path of the origianl executable (for stubs)
+            breakpoint:         list of breakpoints
+            watchpoints:         dict of {watchpoint_addr: size} #  it does not record fashion access (read/write)
+            patches:            dict of {addr: asm}
 
     """
     
     def __init__(self,
-                             path=None,
-                             arch=None,
-                             emulator=None,
-                             p_size=None,
-                             stk_ba=None,
-                             stk_size=None,
-                             autoMap=None,
-                             showRegisters=None,
-                             exec_saddr=None,
-                             exec_eaddr=None,
-                             mapping_saddr=None,
-                             mapping_eaddr=None,
-                             segms=None,
-                             map_with_segs=None,
-                             use_seg_perms=None,
-                             useCapstone=None,
-                             registers=None,
-                             showMemAccess=None,
-                             s_conf=None,
-                             amap_conf=None,
-                             memory_init=None,
-                             color_graph=None,
-                             breakpoints=None):
+                 path: str = None,
+                 arch: str = None,
+                 emulator: str = None,
+                 p_size: int = None,
+                 stk_ba: int = None,
+                 stk_size: int = None,
+                 autoMap: bool = None,
+                 showRegisters: bool = None,
+                 exec_saddr: int =None,
+                 exec_eaddr: int =None,
+                 mapping_saddr: int =None,
+                 mapping_eaddr: int =None,
+                 segms: list =None,
+                 map_with_segs: bool = None,
+                 use_seg_perms: bool =None,
+                 useCapstone: bool = None,
+                 registers: Registers = None,
+                 showMemAccess: bool =None,
+                 s_conf: StubConfiguration = None,
+                 amap_conf: AdditionnalMapping = None,
+                 memory_init: dict =None,
+                 color_graph: bool =None,
+                 breakpoints: list =None,
+                 watchpoints: dict =None,
+                 patches: dict = None,
+                 max_insn: int = 0x10000):
 
         self.path = path 
         self.arch = arch
@@ -142,6 +158,97 @@ class Configuration():
         self.memory_init = memory_init
         self.color_graph = color_graph
         self.breakpoints = breakpoints
+        self.watchpoints = watchpoints
+        self.patches = patches
+        self.max_insn = max_insn
+
+
+    @classmethod
+    def generate_default_config(cls,
+                                 path: str = None,
+                                 arch: str = None,
+                                 emulator: str = None,
+                                 p_size: int = None,
+                                 stk_ba: int = None,
+                                 stk_size: int = None,
+                                 autoMap: bool = None,
+                                 showRegisters: bool = None,
+                                 exec_saddr: int =None,
+                                 exec_eaddr: int =None,
+                                 mapping_saddr: int =None,
+                                 mapping_eaddr: int =None,
+                                 segms: list =None,
+                                 map_with_segs: bool = None,
+                                 use_seg_perms: bool =None,
+                                 useCapstone: bool = None,
+                                 registers: Registers = None,
+                                 showMemAccess: bool =None,
+                                 s_conf: StubConfiguration = None,
+                                 amap_conf: AdditionnalMapping = None,
+                                 memory_init: AdditionnalMapping =None,
+                                 color_graph: bool =None,
+                                 breakpoints: list =None,
+                                watchpoints: dict =None,
+                                patches: dict = None,
+                                max_insn: int = 0x10000):
+
+
+
+
+        if registers == None:
+            raise Exception('Registers object must be created when using generate_default_config function')
+
+        if s_conf == None:
+            exec_path = search_executable()
+            stub_conf = StubConfiguration(nstubs=dict(),
+                                            tag_func_tab = True,
+                                            activate_stub_mechanism=True,
+                                            orig_filepath=exec_path,
+                                            custom_stubs_file=None,
+                                            auto_null_stub=True if exec_path != "" else False,
+                                            tags=dict())
+        else:
+            stub_conf = s_conf
+
+        if amap_conf == None:
+            addmap_conf = AdditionnalMapping.create()
+        else:
+            addmap_conf = amap_conf
+
+        if memory_init == None:
+            meminit = AdditionnalMapping.create()
+        else:
+            meminit = memory_init
+
+
+        return Configuration( path=path if path else '',
+                              arch='arm',
+                              emulator='unicorn',
+                              p_size=p_size if p_size else 0x1000,
+                              stk_ba=stk_ba if stk_ba else 0x7FFFFFFF,
+                              stk_size=stk_size if stk_size else 0x10000,
+                              autoMap=autoMap if autoMap else False,
+                              showRegisters=showRegisters if showRegisters else True,
+                              exec_saddr=exec_saddr if exec_saddr else 0,
+                              exec_eaddr=exec_eaddr if exec_eaddr else 0xFFFFFFFF,
+                              mapping_saddr=get_min_ea_idb() if not mapping_saddr else mapping_saddr,
+                              mapping_eaddr=get_max_ea_idb() if not mapping_eaddr else mapping_eaddr,
+                              segms=segms if segms else [],
+                              map_with_segs=map_with_segs if map_with_segs else False,
+                              use_seg_perms=use_seg_perms if use_seg_perms else False,
+                              useCapstone=useCapstone if useCapstone else True,
+                              registers=registers,
+                              showMemAccess=showMemAccess if showMemAccess else True,
+                              s_conf=stub_conf,
+                              amap_conf=addmap_conf,
+                              memory_init=meminit,
+                              color_graph=False,
+                              breakpoints=breakpoints if breakpoints else [],
+                             watchpoints = watchpoints if watchpoints else {},
+                             patches = patches if patches else {},
+                             max_insn = max_insn)
+
+
 
     def __str__(self):
         return '\n'.join(['{}: {}'.format(x,self.__dict__[x]) for x in self.__dict__])
@@ -166,7 +273,8 @@ class Configuration():
         if ea in self.s_conf.nstubs.keys():
                 del self.s_conf.nstubs[ea]
         else:
-                logger.console(LogType.WARN,"Could not remove null-stub. No null-stub registred at this address (%x)"%ea)
+                logger.console(LogType.WARN,"Could not remove null-stub",
+                               "No null-stub registred at this address (%x)"%ea)
 
 
     def add_tag(self,ea,stub_name):
@@ -189,6 +297,9 @@ class Configuration():
 
     def add_breakpoint(self,ea):
         self.breakpoints.append(ea)
+
+    def add_watchpoint(self,base_addr,size):
+        self.watchpoints[base_addr] = size
         
     def remove_breakpoint(self,ea):
         self.breakpoints.remove(ea)
@@ -196,6 +307,15 @@ class Configuration():
     def show_breakpoints(self):
         for k in self.breakpoints:
             logger.console(LogType.INFO,'%x'%k)
+
+    def add_patch(self,
+                    addr: int,
+                    asm: str):
+        self.patches[addr] = asm
+
+    def remove_patch(self,
+                       addr):
+        del self.patches[addr]
 
 
 
@@ -238,6 +358,7 @@ class ConfigSerializer(json.JSONEncoder):
                             'showMemAccess': conf.showMemAccess, 
                             'use_seg_perms': conf.use_seg_perms, 
                             's_conf': {'nstubs' : funcs, 
+                                                 'tag_func_tab': conf.s_conf.tag_func_tab,
                                                  'activate_stub_mechanism': conf.s_conf.activate_stub_mechanism, 
                                                  'orig_filepath' : conf.s_conf.orig_filepath, 
                                                  'auto_null_stub': conf.s_conf.auto_null_stub,
@@ -245,7 +366,10 @@ class ConfigSerializer(json.JSONEncoder):
                                                  'tags':conf.s_conf.tags}, 
                          'amap_conf': f_amap, 'color_graph': conf.color_graph,
                          'memory_init': f_meminit,
-                         'breakpoints':conf.breakpoints}
+                         'breakpoints':conf.breakpoints,
+                         'watchpoints': conf.watchpoints,
+                         'patches': conf.patches,
+                         'max_insn': conf.max_insn}
 
 
 class ConfigDeserializer(json.JSONDecoder): #PASS ClassType for register parsing ? 
@@ -271,6 +395,18 @@ class ConfigDeserializer(json.JSONDecoder): #PASS ClassType for register parsing
             tags_dict = dict()
             for k,v in jdict['s_conf']['tags'].items():
                 tags_dict[int(k,10)] = v 
+
+            watchpoints = dict()
+            for k,v in jdict['watchpoints'].items():
+                watchpoints[int(k,10)] = v
+
+            patches = dict()
+            for k,v in jdict['patches'].items():
+                try:
+                    patches[int(k,10)] = v
+                except:
+                    patches[int(k,16)] = v
+
 
         
             if jdict['arch'] == 'arm':
@@ -313,10 +449,13 @@ class ConfigDeserializer(json.JSONDecoder): #PASS ClassType for register parsing
                                                                      jdict['s_conf']['custom_stubs_file'],
                                                                      jdict['s_conf']['auto_null_stub'],
                                                                      tags_dict),
-                                 amap_conf=AdditionnalMapping(amap_dict),
+                                amap_conf=AdditionnalMapping(amap_dict),
                                  memory_init=AdditionnalMapping(meminit_dict),
                                  color_graph=jdict['color_graph'],
-                                 breakpoints=jdict['breakpoints'])
+                                 breakpoints=jdict['breakpoints'],
+                                 watchpoints=watchpoints,
+                                 patches=patches,
+                                 max_insn=jdict['max_insn'])
          except Exception as e: 
                 print('[!] Error deserializing JSON object: %s'%e.__str__()) 
                 return None

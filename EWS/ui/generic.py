@@ -2,103 +2,235 @@ import ida_kernwin
 from ida_kernwin import * 
 import ida_segment
 import ida_idaapi
+import idaapi
 import ida_funcs
 import ida_idp
 import time
 import os 
 from EWS.utils.utils import *
 from EWS.utils.configuration import *
+from EWS.ui.stub_configuration import *
+from EWS.utils.registers import Registers
+from EWS.utils.configuration import Configuration
 
-"""                   """
-"         GENERIC       "
-"""                   """
+FormDesc = r"""STARTITEM 
+BUTTON YES Yeah
+BUTTON NO Nope
+BUTTON CANCEL* Nevermind
+EWS ARML32
+Mapping Configuration
+<## Page size  :{iPageSize}> | <## Stack base address: {iStkBA}> | <## Stack size: {iStkSize}>
+<## AutoMap missing regions## No:{aNo}> <Yes:{aYes}>{cAGrp}> 
+<##Start Mapping (ea in IDB):{sMapping}> | <##End Mapping (ea in IDB):{eMapping}>   
+<##Start address:{sAddr}> | <##End address:{eAddr}>
+<##Max executed instruction:{maxInsn}>
+Display Configuration
+<## Show register values## No:{rNo}> <Yes:{rYes}>{cRGrp}> | <## Use Capstone## No:{cNo}> <Yes:{cYes}>{cCGrp}>
+<## Show Mem Access## No:{maNo}> <Yes:{maYes}>{maGrp}> | <## Color graph## No:{cgNo}> <Yes:{cgYes}>{cgGrp}>
+<## Configure Stub: {stubButton}>
+<## Add mapping: {amapButton}>
+<## Configure Registers: {registerButton}>
+"""
 
-
-#----------------------------------------------------------------------------------------------
 
 class Pannel(ida_kernwin.Form):
 
-  class segment_chooser(ida_kernwin.Choose):
-        """
-        A simple chooser to be used as an embedded chooser
-        """
-        def __init__(self, title, nb=5, flags=ida_kernwin.Choose.CH_MULTI):
-            ida_kernwin.Choose.__init__(
-                self,
-                title,
-                [
-                    ["Seg Name", 30]
-                ],
-                flags=flags,
-                embedded=True,
-                width=10,
-                height=6)
-            self.items = [ [ida_segment.get_segm_name(x)] for x in get_seg_list() ]
-            self.icon = 0
-            self.ret = 0
 
-        def OnGetLine(self, n):
-            self.ret = self.items[n]
-            return self.items[n]
-
-        def OnGetSize(self):
-            n = len(self.items)
-            return n
-
-
-  def __init__(self,conf):
-    self.breakpoints = [] 
+  def __init__(self,
+               register_ui_class,
+               default_regs_values : Registers,
+               arch_name : str  = '',
+               emulator_solution: str = '',
+               conf : Configuration = None):
+    self.breakpoints = []
+    self.watchpoints = {}
+    self.patches = {}
     self.conf_path = ''
     self.conf = conf # For refresh purpose. When the windows is re-opened after the first time,
                      # value might be refreshed using the conf object 
+    self.segs = []
+    self.s_conf = StubConfiguration.create()
+    self.amap_conf = AdditionnalMapping({})#AdditionnalMapping.create()
+    self.memory_init = AdditionnalMapping({})
+    self.register_ui_class = register_ui_class
+    self.registers = default_regs_values
+    self.arch_name = arch_name
+    self.emulator_solution = emulator_solution
+    self.config_present = False
+    if self.conf == None:
+        Form.__init__(self, FormDesc,{
+            'iPageSize': Form.NumericInput(tp=Form.FT_RAWHEX),
+            'iStkBA': Form.NumericInput(tp=Form.FT_RAWHEX),
+            'iStkSize': Form.NumericInput(tp=Form.FT_RAWHEX),
+            'cAGrp': Form.RadGroupControl(("aNo","aYes")),
+            'cRGrp': Form.RadGroupControl(("rNo","rYes")),
+            'cCGrp': Form.RadGroupControl(("cNo","cYes")),
+            'spCSeg': Form.RadGroupControl(("spNo","spYes")),
+            'maGrp': Form.RadGroupControl(("maNo","maYes")),
+            'cgGrp': Form.RadGroupControl(("cgNo","cgYes")),
+            'sAddr': Form.NumericInput(tp=Form.FT_ADDR),
+            'eAddr': Form.NumericInput(tp=Form.FT_ADDR),
+            'sMapping': Form.NumericInput(tp=Form.FT_ADDR),
+            'eMapping': Form.NumericInput(tp=Form.FT_ADDR),
+            'registerButton': Form.ButtonInput(self.registerCallback),
+            'stubButton': Form.ButtonInput(self.onStubButton),
+            'amapButton': Form.ButtonInput(self.onaMapButton),
+            'maxInsn': Form.NumericInput(tp=Form.FT_ADDR),
+
+})
+    else:
+        Form.__init__(self, FormDesc,{
+            'iPageSize': Form.NumericInput(tp=Form.FT_RAWHEX,
+                                           value=self.conf.p_size),
+            'iStkBA': Form.NumericInput(tp=Form.FT_RAWHEX,
+                                        value=self.conf.stk_ba),
+            'iStkSize': Form.NumericInput(tp=Form.FT_RAWHEX,
+                                          value=self.conf.stk_size),
+            'cAGrp': Form.RadGroupControl(("aNo","aYes"),
+                                          value=1 if self.conf.autoMap else 0),
+            'cRGrp': Form.RadGroupControl(("rNo","rYes"),
+                                          value=1 if self.conf.showRegisters else 0),
+            'cCGrp': Form.RadGroupControl(("cNo","cYes"),
+                                          value=1 if self.conf.useCapstone else 0),
+            'spCSeg': Form.RadGroupControl(("spNo","spYes"),
+                                           value=1 if self.conf.use_seg_perms else 0),
+            'maGrp': Form.RadGroupControl(("maNo","maYes"),
+                                          value=1 if self.conf.showMemAccess else 0),
+            'cgGrp': Form.RadGroupControl(("cgNo","cgYes"),
+                                          value=1 if self.conf.color_graph else 0),
+            'sAddr': Form.NumericInput(tp=Form.FT_ADDR,value=self.conf.exec_saddr),
+            'eAddr': Form.NumericInput(tp=Form.FT_ADDR,value=self.conf.exec_eaddr),
+            'sMapping': Form.NumericInput(tp=Form.FT_ADDR,value=self.conf.mapping_saddr),
+            'eMapping': Form.NumericInput(tp=Form.FT_ADDR,value=self.conf.mapping_eaddr),
+            'registerButton': Form.ButtonInput(self.registerCallback),
+            'stubButton': Form.ButtonInput(self.onStubButton),
+            'amapButton': Form.ButtonInput(self.onaMapButton),
+            'maxInsn': Form.NumericInput(tp=Form.FT_ADDR,value=self.conf.max_insn),
+})
+
+
+        self.s_conf = conf.s_conf
+        self.amap_conf = conf.amap_conf
+        self.memory_init = conf.memory_init
+        self.registers = conf.registers
+        self.breakpoints = conf.breakpoints
+        self.watchpoints = conf.watchpoints
+        self.patches = conf.patches
+        self.config_present = True
+
+
+  def cb_callback(self,code):
+      pass
 
   def onStubButton(self,code):
-     
+
     s_conf = StubForm.fillconfig(self.conf)
     self.s_conf += s_conf
 
   def onaMapButton(self,code):
-    
-    amap_conf = AddMapping.fillconfig() 
+
+    amap_conf = AddMapping.fillconfig()
     self.amap_conf += amap_conf
 
+  def registerCallback(self,code):
 
-  def onLoadButton(self,code):
-    """ For configuration purpose
-    """
-    pass
-  
-  def onSaveButton(self,code):
-    """ For configuration purpose
-    """
-    pass
+
+    if self.config_present:
+        self.registers = self.register_ui_class(self.registers)
+
+    else:
+        #TODO Add PC, SP information (if available)
+        # maybe add method in registers class fix_pc fix_sp fix_link_reg
+        #self.getControlControlledValue(self.sAddr) self.getControlControlledValue(self.iStkBA)
+        self.registers = self.register_ui_class()
+        self.config_present = True # handle case where the user clicks several time the button
+   
+
+  @staticmethod
+  def fillconfig(register_ui_class,
+               default_regs_values : Registers,
+               arch_name : str  = '',
+               emulator_solution: str = '',
+            conf : Configuration = None) -> Configuration:
+
+
+
+      f = Pannel(register_ui_class,
+                 default_regs_values,
+                 arch_name,
+                 emulator_solution,
+                 conf)
+
+      f.Compile()
+
+
+      ok = f.Execute()
+
+
+      if ok != 0 and ok != idaapi.BADADDR:
+
+          ret = Configuration(path=f.conf_path,arch=ida_idp.get_idp_name(),
+                              emulator='unicorn',
+                              p_size=f.iPageSize.value,
+                              stk_ba=f.iStkBA.value,
+                              stk_size=f.iStkSize.value,
+                              autoMap=f.cAGrp.value,
+                              showRegisters=f.cRGrp.value,
+                              exec_saddr=f.sAddr.value,
+                              exec_eaddr=f.eAddr.value,
+                              mapping_saddr=f.sMapping.value,
+                              mapping_eaddr=f.eMapping.value,
+                              segms=f.segs, # deprecated to be removed from conf
+                              map_with_segs=False, # deprecated to be removed from conf
+                              use_seg_perms=f.spCSeg.value,
+                              useCapstone=f.cCGrp.value,
+                              registers=f.registers,
+                              showMemAccess=f.maGrp.value,
+                              s_conf=f.s_conf,
+                              amap_conf=f.amap_conf,
+                              memory_init=f.memory_init,
+                              color_graph=f.cgGrp.value,
+                              breakpoints = f.breakpoints,
+                              watchpoints = f.watchpoints,
+                              patches = f.patches,
+                              max_insn = f.maxInsn.value)
+
+      else:
+        raise Exception("Could not create configuration object")
+        return None
+
+      f.Free()
+
+      return ret
 
 
 
 #----------------------------------------------------------------------------------------------
+
+FileDesc=r"""STARTITEM 
+BUTTON YES Yeah
+BUTTON NO Nope
+BUTTON CANCEL* Nevermind
+Select a file
+{cbCallback}
+<## Path: {iFile}>
+"""
 class FileSelector(ida_kernwin.Form):
   def __init__(self):
     self.invert = False
     self.f_path = ''
-    Form.__init__(self, r"""STARTITEM 
-BUTTON YES Yeah
-BUTTON NO Nope
-BUTTON CANCEL* Nevermind
-Select a file 
-{cbCallback}
-<## Path: {iFile}> 
-""",{
+    Form.__init__(self,FileDesc ,{
             'iFile': ida_kernwin.Form.FileInput(open=True,save=False),
             'cbCallback': ida_kernwin.Form.FormChangeCb(self.cb_callback),
 })
 
   def cb_callback(self,fid):
       if fid == self.iFile.id:
-          self.f_path = self.GetControlValue(self.iFile) 
-      return 1 
+          self.f_path = self.GetControlValue(self.iFile)
+      return 1
 
 
-  @staticmethod 
+  @staticmethod
   def fillconfig():
       f = FileSelector()
       f.Compile()
@@ -106,7 +238,7 @@ Select a file
       ok = f.Execute()
       f.Free()
 
-      return f.f_path 
+      return f.f_path
 
 #----------------------------------------------------------------------------------------------
 
@@ -147,156 +279,22 @@ Additionnal Mapping
       try:
         with open(f_path,'rb') as f: self.cur_value = f.read()
       except Exception as e : logger.console(2,e.__str__())
-          
 
 
-  @staticmethod 
-  def fillconfig():
+  @staticmethod
+  def fillconfig() -> AdditionnalMapping:
+
       f = AddMapping()
       f.Compile()
-      
-      ok = f.Execute()
-      
 
-      if ok:
-          if not f.clicked: 
+      ret = AdditionnalMapping.create()
+      op = f.Execute()
+
+      if op != 0 and op != idaapi.BADADDR:
+          if not f.clicked:
             logger.console(1,' [Additionnal Mapping Form] no content added, please use Add Mapping button to add selected content')
           ret = AdditionnalMapping(f.mappings)
       f.Free()
 
-      return ret 
-
-
-#----------------------------------------------------------------------------------------------
-
-class StubForm(ida_kernwin.Form):
-
-  class function_chooser(ida_kernwin.Choose):
-        def __init__(self, title, nb=5, flags=ida_kernwin.Choose.CH_MULTI):
-            ida_kernwin.Choose.__init__(
-                self,
-                title,
-                [
-                    ["Address", 10],
-                    ["Func Name", 30]
-                ],
-                flags=flags,
-                embedded=True,
-                width=30,
-                height=6)
-            self.items = [ ['%.8X' % x.start_ea, '%s' % ida_funcs.get_func_name(x.start_ea)] for x in get_func_list() ]
-            self.icon = 0
-            self.ret = 0
-
-        def OnGetLine(self, n):
-            self.ret = self.items[n]
-            return self.items[n]
-
-        def OnGetSize(self):
-            n = len(self.items)
-            return n
-
-
-  def __init__(self, conf=None):
-    self.invert = False
-    self.clicked_ns = False
-    self.clicked_ds = False
-    self.nstub=dict()
-    self.custom_stubs_file = None
-    self.tags = dict()
-    self.orig_fpath = ""
-    if conf == None:
-        Form.__init__(self, r"""STARTITEM 
-    BUTTON YES Yeah
-    BUTTON NO Nope
-    BUTTON CANCEL* Nevermind
-    Stubbing confiugration
-    {cbCallback}
-    <##Stub dynamic func tab No:      {sfNo}> <Yes:{sfYes}>{sfC}>
-    <##Original filepath:{origFpath}>
-    <##Auto null stub missing symbols: {asNo}>< Yes:{asYes}>{saC}>
-    <##Add custom stubs file: {customStubFile}>
-    """,{
-                'sfC': Form.RadGroupControl(("sfNo","sfYes")),
-                'customStubFile': Form.ButtonInput(self.CustomStubFile),
-                'origFpath': Form.FileInput(open=True,save=False),
-                'saC': Form.RadGroupControl(("asNo","asYes")),
-                'cbCallback': Form.FormChangeCb(self.cb_callback)
-    })
-    else:
-        Form.__init__(self, r"""STARTITEM 
-        BUTTON YES Yeah
-        BUTTON NO Nope
-        BUTTON CANCEL* Nevermind
-        Stubbing confiugration
-        {cbCallback}
-        <##Stub dynamic func tab No:      {sfNo}> <Yes:{sfYes}>{sfC}>
-        <##Original filepath:{origFpath}>
-        <##Auto null stub missing symbols: {asNo}>< Yes:{asYes}>{saC}>
-        <##Add custom stubs file: {customStubFile}>
-        """,{
-                    'sfC': Form.RadGroupControl(("sfNo","sfYes"),
-                                                value=1 if conf.s_conf.stub_dynamic_func_tab else 0),
-                    'customStubFile': Form.ButtonInput(self.CustomStubFile),
-                    'origFpath': Form.FileInput(open=True,save=False,
-                                                value=conf.s_conf.orig_filepath),
-                    'saC': Form.RadGroupControl(("asNo","asYes"),
-                                                value=1 if conf.s_conf.auto_null_stub else 0),
-                    'cbCallback': Form.FormChangeCb(self.cb_callback)
-        })
-
-
-  def cb_callback(self,fid):
-    if fid == self.sfC.id:
-        logger.console(LogType.INFO,'Possible file path: %s'%search_executable())
-        self.orig_fpath = search_executable()
-        logger.console(LogType.INFO,'Found potential matching binary path:%s'%self.orig_fpath)
-        self.SetControlValue(self.origFpath,self.orig_fpath)
-    if fid == self.origFpath.id:
-      self.orig_fpath = self.GetControlValue(self.origFpath)
-    return 1
-
-
-  def CustomStubFile(self,code):
-
-    f_path =  FileSelector.fillconfig()
-    if f_path == '' or not os.path.exists(f_path) or os.path.isdir(f_path): 
-        logger.console(2,' [Custom Stub File] Invalid file path')
-        return 
-    self.custom_stubs_file = f_path 
-    return 
-    
-  
-
-  def AddButton(self,code):
-        for x in self.GetControlValue(self.cFuncChooser):
-          f = get_func_list()[x]
-          self.nstub[f.start_ea] = ida_funcs.get_func_name(f.start_ea)
-        self.clicked_ns = True
-
-  @staticmethod 
-  def fillconfig():
-      f = StubForm()
-      f.Compile()
-
-      ok = f.Execute()
-      if ok:
-
-
-          if not verify_valid_elf(f.orig_fpath):
-              logger.console(LogType.WARN,"Specified original filepath invalid, stubs won't work")
-          ret = StubConfiguration(nstubs=f.nstub,
-                                stub_dynamic_func_tab=f.sfC.value,
-                                orig_filepath=f.orig_fpath,
-                                custom_stubs_file=f.custom_stubs_file,
-                                auto_null_stub=f.saC.value,
-                                tags=f.tags)
-          print('orign fpath = %s'%ret.orig_filepath)
-          print('custon stub file = ',ret.custom_stubs_file) 
-          print('stub dyn func tab = ',ret.stub_dynamic_func_tab)
-      f.Free()
-      return ret 
-
-
-
+      return ret
 

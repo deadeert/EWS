@@ -300,10 +300,6 @@ class Regx64Edit(ida_kernwin.Form):
 
 
 
-
-
-    
-
     def onCallback(self,fid):
         return True
 
@@ -333,7 +329,7 @@ class Regx64Edit(ida_kernwin.Form):
                             RIP=regform.RIP.value)
 
 
-DescFormx86 = r"""STARTITEM 
+DescFormx86 = r"""STARTITEM
 x86 Reg Edit
 {cbCallback}
  <##EAX:{EAX}>  |<##EBX:{EBX}>  |<##ECX:{ECX}>
@@ -369,8 +365,6 @@ class Regx86Edit(ida_kernwin.Form):
             'ESP': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.regs.ESP),
             'EIP': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.regs.EIP),
             'cbCallback': Form.FormChangeCb(self.onCallback)})
-
-   
 
     def onCallback(self,fid):
         return True

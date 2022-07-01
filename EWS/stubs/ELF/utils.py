@@ -154,7 +154,6 @@ def build_chain(helper,format_l,values):
 
     out = b''
     for f in format_l:
-        print(f)
         if  f == '%s' : out+=values.pop()
         elif f == '%d' : out+=bytes('%d'%values.pop(),'utf-8')
         elif f == '%ld': out+=bytes('%ld'%values.pop(),'utf-8')

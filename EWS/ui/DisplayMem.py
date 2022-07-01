@@ -157,7 +157,7 @@ class MemDisplayer(idaapi.Choose):
         return n
 
     def test(self,extra=None):
-        print('%s: %s'%(self.title,extra))
+        pass
 
     def OnPopup(self,form, popup_handle):
         actname = "test:%s" % self.title
@@ -200,8 +200,6 @@ if __name__ == '__main__':
 #
     
     addr,nbpages = AddrNBPages.fillconfig()
-    print(addr)
-    print(nbpages)
 
 
 #    values = []

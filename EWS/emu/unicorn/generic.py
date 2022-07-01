@@ -19,6 +19,7 @@ from unicorn.arm_const import *
 from unicorn.mips_const import * 
 from unicorn.arm64_const import * 
 import struct
+import hexdump
 
 from EWS.utils.utils import *
 from EWS.emu.emubase import Emulator
@@ -27,7 +28,7 @@ from EWS.utils.exec_trace import *
 from EWS.ui.debug_view import *
 
 MAX_INSN_SIZE=8
-MAX_EXEC= 0x100 # max number of executed insn 
+MAX_EXEC= 0x10000 # max number of executed insn 
 FOLLOW_PC= False  #TODO move it to the configuration option
 
 class Emucorn(Emulator):
@@ -36,9 +37,12 @@ class Emucorn(Emulator):
         super().__init__(conf)
         self.nb_insn=0
         self.running_stubs = dict()
-        self.exec_trace = Exec_Trace(self.conf.arch)
+        self.exec_trace = Exec_Trace(self.conf.arch,addr=None)
+        self.exec_trace.addr = {}
         self.debug_view = None # todo create the reference in EWS_Plugin object
         self.filetype = ida_loader.get_file_type_name()
+        self.assembler = None
+
 
 
 
@@ -65,6 +69,18 @@ class Emucorn(Emulator):
                 logger.console(LogType.INFO,'[%s] map page %8X'%('Emucorn',b_page))
                 uc.mem_map(b_page,p_size,perms)
             b_page += p_size
+
+
+    def flush(self):
+        """
+            bug3 test
+        """
+
+        for i in range(len(self.exec_trace.addr.keys())-1):
+            try:
+                self.exec_trace.addr.pop()
+            except:
+                pass
 
     def add_mapping(self,addr,mem,perms=UC_PROT_ALL):
         """ Add mapping
@@ -148,9 +164,7 @@ class Emucorn(Emulator):
         idaapi.show_wait_box("Mapping stack") 
         stk_p,r = divmod(conf.stk_size,conf.p_size)
         if r: stk_p+=1 
-        idaapi.hide_wait_box()
-        uc.mem_map(conf.stk_ba+conf.p_size,stk_p*conf.p_size)
-#        logger.console(LogType.INFO,' [%s] mapped stack at 0x%.8X '%('Emucorn',conf.stk_ba))
+        uc.mem_map(conf.stk_ba,stk_p*conf.p_size)
         logger.logfile(LogType.INFO,' [%s] mapped stack at 0x%.8X '%('Emucorn',conf.stk_ba))
         
         idaapi.hide_wait_box()
@@ -190,9 +204,13 @@ class Emucorn(Emulator):
 #---------------------------------------------------------------------------------------------
     @staticmethod
     def unmp_read(uc,access,addr,value,size,user_data):
-        logger.console(LogType.WARN,'[!] Read Access Exception: cannot read 0x%.8X',
-                       'for size %d (reason: unmapped page)'%(addr,size))
-        conf = user_data
+
+        _self = user_data
+        logger.console(LogType.WARN,'[!] Read Access Exception',
+                       'Cannot read 0x%.8X'%addr,
+                       'for size %d (reason: unmapped page)'%size)
+        logger.console(LogType.WARN,'[!] Fault instruction at %x'%_self.helper.get_pc())
+        conf = _self.conf
         if conf.autoMap:
             base_addr = addr & ~(conf.p_size-1)
             uc.mem_map(base_addr,conf.p_size)
@@ -205,16 +223,21 @@ class Emucorn(Emulator):
 
     @staticmethod
     def unmp_write(uc,access,addr,size,value,user_data):
-
-        logger.console(LogType.WARN,'[!] Write Access Excpetion: cannot write value 0x%.8X at address 0x%.8X (reason: unmapped page)'%(value,addr))
-        conf = user_data
+   
+        _self = user_data
+        logger.console(LogType.WARN,
+                       '[!] Write Access Excpetion:'
+                       'cannot write value 0x%.8X at address 0x%.8X'%(value,addr),
+                       '(reason: unmapped page)')
+        logger.console(LogType.WARN,'[!] Fault instruction at %x'%_self.helper.get_pc())
+        conf = _self.conf
         if conf.autoMap:
             base_addr = addr & ~(conf.p_size-1)
             try:
                 uc.mem_map(base_addr,conf.p_size)
             except UcError:
                 logger.console(LogType.WARN,'[*] Automap not supported for this arch')
-                return False    
+                return False
             logger.console(LogType.INFO,'[*] Automap: added page 0x%.8X'%base_addr)
             return True
         logger.console(LogType.ERRR,'Automap is not enabled. Aborting()')
@@ -223,16 +246,56 @@ class Emucorn(Emulator):
 
     @staticmethod
     def hk_read(uc,access,addr,size,value,user_data):
-        logger.console(LogType.INFO,'[*] Read access to addr 0x%.8X for size %d. Value: '%(addr,size),uc.mem_read(addr,size),'\n\n')
+        """ 
+        Unicorn callback. Default hook for read accesses. 
+        Parameters:
+                - user_data is a pointer to emulator object. 
+        """
+
+        _self= user_data
+
+        out= ': [read]  '
+        out +='with size: %d '%size
+        out +=hexdump.hexdump(uc.mem_read(addr,size),result='return').replace('00000000','')
+
+        _self.exec_trace.add_instruction(addr=addr,
+                                        assembly=out,
+                                        regs=_self.get_regs(),
+                                        color=get_insn_color(addr),
+                                        tainted=False,
+                                        count=_self.nb_insn)
+
+        logger.logfile(LogType.INFO,out) 
 
 
 
     @staticmethod
     def hk_write(uc,access,addr,size,value,user_data):
-        logger.console(LogType.INFO,'[*] Write access to addr 0x%.8X'%addr,
-                       'for size %d with value 0x%.8X'%(size,value))
+        """
+        Unicorn callback. Default hook for write accesses.
+        Parameters:
+                - user_data is a pointer to emulator object. 
+        """
+        _self = user_data
+
+
+        out = ': [write] '
+        out +='with size %d '%size
+        out += hexdump.hexdump(int_to_bytes(value,size),
+                               result='return').replace('00000000','')
+
+        _self.exec_trace.add_instruction(addr=addr,
+                                        assembly=out,
+                                        regs=_self.get_regs(),
+                                        color=get_insn_color(addr),
+                                        tainted=False,
+                                        count=_self.nb_insn)
+
+        logger.logfile(LogType.INFO,out) 
+
 
     def hook_code(self,uc,addr,size,user_data): 
+
 
         if addr in self.running_stubs.keys():
             try:
@@ -242,7 +305,8 @@ class Emucorn(Emulator):
                                                 assembly='0x%x: %s'%(addr,s_name),
                                                 regs=self.get_regs(),
                                                 color=get_insn_color(addr),
-                                                tainted=False)
+                                                tainted=False,
+                                                count=self.nb_insn)
 
 
             except Exception as e:
@@ -253,39 +317,36 @@ class Emucorn(Emulator):
 
         elif addr in self.user_breakpoints or ida_dbg.exist_bpt(addr):
                 if self.last_pc != self.helper.get_pc():
-                        uc.emu_stop() 
+                        uc.emu_stop()
                         logger.console(LogType.INFO,'Breakpoint at %x reached.\nType emu.continuee() to pursue execution'%addr)
                         self.last_pc = self.helper.get_pc()
                         return True
-        #TODO remove, duplicate with exec_trace
         
-        self.color_map[addr] = get_insn_color(addr) 
+        self.color_map[addr] = get_insn_color(addr)
 
-        if True:
-            try:
-                # todo integrate emu.conf.log_to_console:
-#                logger.console(LogType.INFO,build_insn_repr(self,addr))
-                logger.logfile(LogType.INFO,build_insn_repr(self,addr))
-            except Exception as e: 
-
-                logger.console(LogType.ERRR,"could not print instruction")
-                logger.console(LogType.ERRR,e.__str__())
-
-        if not addr in self.exec_trace.addr.keys(): #too expensive 
-            self.exec_trace.add_instruction(addr=addr,
-                                            assembly=get_captsone_repr(self,addr),
+        if addr in self.conf.patches.keys():
+            asm = log = ':\t'+self.conf.patches[addr]
+        else:
+            asm = get_captsone_repr(self,addr)
+            log = build_insn_repr(self,addr)
+    
+        self.exec_trace.add_instruction(addr=addr,
+                                            assembly=asm,
                                             regs=self.get_regs(),
                                             color=get_insn_color(addr),
-                                            tainted=False)
+                                            tainted=False,
+                                            count=self.nb_insn)
+        logger.logfile(LogType.INFO,log)
 
 
         self.last_pc = self.helper.get_pc()
         if FOLLOW_PC:
             ida_kernwin.jumpto(self.last_pc)
         
-        if  self.nb_insn >= MAX_EXEC:
-            logger.console(LogType.WARN,"Execution reach the max number of insn (%d)"%MAX_EXEC,
-                           " you can modifiy this value in emu/unicorn/generic.py")
+#        if  self.nb_insn >= MAX_EXEC:
+        if self.nb_insn >= self.conf.max_insn:
+            logger.console(LogType.WARN,
+                           "Execution reach the max number of insn (%d)"%self.conf.max_insn)
             uc.emu_stop()
             return False
         self.nb_insn+=1
@@ -524,7 +585,7 @@ class Emucorn(Emulator):
 
 
 
-    def add_null_stub(self,ea):
+    def add_null_stub(self,ea,update_conf=False):
 
         """
             Null stubs allow to directly bypass
@@ -534,13 +595,17 @@ class Emucorn(Emulator):
         if ea in self.running_stubs.keys():
             self.unstub_func_addr(ea)
 
-        self.stub_func_addr(ea,self.nstub_obj.do_it,stub_type=StubType.NULL)
-#        self.conf.add_null_stub(ea)
+        self.stub_func_addr(ea,
+                            self.nstub_obj.do_it,
+                            stub_type=StubType.NULL)
 
-    def remove_null_stub(self,ea):
+        if update_conf:
+            self.conf.add_null_stub(ea)
+
+    def remove_null_stub(self,ea,update_conf=False):
 
         self.unstub_func_addr(ea)
-
+        
 
     def add_custom_stub(self,
                         ea: int,
@@ -693,12 +758,13 @@ class Emucorn(Emulator):
 
         def hk_read_wp(uc,access,addr,size,value,user_data):
             if addr >= base_addr and addr < base_addr + rang:
-                logger.console(LogType.INFO,"Watchpoint read access for addr" 
+                logger.console(LogType.INFO,"[Watchpoint] read access for addr " 
                                "%x reached at pc %x"% (addr,self.helper.get_pc()))
 
         def hk_write_wp(uc,access,addr,size,value,user_data):
+
             if addr >= base_addr and addr < base_addr + rang:
-                logger.console(LogType.INFO,"Watchpoint write access for addr" 
+                logger.console(LogType.INFO,"[Watchpoint] write access for addr " 
                                "%x reached at pc %x"% (addr,self.helper.get_pc()))
 
         if mode & 0x1:
@@ -716,78 +782,19 @@ class Emucorn(Emulator):
             logger.console(LogType.INFO,"Add write watchpoint "
                            "for [%x: %x]"%(base_addr,(base_addr+rang)))
 
+        self.conf.add_watchpoint(base_addr,size)
 
     def reset_color_graph(self):
-
-        colorate_graph(self.exec_trace.get_color_map())
-
-   # DEPRECATED, use reset() plugin function
-
-#    def restart(self,conf=None,cnt=0):
-#        # unmap & remap 
-#        self.nb_insn = 0
-#        for rsta,rsto,rpriv in self.uc.mem_regions():
-#            self.uc.mem_unmap(rsta,rsto-rsta+1)
-#        stk_p = Emucorn.do_mapping(self.uc,self.conf)
-#
-#        self.reset_regs() 
-#        self.setup_regs(self.conf.registers)
-#        
-#        self.helper.allocator.reset()
-#        self.is_running = False
-#
-#        self.repatch()
-#        
-#        logger.console(LogType.INFO,'Restart done. You can start exec (emu.start()/emu.step_{in,...))')
-#
-#
-#        #DEPRECTATED, replaced by trace exec 
-##        if self.conf.color_graph:
-##            self.restore_graph_color()
-#
-        
-    """ MISC 
-    """
-#---------------------------------------------------------------------------------------------
+        pass
 
 
-    
-   # DEPRECATED, use UI plugin functions
 
-
-#    def display_stack(self,size=None):
-#        sp = self.helper.get_sp()
-#        used = (self.conf.stk_ba + self.conf.stk_size) - sp
-#        logger.console(LogType.INFO,'sp = %x used = %d'%(sp,used))
-#        if not size:
-#            mem=self.uc.mem_read(sp,used)
-#        else:
-#            if not size > used:
-#                mem=self.uc.mem_read(sp,size)
-#            else: 
-#                logger.console(LogType.WARN,'display size is to big, truncating')
-#                mem=self.uc.mem_read(sp,used)
-#        display_mem(mem,ba=sp)
-#
-#    def display_page(self,p_base,size=None):
-#        if not size:
-#            size = self.conf.p_size 
-#        mem=self.uc.mem_read(p_base,size)
-#        display_mem(mem) 
-#
-#    def display_range(self,start_ea,end_ea):
-#        mem=self.uc.mem_read(start_ea,end_ea-start_ea)    
-#        display_mem(mem,ba=start_ea)
-# 
-#
-#    def dump_range(self,start_ea,end_ea,filename):
-#        with open(filename,'wb+') as fbinout:
-#            cntout = fbinout.write(self.uc.mem_read(start_ea,end_ea-start_ea))
-#        logger.console(LogType.INFO,'%d bytes written in %s file'%(cntout,filename))
-#        
-#
-
-
- 
-   
+    def patch_insn(self,addr,asm,update_conf=False):
+        bytecode = self.assembler.assemble(asm,addr)
+        # TODO: check perms, add Write Perm on Page (if required)
+        self.uc.mem_write(addr,bytecode)
+        logger.console(LogType.INFO,"insn at %x as been patched"%addr)
+        # TODO: remove addtionnal perm
+        if update_conf:
+            self.conf.add_patch(addr,asm)
 

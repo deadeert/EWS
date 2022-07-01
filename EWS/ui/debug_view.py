@@ -18,7 +18,7 @@ class Debug_View_Registers(idaapi.Choose):
                                title,
                                [
                                    ["Register", idaapi.Choose.CHCOL_HEX|8],
-                                   ["value", idaapi.Choose.CHCOL_PLAIN|20],
+                                   ["Value", idaapi.Choose.CHCOL_PLAIN|20],
                                ],
                                flags=flags,
                                width=width,
@@ -84,7 +84,8 @@ class Debug_View_Registers(idaapi.Choose):
         self.Refresh()
 
     def test(self,extra=None):
-        print('%s: %s'%(self.title,extra))
+        pass
+#        print('%s: %s'%(self.title,extra))
 
     def OnPopup(self,form, popup_handle):
         actname = "test:%s" % self.title
@@ -109,17 +110,19 @@ class Debug_View_Trace(idaapi.Choose):
         idaapi.Choose.__init__(self,
                                title,
                                [
-                                   ["address", idaapi.Choose.CHCOL_HEX|8],
-                                   ["instruction", idaapi.Choose.CHCOL_PLAIN|20],
+                                   ["Address", idaapi.Choose.CHCOL_HEX|8],
+                                   ["Operation", idaapi.Choose.CHCOL_PLAIN|20],
                                ],
                                flags=flags,
                                width=width,
                                height=height,
                                embedded=embedded)
+        
         self.emu = emu
         self.items = []
-        for k,v in emu.exec_trace.addr.items():
-            self.items.append( [ '0x%x'%k,
+        for k,v in self.emu.exec_trace.addr.items():
+            addr = int(k.split('_')[0],16)
+            self.items.append( [ '0x%x'%addr,
                                 ''.join(v['assembly'].split(':')[1:]) ])
         self.selcount = 0
         self.n = len(self.items)
@@ -146,7 +149,7 @@ class Debug_View_Trace(idaapi.Choose):
         self.register_view.update_with_regs(regs)
 
         # TODO: check if emu.conf.jump pc is activated ? 
-        addr = list(self.emu.exec_trace.addr.keys())[n]
+        addr = int(list(self.emu.exec_trace.addr.keys())[n].split('_')[0],16)
         jumpto(addr)
 
 
@@ -168,7 +171,8 @@ class Debug_View_Trace(idaapi.Choose):
 
         for k,v in self.emu.exec_trace.addr.items():
             if n >= last_size:
-                self.items.append( [ '0x%x'%k,
+                addr = int(k.split('_')[0],16)
+                self.items.append( [ '0x%x'%addr,
                                     ''.join(v['assembly'].split(':')[1:]) ])
             n+=1
             # no need to update last instructions
@@ -184,7 +188,8 @@ class Debug_View_Trace(idaapi.Choose):
 
     def test(self,extra=None):
 
-        print('%s: %s'%(self.title,extra))
+        pass
+#        print('%s: %s'%(self.title,extra))
 
     def OnPopup(self,form, popup_handle):
 
@@ -192,6 +197,13 @@ class Debug_View_Trace(idaapi.Choose):
         desc = action_desc_t(actname, "Test: %s" % self.title, self.test)
 
         attach_dynamic_action_to_popup(form, popup_handle, desc,'ews_action/')
+
+
+    def flush(self):
+
+        self.items = []
+        self.n = 0
+        self.refresh()
 
     def show(self):
 

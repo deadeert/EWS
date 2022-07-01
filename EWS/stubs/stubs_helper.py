@@ -48,25 +48,24 @@ class FILE(object):
 #-------------------------------------------------------------
 
 
-nsock_list = {} 
-sssss = None 
+nsock_list = {}
+sssss = None
 class NWSock(object):
-  
+
   def __init__(self,mode=SockMode.UKN):
-    
+
     self.fd = len(nsock_list) + 1
     self.mode = mode
-    
 
 
   def bind(self):
-    self.mode=SockMode.READ 
+    self.mode=SockMode.READ
 
   @staticmethod
   def recv_broker(len,fd=0):
     """ mode broker: to get the data, this function connects
                      to localhost:6666
-    """ 
+    """
 
     if sssss == None:
       s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
@@ -75,14 +74,14 @@ class NWSock(object):
       except ConnectionRefusedError:
         logger.console(LogType.WARN,'[!] Could not connect to localhost:6666 to receive data\n',
                                     'Make sure that a server is ready to send data (ex: nc -l -p 6666 < data_file)')
-        return b''  
+        return b''
     return s.recv(len)
 
   @staticmethod
   def send(msg,fd=0):
     """ mode broker: to get the data, this function connects
                      to localhost:6666
-    """ 
+    """
 
     s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     try:
@@ -90,7 +89,7 @@ class NWSock(object):
     except ConnectionRefusedError:
       logger.console(LogType.WARN,'[!] Could not connect to localhost:6667.\n',
                                   'Make sure that a server is ready to receive data (ex: nc -l -p 6666 < data_file)')
-      return -1  
+      return -1
     return s.send(msg)
 
 

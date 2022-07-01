@@ -10,7 +10,7 @@ import struct
 import lief
 from EWS.utils.configuration import *
 from EWS.utils.registers import *
-
+from EWS.asm.assembler import *
 
 class Aarch64Corn(Emucorn):
 
@@ -51,6 +51,15 @@ class Aarch64Corn(Emucorn):
         for k,v in self.conf.memory_init.mappings.items():
             self.uc.mem_write(k,v)
 
+        self.assembler = assemblers['aarch64'][0]
+
+
+        for k,v in self.conf.patches.items():
+            self.patch_insn(k,v,update_conf=False)
+
+    
+
+
 
     def install_hooks(self):
         self.uc.hook_add(UC_HOOK_CODE,
@@ -58,18 +67,18 @@ class Aarch64Corn(Emucorn):
                          user_data=self.conf)
         self.uc.hook_add(UC_HOOK_MEM_READ_UNMAPPED,
                          Emucorn.unmp_read,
-                         user_data=self.conf)
+                         user_data=self)
 
         self.uc.hook_add(UC_HOOK_MEM_WRITE_UNMAPPED,
                          Emucorn.unmp_write,
-                         user_data=self.conf)
+                         user_data=self)
         if self.conf.showMemAccess:
           self.uc.hook_add(UC_HOOK_MEM_WRITE,
                     Emucorn.hk_write,
-                    self.conf)
+                    self)
           self.uc.hook_add(UC_HOOK_MEM_READ,
                            Emucorn.hk_read,
-                           self.conf)
+                           self)
 
 
     def setup_stub_mechanism(self):
@@ -92,27 +101,6 @@ class Aarch64Corn(Emucorn):
           self.stubbit()
 
 
-   # DEPRECATED, use reset() plugin function
-
-#    def repatch(self):
-#        """ when using restart() function from debugger 
-#            memory is erased, thus stub instruction has be 
-#            to be patch again 
-#        """ 
-#
-#        if not self.conf.s_conf.stub_dynamic_func_tab: 
-#          return 
-#        self.uc.mem_map(consts_aarch64.ALLOC_BA,
-#                        self.conf.p_size*consts_aarch64.ALLOC_PAGES,
-#                        UC_PROT_READ | UC_PROT_WRITE)
-#
-#        self.unstub_all()
-#        self.stubbit()
-#
-
-
-
-
     def start(self,cnt=0,saddr=None): 
         """ Need to overload because of thumb mode
         """ 
@@ -127,8 +115,8 @@ class Aarch64Corn(Emucorn):
         except Exception as e:
           logger.console(LogType.WARN,'[!] Exception in program : %s' % e.__str__())
           raise e
-        if self.conf.color_graph:
-          colorate_graph(self.color_map)
+#        if self.conf.color_graph:
+#          colorate_graph(self.color_map)
 
 
     def nop_insn(self,insn):
@@ -414,116 +402,168 @@ class Aarch64Corn(Emucorn):
         return strout
 
 
-
     @staticmethod
-    def generate_default_config(path=None,
-                       arch=None,
-                       emulator=None,
-                       p_size=None,
-                       stk_ba=None,
-                       stk_size=None,
-                       autoMap=None,
-                       showRegisters=None,
-                       exec_saddr=None,
-                       exec_eaddr=None,
-                       mapping_saddr=None,
-                       mapping_eaddr=None,
-                       segms=None,
-                       map_with_segs=None,
-                       use_seg_perms=None,
-                       useCapstone=None,
-                       registers=None,
-                       showMemAccess=None,
-                       s_conf=None,
-                       amap_conf=None,
-                       memory_init=None,
-                       color_graph=None,
-                        breakpoints=None):
+    def generate_default_config(
+                                 path: str = None,
+                                 arch: str = None,
+                                 emulator: str = None,
+                                 p_size: int = None,
+                                 stk_ba: int = None,
+                                 stk_size: int = None,
+                                 autoMap: bool = None,
+                                 showRegisters: bool = None,
+                                 exec_saddr: int =None,
+                                 exec_eaddr: int =None,
+                                 mapping_saddr: int =None,
+                                 mapping_eaddr: int =None,
+                                 segms: list =None,
+                                 map_with_segs: bool = None,
+                                 use_seg_perms: bool =None,
+                                 useCapstone: bool = None,
+                                 registers: Registers = None,
+                                 showMemAccess: bool =None,
+                                 s_conf: StubConfiguration = None,
+                                 amap_conf: AdditionnalMapping = None,
+                                 memory_init: AdditionnalMapping =None,
+                                 color_graph: bool =None,
+                                 breakpoints: list =None,
+                                 watchpoints: dict =None) -> Configuration:
+      """this method get called by:
+            - ui **emulate_function**
+            - ui **emulate_selection**
+      """
 
-      if registers == None:
-            registers = Aarch64Registers(0,
-                                         1,
-                                         2,
-                                         3,
-                                         4,
-                                         5,
-                                         6,
-                                         7,
-                                         8,
-                                         9,
-                                         10,
-                                         11,
-                                         12,
-                                         13,
-                                         14,
-                                         15,
-                                         16,
-                                         17,
-                                         18,
-                                         19,
-                                         20,
-                                         21,
-                                         22,
-                                         23,
-                                         24,
-                                         25,
-                                         26,
-                                         27,
-                                         28,
-                                         29,
-                                         e_ea, # LR
-                                         consts_aarch64.STACK_BASEADDR+consts_aarch64.STACK_SIZE-consts_aarch64.initial_stack_offset,
-                                         exec_saddr # PC
-                                         )
-      else:
-        registers = regs
-
-      if s_conf == None:
-        exec_path = search_executable() 
-        stub_conf = StubConfiguration(nstubs=dict(),
-                                        stub_dynamic_func_tab=True, #True if exec_path != "" else False,
-                                        orig_filepath=exec_path,
-                                        custom_stubs_file=None,
-                                        auto_null_stub=True if exec_path != "" else False,
-                                        tags=dict())
-      else:
-        stub_conf = s_conf
-
-      if amap_conf == None:
-        addmap_conf = AdditionnalMapping.create()
-      else:
-        addmap_conf = amap_conf
-      if memory_init == None:
-        meminit = AdditionnalMapping.create()
-      else:
-        meminit = memory_init
+      if not registers: 
+        registers = x64Registers.get_default_object(exec_eaddr, # LR
+                                         consts_aarch64.STACK_BASEADDR+\
+                                                    consts_aarch64.STACK_SIZE-\
+                                                    consts_aarch64.initial_stack_offset,
+                                         exec_saddr)
+      return Configuration.generate_default_config(stk_ba=stk_ba if stk_ba\
+                                                    else consts_aarch64.STACK_BASEADDR,
+                                                    stk_size=stk_size if stk_size\
+                                                    else consts_aarch64.STACK_SIZE,
+                                                    registers=registers,
+                                                    exec_saddr=exec_saddr,
+                                                    exec_eaddr=exec_eaddr)
 
 
 
-      return Configuration(     path=path if path else '',
-                              arch='aarch64',
-                              emulator='unicorn',
-                              p_size=p_size if p_size else consts_aarch64.PSIZE,
-                              stk_ba=stk_ba if stk_ba else consts_aarch64.STACK_BASEADDR,
-                              stk_size=stk_size if stk_size else consts_aarch64.STACK_SIZE,
-                              autoMap=autoMap if autoMap else False,
-                              showRegisters=showRegisters if showRegisters else True,
-                              exec_saddr=exec_saddr if exec_saddr else 0,
-                              exec_eaddr=exec_eaddr if exec_eaddr else 0xFFFFFFFF,
-                              mapping_saddr=get_min_ea_idb() if not mapping_saddr else mapping_saddr,
-                              mapping_eaddr=get_max_ea_idb() if not mapping_eaddr else mapping_eaddr,
-                              segms=segms if segms else [],
-                              map_with_segs=map_with_segs if map_with_segs else False,
-                              use_seg_perms=use_seg_perms if use_seg_perms else False,
-                              useCapstone=useCapstone if useCapstone else True,
-                              registers=registers,
-                              showMemAccess=showMemAccess if showMemAccess else True,
-                              s_conf=stub_conf,
-                              amap_conf=addmap_conf,
-                              memory_init=meminit,
-                              color_graph=False,
-                              breakpoints=breakpoints if breakpoints else [])
 
 
 
+
+
+
+#    @staticmethod
+#    def generate_default_config(path=None,
+#                       arch=None,
+#                       emulator=None,
+#                       p_size=None,
+#                       stk_ba=None,
+#                       stk_size=None,
+#                       autoMap=None,
+#                       showRegisters=None,
+#                       exec_saddr=None,
+#                       exec_eaddr=None,
+#                       mapping_saddr=None,
+#                       mapping_eaddr=None,
+#                       segms=None,
+#                       map_with_segs=None,
+#                       use_seg_perms=None,
+#                       useCapstone=None,
+#                       registers=None,
+#                       showMemAccess=None,
+#                       s_conf=None,
+#                       amap_conf=None,
+#                       memory_init=None,
+#                       color_graph=None,
+#                        breakpoints=None):
+#
+#      if registers == None:
+#            registers = Aarch64Registers(0,
+#                                         1,
+#                                         2,
+#                                         3,
+#                                         4,
+#                                         5,
+#                                         6,
+#                                         7,
+#                                         8,
+#                                         9,
+#                                         10,
+#                                         11,
+#                                         12,
+#                                         13,
+#                                         14,
+#                                         15,
+#                                         16,
+#                                         17,
+#                                         18,
+#                                         19,
+#                                         20,
+#                                         21,
+#                                         22,
+#                                         23,
+#                                         24,
+#                                         25,
+#                                         26,
+#                                         27,
+#                                         28,
+#                                         29,
+#                                         e_ea, # LR
+#                                         consts_aarch64.STACK_BASEADDR+consts_aarch64.STACK_SIZE-consts_aarch64.initial_stack_offset,
+#                                         exec_saddr # PC
+#                                         )
+#      else:
+#        registers = regs
+#
+#      if s_conf == None:
+#        exec_path = search_executable() 
+#        stub_conf = StubConfiguration(nstubs=dict(),
+#                                        stub_dynamic_func_tab=True, #True if exec_path != "" else False,
+#                                        orig_filepath=exec_path,
+#                                        custom_stubs_file=None,
+#                                        auto_null_stub=True if exec_path != "" else False,
+#                                        tags=dict())
+#      else:
+#        stub_conf = s_conf
+#
+#      if amap_conf == None:
+#        addmap_conf = AdditionnalMapping.create()
+#      else:
+#        addmap_conf = amap_conf
+#      if memory_init == None:
+#        meminit = AdditionnalMapping.create()
+#      else:
+#        meminit = memory_init
+#
+#
+#
+#      return Configuration(     path=path if path else '',
+#                              arch='aarch64',
+#                              emulator='unicorn',
+#                              p_size=p_size if p_size else consts_aarch64.PSIZE,
+#                              stk_ba=stk_ba if stk_ba else consts_aarch64.STACK_BASEADDR,
+#                              stk_size=stk_size if stk_size else consts_aarch64.STACK_SIZE,
+#                              autoMap=autoMap if autoMap else False,
+#                              showRegisters=showRegisters if showRegisters else True,
+#                              exec_saddr=exec_saddr if exec_saddr else 0,
+#                              exec_eaddr=exec_eaddr if exec_eaddr else 0xFFFFFFFF,
+#                              mapping_saddr=get_min_ea_idb() if not mapping_saddr else mapping_saddr,
+#                              mapping_eaddr=get_max_ea_idb() if not mapping_eaddr else mapping_eaddr,
+#                              segms=segms if segms else [],
+#                              map_with_segs=map_with_segs if map_with_segs else False,
+#                              use_seg_perms=use_seg_perms if use_seg_perms else False,
+#                              useCapstone=useCapstone if useCapstone else True,
+#                              registers=registers,
+#                              showMemAccess=showMemAccess if showMemAccess else True,
+#                              s_conf=stub_conf,
+#                              amap_conf=addmap_conf,
+#                              memory_init=meminit,
+#                              color_graph=False,
+#                              breakpoints=breakpoints if breakpoints else [])
+#
+#
+#
 

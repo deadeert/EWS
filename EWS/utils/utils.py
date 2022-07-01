@@ -22,8 +22,8 @@ MAX_INSN_SIZE=8
 def get_seg_list() -> list:
 
     """
-        get_seg_list returns the list of available segments
-        in IDB.
+    get_seg_list returns the list of available segments
+    in IDB.
     """
 
     info = ida_idaapi.get_inf_structure()
@@ -249,7 +249,6 @@ def get_insn_color(eaddr: int):
         at address eaddr.
     """
 
-    print(idc.get_color(eaddr,idc.CIC_ITEM))
     return idc.get_color(eaddr,idc.CIC_ITEM)
 
 def colorate_graph(color_map:dict):
@@ -494,7 +493,8 @@ def does_file_exist(f_path: str) -> bool:
         does_file_exist indicate if the specified file in path f_path does exist.
     """
 
-    return os.path.exists(f_path) and not os.path.isdir(f_path)
+    
+    return f_path != None and os.path.exists(f_path) and not os.path.isdir(f_path)
 
 
 
@@ -505,7 +505,12 @@ def verify_valid_elf(candidate: str) -> bool:
         ELF.
     """
 
-    return does_file_exist(candidate) and str(lief.ELF.parse(candidate)) != 'None'
+    try:
+        return candidate != None and\
+            does_file_exist(candidate) and\
+            lief.ELF.parse(candidate)
+    except AttributeError:
+        return False
 
 
 
@@ -516,7 +521,11 @@ def verify_valid_PE(candidate: str) -> bool:
         PE.
     """
 
-    return does_file_exist(candidate) and str(lief.PE.parse(candidate)) != 'None'
+
+    try: 
+        return does_file_exist(candidate) and lief.PE.parse(candidate) != None
+    except AttributeError:
+        return False
 
 
 def get_next_pc(insn: ida_ua.insn_t) -> int:
@@ -613,3 +622,14 @@ def get_relocs(fpath: str,
 
 
 
+def int_to_bytes(value:int,
+                size: int)-> bytes:
+
+    if size == 1:
+        return struct.pack('B',value)
+    elif size == 2:
+        return struct.pack('<H',value)
+    elif size == 4:
+        return struct.pack('<I',value)
+    elif size == 8:
+        return struct.pack('<Q',value)

@@ -12,8 +12,8 @@ BUTTON NO Nope
 BUTTON CANCEL* Nevermind
 Edit memory
 {callback}
-<## Addr: {iAddr}> 
-<## Value: {iValue}> 
+<## Addr: {iAddr}>
+<## Value: {iValue}>
 """,{
   'iAddr': ida_kernwin.Form.StringInput(ida_kernwin.Form.FT_ASCII),
   'iValue': ida_kernwin.Form.StringInput(ida_kernwin.Form.FT_ASCII),
@@ -22,7 +22,7 @@ Edit memory
 
     def callback(self,fid):
       if self.iAddr.id == fid:
-        
+
         try:
             addr = int(self.GetControlValue(self.iAddr),16)
         except:
@@ -32,7 +32,7 @@ Edit memory
                     addr = self.emu.reg_read(r_id)
                     self.SetControlValue(self.iAddr,'0x%x'%addr)
                 except:
-                    return 
+                    return
             else:
                 return
 
@@ -57,16 +57,16 @@ Edit memory
       return 1
 
 
-    @staticmethod 
+    @staticmethod
     def fillconfig(emu=None):
         f= MemEdit(emu)
         f.Compile()
         ok = f.Execute()
-        ret = (False,0,0) 
+        ret = (False,0,0)
         if ok:
           ret =  (f.ok,f.iAddr.value,f.iValue.value)
         f.Free()
-        return ret 
+        return ret
 
 
 
