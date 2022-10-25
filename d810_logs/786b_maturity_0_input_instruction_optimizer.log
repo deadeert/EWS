@@ -1,0 +1,14 @@
+; STKD=4 MINREF=0/END=30 ARGS: OFF=34/MINREF=34/END=134/SHADOW=0
+; SAVEDREGS: ebp.4,ebx.4,edi.4,esi.4
+; ????-BLOCK 0 PROP FAKE [START=786B END=786B] MINREFS: STK=0/ARG=34, MAXBSP: 0
+; USE-DEF LISTS ARE NOT READY
+
+; ????-BLOCK 1 PROP [START=786B END=7877] MINREFS: STK=0/ARG=34, MAXBSP: 20
+; USE-DEF LISTS ARE NOT READY
+ mov     #0.1, cf.1              ; 786F u=           d=cf.1
+ mov     #0.1, zf.1              ; 786F u=           d=zf.1
+ mov     #0.1, of.1              ; 786F u=           d=of.1
+ und     sf.1                    ; 786F u=           d=sf.1
+ und     pf.1                    ; 786F u=           d=pf.1
+ mov     #0x7877.4, ett.4        ; 7872 u=           d=ett.4
+

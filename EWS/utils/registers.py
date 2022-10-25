@@ -317,8 +317,7 @@ class x86Registers(Registers):
     return out
 
   @classmethod
-  def et_default_object(cls):
-      return x86Registers(EAX=0,
+  def get_default_object(cls,EAX=0,
                             EBX=1,
                             ECX=2,
                             EDX=3,
@@ -328,7 +327,8 @@ class x86Registers(Registers):
                              consts_x86.initial_stack_offset,
                             ESP=consts_x86.STACK_BASEADDR+consts_x86.STACK_SIZE-\
                              consts_x86.initial_stack_offset,
-                            EIP=0)
+                            EIP=0):
+      return x86Registers(EAX,EBX,ECX,EDX,EDI,ESI,EBP,ESP,EIP)
 
 class x86EFLAGS(Registers):
   def __init__(self,CF,PF,AF,ZF,SF,TF,EIF,DF,OF):
@@ -436,27 +436,27 @@ class x64Registers(Registers):
       return out
 
   @classmethod
-  def get_default_object(cls):
-      return x64Registers(RAX=0,
-                                         RBX=1,
-                                         RCX=2,
-                                         RDX=3,
-                                         RDI=4,
-                                         RSI=5,
-                                         R8=6,
-                                         R9=7,
-                                         R10=8,
-                                         R11=9,
-                                         R12=10,
-                                         R13=11,
-                                         R14=12,
-                                         R15=13,
-                                         RBP=consts_x64.STACK_BASEADDR+consts_x64.STACK_SIZE-\
-                                         consts_x64.initial_stack_offset,
-                                         RSP=consts_x64.STACK_BASEADDR+consts_x64.STACK_SIZE-\
-                                         consts_x64.initial_stack_offset,
-                                         RIP=0)
-    
+  def get_default_object(cls,RAX=0,
+                             RBX=1,
+                             RCX=2,
+                             RDX=3,
+                             RDI=4,
+                             RSI=5,
+                             R8=6,
+                             R9=7,
+                             R10=8,
+                             R11=9,
+                             R12=10,
+                             R13=11,
+                             R14=12,
+                             R15=13,
+                             RBP=consts_x64.STACK_BASEADDR+consts_x64.STACK_SIZE-\
+                             consts_x64.initial_stack_offset,
+                             RSP=consts_x64.STACK_BASEADDR+consts_x64.STACK_SIZE-\
+                             consts_x64.initial_stack_offset,
+                             RIP=0):
+      return x64Registers(RAX,RBX,RCX,RDX,RDI,RSI,R8,R9,R10,R11,R12,R13,R14,R15,RBP,RSP,RIP)
+
 
 
 

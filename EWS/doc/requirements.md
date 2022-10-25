@@ -1,1 +1,5 @@
-- hexdump 
+- hexdump (pip install hexdump).  
+- dateutil (pip install python-dateutil).
+- unicorn engine (install python bindings `bindings/python/setup.py install`)
+- capstone engine (install python bindings `bindings/python/setup.py install`)
+- keystone engine (install python bindings `bindings/python/setup.py install`)

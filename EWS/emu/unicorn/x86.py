@@ -196,7 +196,7 @@ class x86Corn(Emucorn):
                    name:str=''):
 
     if 'ELF' in self.filetype:
-      stub = ELF.Stub(self.helper,stub_type=stub_type)
+      stub = ELF.Stub(self.helper,stub_type=stub_type,name=name)
       stub.do_it = stub_func
     elif 'PE' in self.filetype:
       stub = PE.Stub(self.helper,stub_type=stub_type)

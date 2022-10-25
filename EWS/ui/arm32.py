@@ -12,8 +12,7 @@ Mapping Configuration
 <## Page size  :{iPageSize}> | <## Stack base address: {iStkBA}> | <## Stack size: {iStkSize}>
 <## AutoMap missing regions## No:{aNo}> <Yes:{aYes}>{cAGrp}> 
 <##Start Mapping (ea in IDB):{sMapping}> | <##End Mapping (ea in IDB):{eMapping}>   
-<## Map using segments## No:{sNo}> <Yes:{sYes}>{cCSeg}> | <## Use segment perms ## No:{spNo}> <Yes:{spYes}>{spCSeg}>
-<Segment: {cSegChooser}>
+<## Use segment perms ## No:{spNo}> <Yes:{spYes}>{spCSeg}>
 Execution Configuration
 <##Start address:{sAddr}> | <##End address:{eAddr}>
  <##R0:{R0}>  |<##R1:{R1}>  |<##R2:{R2}>  |<##R3:{R3}> |<##R4:{R4}>

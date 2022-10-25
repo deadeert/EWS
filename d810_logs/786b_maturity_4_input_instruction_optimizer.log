@@ -1,0 +1,89 @@
+; STKD=4 MINREF=30/END=30 ARGS: OFF=34/MINREF=134/END=134/SHADOW=0
+; SAVEDREGS: ebp.4,ebx.4,edi.4,esi.4
+; 1WAY-BLOCK 0 FAKE OUTBOUNDS: 1 [START=786B END=786B] MINREFS: STK=30/ARG=134, MAXBSP: 0
+; DEF: (eax.4,ebx.4,ebp.4,rdi.8,cs.2,ds.2,sp+0.4,sp+1B.5,arg+0.8)
+
+; 1WAY-BLOCK 1 PROP COMB INBOUNDS: 0 OUTBOUNDS: 2 [START=786B END=78FD] MINREFS: STK=30/ARG=134, MAXBSP: 20
+; USE-DEF LISTS ARE NOT READY
+ mov     #0x7877.4, %0x0.4{1}    ; 7872 u=           d=sp+0.4
+ add      (&($off_18C48).4-#0x7877.4) , %0x0.4{1}, ebx.4{2} ; 7878 lowaddr(l) u=sp+0.4     d=ebx.4
+ mov     %arg_4.4{3}, esi.4{3}   ; 787E u=arg+4.4    d=esi.4
+ mov     %arg_0.4{4}, edi.4{4}   ; 7882 u=arg+0.4    d=edi.4
+ mov      call $sub_4030<cdecl:"size_t size" #0xC.4>.4 , eax.4{5} ; 788D u=(GLBLOW,GLBHIGH) d=eax.4,(cf.1,zf.1,sf.1,of.1,pf.1,edx.4,ecx.4,fps.2,fl.1,c0.1,c2.1,c3.1,df.1,if.1,GLBLOW,sp+4.4,GLBHIGH)
+ stx      ( (&($off_188FC).4-#0x18C48.4) +ebx.4{2}) , ds.2{6}, eax.4{5} ; 7898 u=eax.4,ebx.4,ds.2 d=(GLBLOW,GLBHIGH)
+ stx     #0.4, ds.2{6},  (eax.4{5}+#4.4)  ; 789A u=eax.4,ds.2 d=(GLBLOW,GLBHIGH)
+ stx     #0.4, ds.2{6},  (eax.4{5}+#8.4)  ; 789E u=eax.4,ds.2 d=(GLBLOW,GLBHIGH)
+ mov     eax.4{5}, %var_14.4{5}  ; 78A2 u=eax.4      d=sp+1C.4
+ ldx     ds.2{6},  (edi.4{4}+#4.4) , ebp.4{7} ; 78A6 u=edi.4,ds.2,(GLBLOW,GLBHIGH) d=ebp.4
+ mov      call $sub_4030<cdecl:"size_t size" #0x18.4>.4 , eax.4{8} ; 78B0 u=(GLBLOW,GLBHIGH) d=eax.4,(cf.1,zf.1,sf.1,of.1,pf.1,edx.4,ecx.4,fps.2,fl.1,c0.1,c2.1,c3.1,df.1,if.1,GLBLOW,sp+4.4,GLBHIGH)
+ stx     #2.4, ds.2{9}, eax.4{8} ; 78B9 u=eax.4,ds.2 d=(GLBLOW,GLBHIGH)
+ stx     %var_14.4{5}, ds.2{9},  (eax.4{8}+#4.4)  ; 78BF u=eax.4,ds.2,sp+1C.4 d=(GLBLOW,GLBHIGH)
+ stx      ( (&($sub_795E).4-#0x18C48.4) +ebx.4{2}) , ds.2{9},  (eax.4{8}+#8.4)  ; 78C8 u=eax.4,ebx.4,ds.2 d=(GLBLOW,GLBHIGH)
+ stx      ( (&($sub_7984).4-#0x18C48.4) +ebx.4{2}) , ds.2{9},  (eax.4{8}+#0xC.4)  ; 78D1 u=eax.4,ebx.4,ds.2 d=(GLBLOW,GLBHIGH)
+ stx      ( (&($sub_79AA).4-#0x18C48.4) +ebx.4{2}) , ds.2{9},  (eax.4{8}+#0x10.4)  ; 78DA u=eax.4,ebx.4,ds.2 d=(GLBLOW,GLBHIGH)
+ stx      ( (&($sub_79D0).4-#0x18C48.4) +ebx.4{2}) , ds.2{9},  (eax.4{8}+#0x14.4)  ; 78E3 u=eax.4,ebx.4,ds.2 d=(GLBLOW,GLBHIGH)
+ low      icall cs.2{9},ebp.4{7}<cdecl:_DWORD edi.4{4},_DWORD eax.4{8}>.4 , al.1 ; 78ED u=eax.4,ebp.4,edi.4,cs.2,(GLBLOW,GLBHIGH) d=al.1,(cf.1,zf.1,sf.1,of.1,pf.1,ah.1,eax^2.2,edx.4,ecx.4,fps.2,fl.1,c0.1,c2.1,c3.1,df.1,if.1,GLBLOW,sp+4.8,GLBHIGH)
+ mov     al.1{10}, %var_15.1{10} ; 78EF u=al.1       d=sp+1B.1
+ mov     #0x6EBD5020.4, eax.4    ; 78F3 u=           d=eax.4
+ mov     #0x26CBC5F6.4, ebp.4    ; 78F8 u=           d=ebp.4
+
+; 2WAY-BLOCK 2 INBOUNDS: 1 8 10 OUTBOUNDS: 3 11 [START=78FD END=7904] MINREFS: STK=30/ARG=134, MAXBSP: 4
+; USE: eax.4
+; VALRANGES: eax.4:(==26CBC5F6|==42345504|==6EBD5020|==AA0ED56C), ebp.4:==26CBC5F6, %0x0.4:==7877
+ jz      eax.4, #0xAA0ED56C.4, @11 ; 7902 u=eax.4
+
+; 2WAY-BLOCK 3 INBOUNDS: 2 OUTBOUNDS: 4 9 [START=7904 END=790B] MINREFS: STK=30/ARG=134, MAXBSP: 4
+; USE: eax.4
+; VALRANGES: eax.4:(==26CBC5F6|==42345504|==6EBD5020), ebp.4:==26CBC5F6, %0x0.4:==7877
+ jz      eax.4, #0x26CBC5F6.4, @9 ; 7909 u=eax.4
+
+; 2WAY-BLOCK 4 INBOUNDS: 3 OUTBOUNDS: 5 10 [START=790B END=7912] MINREFS: STK=30/ARG=134, MAXBSP: 4
+; USE: eax.4
+; VALRANGES: eax.4:(==42345504|==6EBD5020), ebp.4:==26CBC5F6, %0x0.4:==7877
+ jz      eax.4, #0x42345504.4, @10 ; 7910 u=eax.4
+
+; 1WAY-BLOCK 5 PROP INBOUNDS: 4 OUTBOUNDS: 6 [START=7912 END=7919] MINREFS: STK=30/ARG=134, MAXBSP: 4
+; USE-DEF LISTS ARE NOT READY
+; VALRANGES: eax.4:==6EBD5020, ebp.4:==26CBC5F6, %0x0.4:==7877
+ nop                             ; 7917 u=
+
+; 2WAY-BLOCK 6 INBOUNDS: 5 OUTBOUNDS: 7 8 [START=7919 END=7926] MINREFS: STK=30/ARG=134, MAXBSP: 4
+; USE: sp+1B.1
+; DEF: eax.4
+; DNU: eax.4
+; VALRANGES: eax.4:==6EBD5020, ebp.4:==26CBC5F6, %0x0.4:==7877
+ mov     #0x42345504.4, eax.4    ; 791E u=           d=eax.4
+ jz      %var_15.1{10}, #0.1, @8 ; 7923 u=sp+1B.1
+
+; 1WAY-BLOCK 7 FAKE INBOUNDS: 6 OUTBOUNDS: 8 [START=7923 END=7926] MINREFS: STK=30/ARG=134, MAXBSP: 4
+; DEF: eax.4
+; DNU: eax.4
+; VALRANGES: eax.4:==42345504, ebp.4:==26CBC5F6, %0x0.4:==7877, %0x1B.1:!=0
+ mov     #0x26CBC5F6.4, eax.4    ; 7923 u=           d=eax.4
+
+; 1WAY-BLOCK 8 INBOUNDS: 6 7 OUTBOUNDS: 2 [START=7926 END=7928] MINREFS: STK=30/ARG=134, MAXBSP: 4
+; VALRANGES: eax.4:(==26CBC5F6|==42345504), ebp.4:==26CBC5F6, %0x0.4:==7877
+ goto    @2                      ; 7926 u=
+
+; 1WAY-BLOCK 9 PROP COMB INBOUNDS: 3 OUTBOUNDS: 10 [START=7928 END=794F] MINREFS: STK=30/ARG=134, MAXBSP: 4
+; USE-DEF LISTS ARE NOT READY
+; VALRANGES: eax.4:==26CBC5F6, ebp.4:==26CBC5F6, %0x0.4:==7877
+ mov      call $sub_4030<cdecl:"size_t size" #4.4>.4 , eax.4{11} ; 792F u=(GLBLOW,GLBHIGH) d=eax.4,(cf.1,zf.1,sf.1,of.1,pf.1,edx.4,ecx.4,fps.2,fl.1,c0.1,c2.1,c3.1,df.1,if.1,GLBLOW,sp+4.4,GLBHIGH)
+ stx     edi.4{4}, ds.2{12}, eax.4{11} ; 7934 u=eax.4,edi.4,ds.2 d=(GLBLOW,GLBHIGH)
+ mov      icall cs.2{12}, [ds.2{12}: [ds.2{12}:%var_14.4{5}].4 ].4 <cdecl:_DWORD %var_14.4{5},_DWORD eax.4{11},_DWORD esi.4{3}>.4 , eax.4 ; 794D u=eax.4,esi.4,cs.2,ds.2,sp+1C.4,(GLBLOW,GLBHIGH) d=eax.4,(cf.1,zf.1,sf.1,of.1,pf.1,edx.4,ecx.4,fps.2,fl.1,c0.1,c2.1,c3.1,df.1,if.1,GLBLOW,sp+4.C,GLBHIGH)
+
+; 1WAY-BLOCK 10 INBOUNDS: 4 9 OUTBOUNDS: 2 [START=794F END=7956] MINREFS: STK=30/ARG=134, MAXBSP: 4
+; DEF: eax.4
+; DNU: eax.4
+; VALRANGES: ebp.4:==26CBC5F6, %0x0.4:==7877
+ mov     #0xAA0ED56C.4, eax.4    ; 794F u=           d=eax.4
+ goto    @2                      ; 7954 u=
+
+; 1WAY-BLOCK 11 INBOUNDS: 2 OUTBOUNDS: 12 [START=7956 END=795E] MINREFS: STK=30/ARG=134, MAXBSP: 30
+; VALRANGES: eax.4:==AA0ED56C, ebp.4:==26CBC5F6, %0x0.4:==7877
+ mov     #0xAA0ED56C.4, eax.4    ; 7956 assert u=           d=eax.4
+
+; STOP-BLOCK 12 FAKE INBOUNDS: 11 [START=FFFFFFFF END=FFFFFFFF] MINREFS: STK=30/ARG=134, MAXBSP: 0
+; USE: (eax.4)
+; VALRANGES: eax.4:==AA0ED56C, ebp.4:==26CBC5F6, %0x0.4:==7877
+

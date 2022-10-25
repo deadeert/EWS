@@ -296,17 +296,12 @@ class Emucorn(Emulator):
 
     def hook_code(self,uc,addr,size,user_data): 
 
-
+        asm = ''
         if addr in self.running_stubs.keys():
             try:
                 self.running_stubs[addr].do_it()
                 s_name = self.running_stubs[addr].name
-                self.exec_trace.add_instruction(addr=addr,
-                                                assembly='0x%x: %s'%(addr,s_name),
-                                                regs=self.get_regs(),
-                                                color=get_insn_color(addr),
-                                                tainted=False,
-                                                count=self.nb_insn)
+                asm = log = '0x%x:\t%s'%(addr,s_name)
 
 
             except Exception as e:
@@ -314,8 +309,9 @@ class Emucorn(Emulator):
                 uc.emu_stop()
                 logger.console(LogType.ERRR,'backtrace:\n',e.__str__())
                 return False
-
+        
         elif addr in self.user_breakpoints or ida_dbg.exist_bpt(addr):
+                print("entering breakpoint shit")
                 if self.last_pc != self.helper.get_pc():
                         uc.emu_stop()
                         logger.console(LogType.INFO,'Breakpoint at %x reached.\nType emu.continuee() to pursue execution'%addr)
@@ -327,8 +323,9 @@ class Emucorn(Emulator):
         if addr in self.conf.patches.keys():
             asm = log = ':\t'+self.conf.patches[addr]
         else:
-            asm = get_captsone_repr(self,addr)
-            log = build_insn_repr(self,addr)
+            if asm == '':
+                asm = get_captsone_repr(self,addr)
+                log = build_insn_repr(self,addr)
     
         self.exec_trace.add_instruction(addr=addr,
                                             assembly=asm,
@@ -651,7 +648,7 @@ class Emucorn(Emulator):
 
         if ea in self.running_stubs.keys():
                 logger.console(LogType.WARN,"Function at %x is already stubbed. ",
-                               ' Overwritting stub with new tag'%ea)
+                               ' Overwritting stub with new tag'%(stub_name, ea))
                 self.unstub_func_addr(ea)
 
         else:

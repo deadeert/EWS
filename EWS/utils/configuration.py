@@ -463,9 +463,14 @@ class ConfigDeserializer(json.JSONDecoder): #PASS ClassType for register parsing
 def saveconfig(conf,conf_apath=None): 
     if not conf_apath: 
         conf_apath=conf.path
+    # TODO test and commit changes
+    """
     out=json.dumps(conf,cls=ConfigSerializer)
     with open(conf_apath,'w+') as fout: 
         fout.write(out)
+    """
+    with open(conf_apath,'w+') as fout: 
+        json.dump(conf,fp=fout,cls=ConfigSerializer)
     
 
 def loadconfig(conf_apath): 
