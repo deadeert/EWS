@@ -7,15 +7,6 @@ import ida_segment
 import ida_kernwin
 import ida_bytes
 from EWS.ui.generic import Pannel
-#from EWS.ui.arm32_simplified import Arm32Pannel
-#from EWS.ui.mipsl32 import Mipsl32Pannel
-#from EWS.ui.x86_simplified import x86Pannel
-#from EWS.ui.x64_simplified import x64Pannel
-#from EWS.ui.aarch64_simplified import Aarch64Pannel
-#from EWS.ui.arm32 import Arm32Pannel as Arm32PannelFull
-#from EWS.ui.aarch64 import Aarch64Pannel as Aarch64CornFull
-#from EWS.ui.x86 import x86Pannel as x86PannelFull
-#from EWS.ui.x64 import x64Pannel as x64PannelFull
 from EWS.ui.regedit import RegArm32Edit, RegArm64Edit, Regx86Edit, Regx64Edit
 from EWS.ui.MemEdit import MemEdit
 from EWS.ui.MemOperations import ExportMemory, ImportMemory 
@@ -130,32 +121,7 @@ def get_emul_conf(simplified : bool = True,
   else:
       logger.console(LogType.ERRR,"Current architecture not yet supported")
       return None
-#  if procname == 'arm':
-#      #TODO MODIF HERE PANNEL
-#    if idc.__EA64__:
-#        if simplified:
-#            return Aarch64Pannel.fillconfig() 
-#        else:
-#            return Aarch64CornFull.fillconfig(conf)
-#    else:
-#        if simplified:
-#            return Arm32Pannel.fillconfig()
-#        else:
-#            return Arm32PannelFull.fillconfig(conf)
-#  elif procname == 'pc':
-#   if idc.__EA64__: # assess if ida is running in 64bits
-#     if simplified:
-#        return x64Pannel.fillconfig()
-#     else:
-#        return x64PannelFull.fillconfig(conf)
-#   else:
-#       if simplified:
-#            return x86Pannel.fillconfig()
-#       else:
-#            return x86PannelFull.fillconfig(conf)
-#  else:
-#      logger.console(LogType.ERRR,"Current architecture not yet supported")
-#
+
 
 
 def get_regedit_func():

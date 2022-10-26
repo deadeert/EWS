@@ -479,9 +479,16 @@ class ArmCorn(Emucorn):
       """
 
       if not registers: 
-        registers = ArmRegisters.get_default_object(r13= consts_arm.STACK_BASEADDR+\
-                                                      consts_arm.STACK_SIZE-\
-                                                      consts_arm.initial_stack_offset, #SP
+        if stk_ba and stk_size: 
+            r13 = stk_ba + stk_size - consts_arm32.initial_stack_offset 
+        elif stk_ba and not stk_size: 
+            r13 = stk_ba +  consts_arm32.STACK_SIZE - consts_arm32.initial_stack_offset 
+        elif stk_size and not stk_ba: 
+            r13 = consts_arm32.STACK_BASEADDR + stk_size - consts_arm32.initial_stack_offset 
+        else:
+            r13 = consts_arm32.STACK_BASEADDR+consts_arm32.STACK_SIZE-\
+                                 consts_arm32.initial_stack_offset
+        registers = ArmRegisters.get_default_object(r13=r13,
                                                       r14=exec_eaddr,
                                                       r15=exec_saddr)
 

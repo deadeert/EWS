@@ -247,7 +247,8 @@ class x86Pannel(Pannel):
       f.Compile()
       
       ok = f.Execute()
-      if ok:
+      if ok == ida_kernwin.ASKBTN_YES:
+
           ret = Configuration(path=f.conf_path,arch='x86',
                               emulator='unicorn',
                               p_size=f.iPageSize.value,

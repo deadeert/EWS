@@ -545,11 +545,16 @@ class x64Corn(Emucorn):
       """
 
       if not registers: 
-        registers = x64Registers.get_default_object(RBP=consts_x64.STACK_BASEADDR+consts_x64.STACK_SIZE-\
-                                         consts_x64.initial_stack_offset,
-                                         RSP=consts_x64.STACK_BASEADDR+consts_x64.STACK_SIZE-\
-                                         consts_x64.initial_stack_offset,
-                                         RIP=exec_saddr)
+        if stk_ba and stk_size: 
+            RBP = RSP =  stk_ba + stk_size - consts_x64.initial_stack_offset 
+        elif stk_ba and not stk_size: 
+            RBP = RSP =  stk_ba +  consts_x64.STACK_SIZE - consts_x64.initial_stack_offset 
+        elif stk_size and not stk_ba: 
+            RBP = RSP = consts_x64.STACK_BASEADDR + stk_size - consts_x64.initial_stack_offset 
+        else:
+            RBP = RSP = consts_x64.STACK_BASEADDR+consts_x64.STACK_SIZE-\
+                                 consts_x64.initial_stack_offset
+        registers = x64Registers.get_default_object(RBP=RBP,RSP=RSP,RIP=exec_saddr)
 
 
 

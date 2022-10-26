@@ -181,8 +181,7 @@ class menu_action_handler_t(idaapi.action_handler_t):
         ##        otherwise, it should edit self.plug.emu.registers object. 
 
         if not self.plug.config_initialized:
-        #if self.plug.conf == idaapi.BADADDR:
-            logger.console(LogType.WARN,"Please init a configuration")
+            logger.console(LogType.WARN,"Please init the configuration before using this function")
             return
 
 
@@ -195,7 +194,8 @@ class menu_action_handler_t(idaapi.action_handler_t):
             new_regs = regedit_func(self.plug.emu.get_regs())
             # FIXME IDT (i don't think) it's necessary to update the configuration object of the emulator. 
             #self.plug.emu.conf= self.plug.conf
-            self.plug.emu.setup_regs(new_regs)
+            if not new_regs is None:  
+                self.plug.emu.setup_regs(new_regs)
 
     def tag_func(self):
         """

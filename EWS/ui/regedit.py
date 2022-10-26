@@ -23,26 +23,9 @@ class RegArm32Edit(ida_kernwin.Form):
     def __init__(self,regs):
         self.regs = regs
         if self.regs == None:
-            Form.__init__(self, DescFormARM,{
-            'R0': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'R1': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'R2': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'R3': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'R4': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'R5': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'R6': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'R7': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'R8': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'R9': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'R10': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'R11': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'R12': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'R13': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'R14': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'R15': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'cbCallback': Form.FormChangeCb(self.onCallback)})
-        else:
-            Form.__init__(self, DescFormARM,{
+            self.regs = ArmRegisters.get_default_object()
+
+        Form.__init__(self, DescFormARM,{
             'R0': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.regs.R0),
             'R1': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.regs.R1),
             'R2': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.regs.R2),
@@ -67,26 +50,30 @@ class RegArm32Edit(ida_kernwin.Form):
 
     @staticmethod
     def create(regs=None):
-      regform = RegArm32Edit(regs)
-      regform.Compile()
-      ok = regform.Execute()
-      if ok:
-          return ArmRegisters(R0=regform.R0.value,
-                              R1=regform.R1.value,
-                              R2=regform.R2.value,
-                              R3=regform.R3.value,
-                              R4=regform.R4.value,
-                              R5=regform.R5.value,
-                              R6=regform.R6.value,
-                              R7=regform.R7.value,
-                              R8=regform.R8.value,
-                              R9=regform.R9.value,
-                              R10=regform.R10.value,
-                              R11=regform.R11.value,
-                              R12=regform.R12.value,
-                              R13=regform.R13.value,
-                              R14=regform.R14.value,
-                              R15=regform.R15.value)
+        if regs == None: 
+            regs = ArmRegisters.get_default_object()
+        regform = RegArm32Edit(regs)
+        regform.Compile()
+        ok = regform.Execute()
+        if not ok == ida_kernwin.ASKBTN_YES:
+            return regs
+        else:
+            return ArmRegisters(R0=regform.R0.value,
+                  R1=regform.R1.value,
+                  R2=regform.R2.value,
+                  R3=regform.R3.value,
+                  R4=regform.R4.value,
+                  R5=regform.R5.value,
+                  R6=regform.R6.value,
+                  R7=regform.R7.value,
+                  R8=regform.R8.value,
+                  R9=regform.R9.value,
+                  R10=regform.R10.value,
+                  R11=regform.R11.value,
+                  R12=regform.R12.value,
+                  R13=regform.R13.value,
+                  R14=regform.R14.value,
+                  R15=regform.R15.value)
 
 
 DescFormAarch64 =  r"""STARTITEM 
@@ -112,44 +99,9 @@ class RegArm64Edit(ida_kernwin.Form):
 
     def __init__(self,regs):
         self.regs = regs
-        if self.regs == None:
-            Form.__init__(self,DescFormAarch64,{
-            'X0': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'X1': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'X2': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'X3': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'X4': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'X5': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'X6': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'X7': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'X8': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'X9': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'X10': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'X11': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'X12': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'X13': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'X14': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'X15': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'X16': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'X17': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'X18': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'X19': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'X20': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'X21': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'X22': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'X23': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'X24': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'X25': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'X26': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'X27': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'X28': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'FP': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'LR': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'SP': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'PC': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'cbCallback': Form.FormChangeCb(self.onCallback)})
-        else:
-            Form.__init__(self,DescFormAarch64,{
+        if regs == None: 
+            self.regs = Aarch64Registers.get_default_object()
+        Form.__init__(self,DescFormAarch64,{
                 'X0': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.regs.X0),
                 'X1': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.regs.X1),
                 'X2': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.regs.X2),
@@ -196,10 +148,15 @@ class RegArm64Edit(ida_kernwin.Form):
 
     @staticmethod
     def create(regs=None):
+
+      if regs == None: 
+            regs = Aarch64Registers.get_default_object()
       regform = RegArm64Edit(regs)
       regform.Compile()
       ok = regform.Execute()
-      if ok:
+      if not ok == ida_kernwin.ASKBTN_YES:
+          return regs
+      else:
           return Aarch64Registers(regform.X0.value,
                                                      regform.X1.value,
                                                      regform.X2.value,
@@ -255,29 +212,9 @@ class Regx64Edit(ida_kernwin.Form):
     def __init__(self,regs):
         self.regs = regs
         if self.regs == None:
-            Form.__init__(self, DescFormx64 ,{
-
-            'RAX': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'RBX': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'RCX': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'RDX': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'RDI': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'RSI': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'RBP': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'RSP': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'RIP': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'R8': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'R9': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'R10': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'R11': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'R12': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'R13': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'R14': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'R15': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'cbCallback': Form.FormChangeCb(self.onCallback)})
-
-        else:
-            Form.__init__(self, DescFormx64 ,{
+            self.regs= x64Registers.get_default_object()
+            
+        Form.__init__(self, DescFormx64 ,{
 
             'RAX': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.regs.RAX),
             'RBX': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.regs.RBX),
@@ -306,10 +243,14 @@ class Regx64Edit(ida_kernwin.Form):
 
     @staticmethod
     def create(regs=None):
+      if regs == None: 
+          regs = x64Registers.get_default_object()
       regform = Regx64Edit(regs)
       regform.Compile()
       ok = regform.Execute()
-      if ok:
+      if not ok == ida_kernwin.ASKBTN_YES:
+          return regs 
+      else:
           return x64Registers(RAX=regform.RAX.value,
                             RBX=regform.RBX.value,
                             RCX=regform.RCX.value,
@@ -342,17 +283,7 @@ class Regx86Edit(ida_kernwin.Form):
     def __init__(self,regs):
         self.regs = regs
         if self.regs == None :
-            Form.__init__(self, DescFormx86,{
-            'EAX': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'EBX': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'ECX': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'EDX': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'EDI': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'ESI': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'EBP': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'ESP': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'EIP': Form.NumericInput(tp=Form.FT_RAWHEX),
-            'cbCallback': Form.FormChangeCb(self.onCallback)})
+            x86Registers.get_default_object()
         else:
             Form.__init__(self, DescFormx86,{
             'EAX': Form.NumericInput(tp=Form.FT_RAWHEX,value=self.regs.EAX),
@@ -372,10 +303,14 @@ class Regx86Edit(ida_kernwin.Form):
 
     @staticmethod
     def create(regs=None):
+      if regs == None :
+            regs = x86Registers.get_default_object()
       regform = Regx86Edit(regs)
       regform.Compile()
       ok = regform.Execute()
-      if ok:
+      if not ok == ida_kernwin.ASKBTN_YES:
+          return regs
+      else: 
             return x86Registers(regform.EAX.value,
                                                     regform.EBX.value,
                                                     regform.ECX.value,

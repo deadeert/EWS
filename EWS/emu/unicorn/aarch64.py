@@ -434,10 +434,18 @@ class Aarch64Corn(Emucorn):
       """
 
       if not registers: 
+
+        if stk_ba and stk_size: 
+            x31 =  stk_ba + stk_size - consts_aarch64.initial_stack_offset 
+        elif stk_ba and not stk_size: 
+            x31 =  stk_ba +  consts_aarch64.STACK_SIZE - consts_aarch64.initial_stack_offset 
+        elif stk_size and not stk_ba: 
+            x31 = consts_aarch64.STACK_BASEADDR + stk_size - consts_aarch64.initial_stack_offset 
+        else:
+            x31 = consts_aarch64.STACK_BASEADDR+consts_aarch64.STACK_SIZE-\
+                                 consts_aarch64.initial_stack_offset
         registers = x64Registers.get_default_object(exec_eaddr, # LR
-                                         consts_aarch64.STACK_BASEADDR+\
-                                                    consts_aarch64.STACK_SIZE-\
-                                                    consts_aarch64.initial_stack_offset,
+                                         x31,
                                          exec_saddr)
       return Configuration.generate_default_config(stk_ba=stk_ba if stk_ba\
                                                     else consts_aarch64.STACK_BASEADDR,

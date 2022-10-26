@@ -63,7 +63,7 @@ Select Segment
       f = SelectSegment()
       f.Compile()
       ok = f.Execute()
-      if ok:
+      if ok == ida_kernwin.ASKBTN_YES:
          return f.segname
 
 
@@ -90,7 +90,7 @@ Show Memory
       f = AddrNBPages()
       f.Compile()
       ok = f.Execute()
-      if ok:
+      if ok == ida_kernwin.ASKBTN_YES:
          return f.iAddr.value,f.iValue.value
 
 

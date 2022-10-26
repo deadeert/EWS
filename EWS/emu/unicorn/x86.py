@@ -340,11 +340,16 @@ class x86Corn(Emucorn):
       """
 
       if not registers: 
-        registers = x86Registers.get_default_object(EBP=consts_x86.STACK_BASEADDR+consts_x86.STACK_SIZE-\
-                                 consts_x86.initial_stack_offset,
-                                ESP=consts_x86.STACK_BASEADDR+consts_x86.STACK_SIZE-\
-                                 consts_x86.initial_stack_offset,
-                                EIP=exec_saddr)
+        if stk_ba and stk_size: 
+            EBP = ESP =  stk_ba + stk_size - consts_x86.initial_stack_offset 
+        elif stk_ba and not stk_size: 
+            EBP = ESP =  stk_ba +  consts_x86.STACK_SIZE - consts_x86.initial_stack_offset 
+        elif stk_size and not stk_ba: 
+            EBP = ESP = consts_x86.STACK_BASEADDR + stk_size - consts_x86.initial_stack_offset 
+        else:
+            EBP = ESP = consts_x86.STACK_BASEADDR+consts_x86.STACK_SIZE-\
+                                 consts_x86.initial_stack_offset
+        registers = x86Registers.get_default_object(EBP=EBP,ESP=ESP,EIP=exec_saddr)
       return Configuration.generate_default_config(stk_ba=stk_ba if stk_ba\
                                                     else consts_x86.STACK_BASEADDR,
                                                     stk_size=stk_size if stk_size\

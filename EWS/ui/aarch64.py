@@ -330,7 +330,7 @@ class Aarch64Pannel(Pannel):
       f.Compile()
       
       ok = f.Execute()
-      if ok:
+      if ok == ia_kernwin.ASKBTN_YES:
       
           ret = Configuration(path=f.conf_path,arch=ida_idp.get_idp_name(),
                               emulator='unicorn',

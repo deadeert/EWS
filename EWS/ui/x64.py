@@ -278,7 +278,7 @@ class x64Pannel(Pannel):
       f.Compile()
       
       ok = f.Execute()
-      if ok:
+      if ok == ida_kernwin.ASKBTN_YES:
       
           ret = Configuration(path=f.conf_path, arch='x64',
                               emulator='unicorn',

@@ -167,7 +167,7 @@ class Pannel(ida_kernwin.Form):
       ok = f.Execute()
 
 
-      if ok != 0 and ok != idaapi.BADADDR:
+      if ok == ida_kernwin.ASKBTN_YES: 
 
           ret = Configuration(path=f.conf_path,arch=ida_idp.get_idp_name(),
                               emulator='unicorn',
