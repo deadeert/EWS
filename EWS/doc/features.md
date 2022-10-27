@@ -1,10 +1,5 @@
 # Available Features 
 
-## Configuration 
-
-### Import / Export 
-
-
 
 ## Debugging
 
@@ -40,7 +35,7 @@ You can export some part of the memory.
 
 ### MemoryImport:
 
-You can i###mport memory from **already** mapped area.
+You can i#mport memory from **already** mapped area.
 To map a new memory area use the feature to add a new mapping (shortcut is `Ctrl+Alt+A`). 
 
 ### Memory Display 
@@ -110,4 +105,13 @@ this function is actually `<malloc>/<realloc>`...
 ### Allocator 
 
 Yes, there is a dumb allocator available as well...
+
+## Configuration 
+
+### Import / Export 
+
+Configuration file can be created (exported) and imported inside
+the plugin. This will (de)serialize the configuration object. 
+
+
 
