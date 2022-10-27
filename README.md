@@ -10,4 +10,4 @@ from various emulator (currently unicorn, but you can add more).
 
 https://user-images.githubusercontent.com/6783156/198288491-7e9b3059-7ab0-4c1f-9e08-7a645a8799e8.mov
 
-
+![Working Video](EWS/doc/img/EWS_basic_usage.mov) Github failed to import correctly the video. 
