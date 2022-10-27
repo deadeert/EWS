@@ -8,8 +8,6 @@ from various emulator (currently unicorn, but you can add more).
 
 ## An example 
 
-![Debugger View](EWS/doc/img/debugger_view.jpg) 
-
-
+https://user-images.githubusercontent.com/6783156/198287350-d7fc7696-8465-408e-b007-3d641623f655.mov
 
 
