@@ -149,10 +149,10 @@ class x64Corn(Emucorn):
 
             self.uc.hook_add(UC_HOOK_MEM_WRITE,
                              Emucorn.hk_write,
-                             conf)
+                             self)
             self.uc.hook_add(UC_HOOK_MEM_READ,
                              Emucorn.hk_read,
-                             conf)
+                             self)
 
 
 
