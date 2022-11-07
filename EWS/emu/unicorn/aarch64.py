@@ -453,7 +453,8 @@ class Aarch64Corn(Emucorn):
                                                     else consts_aarch64.STACK_SIZE,
                                                     registers=registers,
                                                     exec_saddr=exec_saddr,
-                                                    exec_eaddr=exec_eaddr)
+                                                    exec_eaddr=exec_eaddr, 
+                                                   arch='aarch64')
 
 
 

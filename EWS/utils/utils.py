@@ -625,6 +625,7 @@ def get_relocs(fpath: str,
 def int_to_bytes(value:int,
                 size: int)-> bytes:
 
+    value = abs(value) 
     if size == 1:
         return struct.pack('B',value)
     elif size == 2:

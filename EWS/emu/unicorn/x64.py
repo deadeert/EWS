@@ -564,7 +564,8 @@ class x64Corn(Emucorn):
                                                     else consts_x64.STACK_SIZE,
                                                     registers=registers,
                                                     exec_saddr=exec_saddr,
-                                                    exec_eaddr=exec_eaddr)
+                                                    exec_eaddr=exec_eaddr,
+                                                   arch='x64')
 
 
 

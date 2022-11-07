@@ -222,7 +222,7 @@ class Configuration():
 
 
         return Configuration( path=path if path else '',
-                              arch='arm',
+                              arch=arch,
                               emulator='unicorn',
                               p_size=p_size if p_size else 0x1000,
                               stk_ba=stk_ba if stk_ba else 0x7FFFFFFF,

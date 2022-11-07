@@ -356,7 +356,8 @@ class x86Corn(Emucorn):
                                                     else consts_x86.STACK_SIZE,
                                                     registers=registers,
                                                     exec_saddr=exec_saddr,
-                                                    exec_eaddr=exec_eaddr)
+                                                    exec_eaddr=exec_eaddr,
+                                                   arch='x86')
 
 
 

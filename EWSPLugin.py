@@ -399,18 +399,18 @@ class menu_action_handler_t(idaapi.action_handler_t):
             logger.console(LogType.INFO,"Exec continues")
             try:
                 self.plug.emu.continuee()
-            except Exception as e:
-                logger.console(LogType.ERRR,"Execution run out of control.",
-                               "Reason: %s"%e.__str__())
+#            except Exception as e:
+#                logger.console(LogType.ERRR,"Execution run out of control.",
+#                               "Reason: %s"%e.__str__())
             finally:
                 self.plug.refresh_view()
         else:
             logger.console(LogType.INFO,"Exec starts")
             try:
                 self.plug.emu.start()
-            except Exception as e:
-                logger.console(LogType.ERRR,"Execution run out of control.",
-                               "Reason: %s"%e.__str__())
+#            except Exception as e:
+#                logger.console(LogType.ERRR,"Execution run out of control.",
+#                               "Reason: %s"%e.__str__())
             finally:
                 self.plug.refresh_view()
 

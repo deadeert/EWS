@@ -647,9 +647,9 @@ class Emucorn(Emulator):
             return
 
         if ea in self.running_stubs.keys():
-                logger.console(LogType.WARN,"Function at %x is already stubbed. ",
-                               ' Overwritting stub with new tag'%(stub_name, ea))
-                self.unstub_func_addr(ea)
+            logger.console(LogType.WARN,f"Function at {ea:x} is already stubbed. ",
+                               f'Overwritting stub with new tag {stub_name}')
+            self.unstub_func_addr(ea)
 
         else:
                 self.stubs[stub_name].set_helper(self.helper)
@@ -701,9 +701,9 @@ class Emucorn(Emulator):
         except UcError as e:
             logger.console(LogType.ERRR,'Error in unicorn engine')
             raise e
-        except Exception as e:
-            logger.console(LogType.WARN,
-                           '[!] Exception in program : %s' % e.__str__())
+#        except Exception as e:
+#            logger.console(LogType.WARN,
+#                          '[!] Exception in program : %s' % e.__str__())
         finally:
             idaapi.hide_wait_box()
 
