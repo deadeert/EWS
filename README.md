@@ -3,7 +3,7 @@
  
  
  
-EWS (*Emulator Wrapper Solution*)  is a plugin that aims to integrate emulation features (such as debugger) 
+EWS (*Emulator Wrapper Solution*)  is a IDA PRO plugin that aims to integrate emulation features (such as debugger) 
 from various emulators (currently unicorn, but you can add more). 
 
 # WIP 
