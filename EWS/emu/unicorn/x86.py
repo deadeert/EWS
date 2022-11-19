@@ -61,13 +61,14 @@ class x86Corn(Emucorn):
 
 
     for k,v in self.conf.patches.items():
-            self.patch_insn(k,v,update_conf=False)
-
+            self.patch_insn(k,v)
 
 
 
 
   def install_hooks(self):
+
+
     self.uc.hook_add(UC_HOOK_CODE,
                      self.hook_code,
                      user_data=self)
@@ -88,7 +89,10 @@ class x86Corn(Emucorn):
                        Emucorn.hk_read,
                        self)
 
+
   def setup_stub_mechanism(self):
+
+
         self.uc.mem_map(consts_x86.ALLOC_BA,
                         self.conf.p_size*consts_x86.ALLOC_PAGES,
                         UC_PROT_READ | UC_PROT_WRITE)
@@ -124,46 +128,51 @@ class x86Corn(Emucorn):
 
 
 
-   # DEPRECATED, use reset() plugin function
+          for k,v in self.conf.s_conf.tags.items(): 
+            self.tag_func(k, v)
 
-#  def repatch(self):
-#    if not self.conf.s_conf.activate_stub_mechanism:
-#      return 
-#    # need to remap according to the arch settings 
-#    self.uc.mem_map(consts_x86.ALLOC_BA,
-#                    self.conf.p_size*consts_x86.ALLOC_PAGES,
-#                    UC_PROT_READ | UC_PROT_WRITE)
-#
-#    self.unstub_all()
-#    self.stubbit()
-#    
-        
 
-  """ Instructions specifics functions 
-  """
+
+
 #---------------------------------------------------------------------------------------------
-  def nop_insn(self,insn):
+  def nop_insn(self,
+               insn):
+
+    """ 
+    ! nop the instruction 
+  
+    @param instruction repr by IDA
+    """
     for of in range(0,insn.size):
       self.uc.mem_write(insn.ea+of,struct.pack('B',consts_x86.nop))
     
 
   @staticmethod
   def tail_retn(ea):
+
     """ returns operand of retn <op>
         this is heuristic, should be used carefully.
+        
+        @param ea Address to start the research 
     """
 
     f = ida_funcs.get_func(ea)
     insn = get_insn_at(f.end_ea)# somehow end_ea does not point to the last insn...
+
     if insn.itype == consts_x86.ida_retn_itype: # or use ida_idp.is_ret_insn...
-      print('found directly retn')
+
       if not len(insn.__get_ops__()) > 0:
+
         return 0 
+
       else:
+
         return idc.get_operand_value(insn.ea,0)
+
     # in case, last insn of the funcs is not a retn X, we need
     # to decode insn one by one until find the "good one" 
     else:
+
       ea = f.start_ea 
       while ea < f.end_ea:
          insn = get_insn_at(ea)
@@ -178,9 +187,12 @@ class x86Corn(Emucorn):
           
     return -1 
    
-  def get_retn_insn(self,ea):
+  def get_retn_insn(self,
+                    ea:int):
+
     f = ida_funcs.get_func(ea)
     n = x86Corn.tail_retn(f.start_ea)
+
     if n > 0: 
       try: retn = self.ks.asm('ret %d'%n,as_bytes=True)[0]
       except: logger.console(LogType.WARN,'could not compile retn insn'); return -1
@@ -213,7 +225,7 @@ class x86Corn(Emucorn):
     
     return x86EFLAGS.create(self.uc.reg_read(UC_X86_REG_EFLAGS))
 
-  def setup_regs(self,regs):
+def setup_regs(self,regs):
 
     # Segment register might be instancied manually using console
     self.uc.reg_write(UC_X86_REG_EAX,regs.EAX)
@@ -366,91 +378,3 @@ class x86Corn(Emucorn):
 
 
 
-#  @staticmethod
-#  def generate_default_config(path=None,
-#                       arch=None,
-#                       emulator=None,
-#                       p_size=None,
-#                       stk_ba=None,
-#                       stk_size=None,
-#                       autoMap=None,
-#                       showRegisters=None,
-#                       exec_saddr=None,
-#                       exec_eaddr=None,
-#                       mapping_saddr=None,
-#                       mapping_eaddr=None,
-#                       segms=None,
-#                       map_with_segs=None,
-#                       use_seg_perms=None,
-#                       useCapstone=None,
-#                       registers=None,
-#                       showMemAccess=None,
-#                       s_conf=None,
-#                       amap_conf=None,
-#                        memory_init=None,
-#                       color_graph=None,
-#                        breakpoints=None):
-#
-#    if registers == None:
-#        registers = x86Registers(EAX=0,
-#                                EBX=1,
-#                                ECX=2,
-#                                EDX=3,
-#                                EDI=4,
-#                                ESI=5,
-#                                EBP=consts_x86.STACK_BASEADDR+consts_x86.STACK_SIZE-\
-#                                 consts_x86.initial_stack_offset,
-#                                ESP=consts_x86.STACK_BASEADDR+consts_x86.STACK_SIZE-\
-#                                 consts_x86.initial_stack_offset,
-#                                EIP=exec_saddr)
-#    else:
-#        registers = regs
-#
-#    if s_conf == None:
-#        exec_path = search_executable()
-#        stub_conf = StubConfiguration(nstubs=dict(),
-#                                      activate_stub_mechanism=True if exec_path != ""
-#                                      else False,
-#                                      orig_filepath=exec_path,
-#                                      custom_stubs_file=None,
-#                                      auto_null_stub=True if exec_path != "" else False,
-#                                      tags=dict())
-#    else:
-#        stub_conf = s_conf
-#
-#    if amap_conf == None:
-#        addmap_conf = AdditionnalMapping.create()
-#    else:
-#        addmap_conf = amap_conf
-#
-#
-#    if memory_init == None:
-#        meminit = AdditionnalMapping.create()
-#    else:
-#        meminit = memory_init
-#
-#    return Configuration(     path=path if path else '',
-#                              arch='x86',
-#                              emulator='unicorn',
-#                              p_size=p_size if p_size else consts_x86.PSIZE,
-#                              stk_ba=stk_ba if stk_ba else consts_x86.STACK_BASEADDR,
-#                              stk_size=stk_size if stk_size else consts_x86.STACK_SIZE,
-#                              autoMap=autoMap if autoMap else False,
-#                              showRegisters=showRegisters if showRegisters else True,
-#                              exec_saddr=exec_saddr if exec_saddr else 0,
-#                              exec_eaddr=exec_eaddr if exec_eaddr else 0xFFFFFFFF,
-#                              mapping_saddr=get_min_ea_idb() if not mapping_saddr else mapping_saddr,
-#                              mapping_eaddr=get_max_ea_idb() if not mapping_eaddr else mapping_eaddr,
-#                              segms=segms if segms else [],
-#                              map_with_segs=map_with_segs if map_with_segs else False,
-#                              use_seg_perms=use_seg_perms if use_seg_perms else False,
-#                              useCapstone=useCapstone if useCapstone else True,
-#                              registers=registers,
-#                              showMemAccess=showMemAccess if showMemAccess else True,
-#                              s_conf=stub_conf,
-#                              amap_conf=addmap_conf,
-#                              memory_init=meminit,
-#                              color_graph=False,
-#                              breakpoints=breakpoints if breakpoints else [])
-#
-#

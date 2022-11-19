@@ -25,7 +25,7 @@ class Emulator(object):
     self.is_running = False
     self.stubbed_bytes = dict() # records of {ea : original instruction
     for ea in self.conf.breakpoints:
-      self.add_breakpoint(ea,update_conf=False)
+      self.add_breakpoint(ea)
     
 
     
@@ -210,7 +210,7 @@ class Emulator(object):
     """ 
     pass
 
-  def add_breakpoint(self,ea,update_conf=True):
+  def add_breakpoint(self,ea):
     """ setup a breakpoint for insn x 
     """
     self.user_breakpoints.append(ea)
@@ -219,10 +219,10 @@ class Emulator(object):
     
       
 
-  def del_breakpoint(self,ea,update_conf=True):
+  def del_breakpoint(self,ea):
     try:
       self.user_breakpoints.remove(ea)
-      if update_conf: self.conf.remove_breakpoint(ea)
+      
     except ValueError:
       logger.console(LogType.WARN,'no breakpoint at specified address %x'%ea)
 

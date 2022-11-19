@@ -66,7 +66,7 @@ class x64Corn(Emucorn):
 
 
         for k,v in self.conf.patches.items():
-            self.patch_insn(k,v,update_conf=False)
+            self.patch_insn(k,v)
 
 
         
@@ -124,6 +124,10 @@ class x64Corn(Emucorn):
 
                     self.libc_start_main_trampoline = consts_x64.LIBCSTARTSTUBADDR
                     self.stub_PLT()
+
+
+            for k,v in self.conf.s_conf.tags.items(): 
+                self.tag_func(k, v)
 
 
 

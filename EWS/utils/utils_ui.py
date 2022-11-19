@@ -346,7 +346,7 @@ def add_patch_file(engine):
 
     for addr,insn in dict(patches).items():
         addr = int(addr,16)
-        engine.patch_insn(addr,insn,update_conf)
+        engine.patch_insn(addr,insn)
 
 
 

@@ -13,6 +13,7 @@ from EWS.ui import *
 from EWS.ui.debug_view import *
 from EWS.utils.utils import logger,LogType
 from EWS.utils.consts_ida import *
+from unicorn import UcError
 
 
 class menu_action_handler_t(idaapi.action_handler_t):
@@ -256,16 +257,16 @@ class menu_action_handler_t(idaapi.action_handler_t):
     def editconf(self):
         
         if self.plug.emulator_initialized:
-#            logger.console(LogType.ERRR,"Could not edit configuration while emulator is initialized",
-#                           "Please reset the emulator. tips: save your current configuration before",
-#                           "You can reimport it and then modify it")
-            ida_kernwin.warning("Could not edit configuration while emulator is initialized\n\
-                                Please reset the emulator. tips: save your current configuration before\n\
-                                You can reimport it and then modify it")
-            return
+            uret = ida_kernwin.ask_yn(False,"Emulator being already instancied, editing configuration 
+            will extract current emulator state in a new configuration object and allow you to edit it. 
+                                      Is that what you want")
             
-        if not self.plug.config_initialized:
-            #logger.console(LogType.ERRR,"Please create/load a configuration before using this function")
+            if uret == ida_kernwin.ASKBTN_YES: 
+                conf = self.plug.emu.extract_current_configuration() 
+            else:
+                return
+            
+        elif not self.plug.config_initialized:
             ida_kernwin.warning("Please create/load a configuration before using this function")
             return
 
@@ -359,17 +360,6 @@ class menu_action_handler_t(idaapi.action_handler_t):
         finally:
             self.plug.refresh_view()
 
-#        if self.plug.emu.is_running:
-#            self.plug.emu.step_in()
-#            self.plug.refresh_view()
-#        else:
-#            if not self.plug.view_intialized: 
-#                self.plug.init_view()
-#            if not self.plug.view_enabled:
-#                self.plug.enable_view()
-#            self.plug.emu.start()
-#            self.plug.refresh_view()
-
         
 
     def stepover(self):
@@ -399,42 +389,25 @@ class menu_action_handler_t(idaapi.action_handler_t):
             logger.console(LogType.INFO,"Exec continues")
             try:
                 self.plug.emu.continuee()
-#            except Exception as e:
-#                logger.console(LogType.ERRR,"Execution run out of control.",
-#                               "Reason: %s"%e.__str__())
+            except Exception as e:
+                logger.console(LogType.ERRR,"Execution run out of control.",
+                               "Reason: %s"%e.__str__())
             finally:
                 self.plug.refresh_view()
         else:
             logger.console(LogType.INFO,"Exec starts")
             try:
                 self.plug.emu.start()
-#            except Exception as e:
-#                logger.console(LogType.ERRR,"Execution run out of control.",
-#                               "Reason: %s"%e.__str__())
+            except Exception as e:
+                logger.console(LogType.ERRR,"Execution run out of control.",
+                               "Reason: %s"%e.__str__())
             finally:
                 self.plug.refresh_view()
 
 
-
-### DEPRECATED 
-### USE reset()
-
-#        
-#    def restart(self):
-#        
-#        if self.plug.emu == idaapi.BADADDR:
-#            logger.console(LogType.ERRR,
-#                           "Please initiate an self.plug.emulator before using this function (Alt+Ctrl+I)")
-#            return
-#        if self.plug.emu.is_running:
-#            self.plug.emu.restart()
-#        else:
-#            self.plug.emu.start()
-#
     def add_mapping(self):
         
 
-        #if self.plug.conf == idaapi.BADADDR:
         if not self.plug.emulator_initialized: 
             logger.console(LogType.ERRR,
                            "Please initiate an self.plug.emulator before using this function (Alt+Ctrl+I)")
@@ -461,7 +434,6 @@ class menu_action_handler_t(idaapi.action_handler_t):
 
     def add_nstub(self):
 
-        #if self.plug.emu == idaapi.BADADDR:
         if not self.plug.emulator_initialized: 
             logger.console(LogType.ERRR,
                            "Please initiate an self.plug.emulator before using this function (Alt+Ctrl+I)")
@@ -474,7 +446,7 @@ class menu_action_handler_t(idaapi.action_handler_t):
 
         cur_ea = ida_kernwin.get_screen_ea()
         if (ida_kernwin.ask_yn(False,"Null-stub function %x"%cur_ea)):
-            self.plug.emu.add_null_stub(cur_ea,update_conf=True)
+            self.plug.emu.add_null_stub(cur_ea)
         logger.console(LogType.INFO,"Null stub added to function %s"%ida_name.get_name(cur_ea),
                        "at addr %x"%cur_ea)
 
@@ -580,10 +552,10 @@ class EWS_Plugin(idaapi.plugin_t, idaapi.UI_Hooks):
                                  menu_action_handler_t(DISPLAYADDR,self), 'Alt+Shift+M',
                                  "T", 12),
             idaapi.action_desc_t(IMPORTMEM, "Import Memory From File",
-                                 menu_action_handler_t(IMPORTMEM,self), 'Alt+Shift+I',
+                                 menu_action_handler_t(IMPORTMEM,self), 'Ctrl+Shift+I',
                                  "T", 12),
             idaapi.action_desc_t(EXPORTMEM, "Export Memory To File",
-                                 menu_action_handler_t(EXPORTMEM,self), 'Alt+Shift+E',
+                                 menu_action_handler_t(EXPORTMEM,self), 'Ctrl+Shift+E',
                                  "T", 12),
             idaapi.action_desc_t(STEPIN, "Start / Step IN",
                                  menu_action_handler_t(STEPIN,self), 'Alt+Shift+I',

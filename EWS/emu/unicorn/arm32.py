@@ -80,7 +80,7 @@ class ArmCorn(Emucorn):
         self.assembler = assemblers['arm'][0]
 
     for k,v in self.conf.patches.items():
-        self.patch_insn(k,v,update_conf=False)
+        self.patch_insn(k,v)
 
 
 
@@ -133,32 +133,23 @@ class ArmCorn(Emucorn):
             self.stub_PLT()
 
 
+      for k,v in self.conf.s_conf.tags.items(): 
+            self.tag_func(k, v)
 
 
 
 
 
-  def start(self,cnt=0,saddr=None): 
-    """ 
-        Need to overload because of thumb mode
-    """ 
-    if not saddr:
+  """
+  def start(self,
+            cnt=0,
+            saddr=None): 
+     if not saddr:
       saddr = self.conf.exec_saddr 
-
 
     if self.isThumb(): 
       saddr |= 1
 
-
-    # pc can be changed after unicorn has been init
-    # so saddr may not be equals to the previous start addr
-    if self.conf.registers.get_program_counter() != saddr&(~1) and not self.is_running:
-        logger.console(LogType.WARN,'exec_saddr != registers.PC, using registers.PC')
-        saddr = self.conf.registers.get_program_counter()
-
-
-    if self.isThumb():
-      saddr |= 1
 
     try:
       idaapi.show_wait_box("Running...")
@@ -174,28 +165,12 @@ class ArmCorn(Emucorn):
     finally:
       idaapi.hide_wait_box()
 
-#    if self.conf.color_graph:
-#        colorate_graph(self.exec_trace.generate_color_map())
-
     Exec_Trace_Serializer.dump_to_file(self.exec_trace,'/tmp/exec_trace.txt')
 
 
 
-
-#      colorate_graph(self.color_map)
-
-
-
-
-
-
-
   def step_over(self):
-    """
-    need to overload because of Thumb mode
-    """
-
-
+  
 
     insn = get_insn_at(self.helper.get_pc())
     bp_addr = []
@@ -209,12 +184,7 @@ class ArmCorn(Emucorn):
                        "Please do it manually")
     else:
         self.step_in()
-
-
-
-
-
-
+  """
 
   def nop_insn(self,insn):
 
@@ -405,25 +375,6 @@ class ArmCorn(Emucorn):
     return arm32CPSR.create(self.uc.reg_read(UC_ARM_REG_CPSR))
 
 
-# DEPRECATED use reset function instead
-
-
-#
-#  def repatch(self):
-#    """ 
-#    when using restart() function from debugger 
-#    memory is erased, thus stub instruction has be 
-#    to be patch again 
-#    """
-#
-#    if not self.conf.s_conf.activate_stub_mechanism:
-#      return
-#    self.uc.mem_map(consts_arm.ALLOC_BA,self.conf.p_size*consts_arm.ALLOC_PAGES,UC_PROT_READ | UC_PROT_WRITE)
-#    # this switch is probably useless, cause reloc list is not populated 
-#    if verify_valid_elf(self.conf.s_conf.orig_filepath):
-#        self.stubbit()
-#
-#
 
 
   def print_registers(self):

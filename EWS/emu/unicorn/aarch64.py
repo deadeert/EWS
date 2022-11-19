@@ -55,7 +55,7 @@ class Aarch64Corn(Emucorn):
 
 
         for k,v in self.conf.patches.items():
-            self.patch_insn(k,v,update_conf=False)
+            self.patch_insn(k,v)
 
     
 
@@ -99,6 +99,9 @@ class Aarch64Corn(Emucorn):
           self.stubs = ELF.libc_stubs 
           self.libc_start_main_trampoline = consts_aarch64.LIBCSTARTSTUBADDR
           self.stubbit()
+
+        for k,v in self.conf.s_conf.tags.items():
+            self.tag_func(k,v)
 
 
     def start(self,cnt=0,saddr=None): 
