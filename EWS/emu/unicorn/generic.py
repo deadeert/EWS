@@ -22,8 +22,10 @@ import struct
 import hexdump
 
 from EWS.utils.utils import *
+from EWS.utils.configuration import Configuration, StubConfiguration
 from EWS.emu.emubase import Emulator
 from EWS.utils.exec_trace import *
+from EWS.utils.configuration import AdditionnalMapping
 
 from EWS.ui.debug_view import *
 
@@ -41,8 +43,8 @@ class Emucorn(Emulator):
         self.nb_insn=0
         self.running_stubs = dict()
 
-        self.exec_trace = Exec_Trace(self.conf.arch,addr=None)
-        self.exec_trace.addr = {}
+        self.exec_trace = Exec_Trace(self.conf.arch,content=None)
+        self.exec_trace.content = {}
         self.debug_view = None # todo create the reference in EWS_Plugin object
 
         self.filetype = ida_loader.get_file_type_name()
@@ -52,6 +54,13 @@ class Emucorn(Emulator):
         # Debugger Variables
         self.stop = False
         self.ignore_end_addr = False
+
+        self.amap = dict()
+        self.patches = dict()
+
+        self.watchpoints = dict()
+
+        self.tags = dict()
 
 
 
@@ -104,7 +113,13 @@ class Emucorn(Emulator):
 
     def flush(self):
 
-        for i in range(len(self.exec_trace.addr.keys())-1):
+        """ 
+        !flush the trace list instructions. Somehow there is a cache issue/leak. 
+        this function is executed from the UI when plugin is reset. 
+
+        """
+
+        for i in range(len(self.exec_trace.content.keys())-1):
             try:
                 self.exec_trace.addr.pop()
             except:
@@ -136,13 +151,16 @@ class Emucorn(Emulator):
 
         self.uc.mem_write(addr,mem) 
 
-        logger.console(LogType.INFO,'[%s] Additionnal mapping for data at 0x%x'%('Emucorn',addr)) 
+        logger.console(LogType.INFO,f'Created new mapping starting at 0x{addr:x}') 
+
+        self.amap[addr] = mem
         
         return 0
 
     @staticmethod
     def do_mapping(uc: Uc,
-                   conf:EWS.utils.configuration.Configuration):
+                   conf:Configuration):
+
         """
             !Do required mapping according the 
             configuration object.
@@ -270,7 +288,7 @@ class Emucorn(Emulator):
 
     def mem_write(self,
                   addr:int,
-                  data:byes) -> None:
+                  data:bytes) -> None:
 
         """
         !mem_write
@@ -446,8 +464,7 @@ class Emucorn(Emulator):
                                         assembly=out,
                                         regs=_self.get_regs(),
                                         color=get_insn_color(addr),
-                                        tainted=False,
-                                        count=_self.nb_insn)
+                                        tainted=False)
 
         logger.logfile(LogType.INFO,out) 
 
@@ -484,8 +501,7 @@ class Emucorn(Emulator):
                                         assembly=out,
                                         regs=_self.get_regs(),
                                         color=get_insn_color(addr),
-                                        tainted=False,
-                                        count=_self.nb_insn)
+                                        tainted=False)
 
         logger.logfile(LogType.INFO,out) 
 
@@ -548,13 +564,9 @@ class Emucorn(Emulator):
                         
         self.color_map[addr] = get_insn_color(addr)
 
-        if addr in self.conf.patches.keys():
 
-            asm = log = ':\t'+self.conf.patches[addr]
-
-        else:
-
-            if asm == '':
+        if asm == '':
+                        
 
                 asm = get_captsone_repr(self,addr)
                 log = build_insn_repr(self,addr)
@@ -563,8 +575,7 @@ class Emucorn(Emulator):
                                             assembly=asm,
                                             regs=self.get_regs(),
                                             color=get_insn_color(addr),
-                                            tainted=False,
-                                            count=self.nb_insn)
+                                            tainted=False)
         logger.logfile(LogType.INFO,log)
 
 
@@ -692,6 +703,9 @@ class Emucorn(Emulator):
                             ea))
             return
 
+        if stub_type == StubType.NULL: 
+            ea = ida_funcs.get_func(ea).start_ea
+
         stub =    self.get_new_stub(stub_func,
                                     stub_type=stub_type,
                                     name=name)
@@ -720,10 +734,12 @@ class Emucorn(Emulator):
 
         if ea in self.running_stubs.keys():
 
+            """
             if self.running_stubs[ea].stub_type == StubType.TAG:
                 self.conf.remove_tag(ea)
             elif self.running_stubs[ea].stub_type == StubType.NULL:
                 self.conf.remove_null_stub(ea)
+            """
 
             del self.running_stubs[ea]
 
@@ -924,8 +940,8 @@ class Emucorn(Emulator):
         """
 
         if not stub_name in self.stubs.keys():
-            logger.console(LogType.WARN,'[!] %s is not among available stubs. ',
-                           'Please refers to list_stubs command to get the list of available stubs'%stub_name)
+            logger.console(LogType.WARN,'[!] %s is not among available stubs. '%stub_name,
+                           'Please refers to list_stubs command to get the list of available stubs')
             return
 
         if ea in self.running_stubs.keys():
@@ -936,10 +952,11 @@ class Emucorn(Emulator):
         else:
                 self.stubs[stub_name].set_helper(self.helper)
 
-        self.stub_func_addr(ea,self.stubs[stub_name].do_it,stub_type=StubType.TAG)
+        self.stub_func_addr(ea,self.stubs[stub_name].do_it,stub_type=StubType.TAG,name=stub_name)
 
         logger.console(LogType.INFO,'[+] %x is now stubbed with %s function'%(ea,stub_name))
-        self.conf.add_tag(ea,stub_name)
+
+
 
 
     def remove_tag(self,
@@ -952,6 +969,7 @@ class Emucorn(Emulator):
         @param ea Address 
 
         """
+
         self.unstub_func_addr(ea)
 
 
@@ -980,7 +998,6 @@ class Emucorn(Emulator):
         self.nb_insn = 0
 
         if saddr == -1:
-
             saddr = self.conf.exec_saddr
 
 
@@ -995,7 +1012,6 @@ class Emucorn(Emulator):
         else: 
 
             end_addr = self.conf.exec_eaddr
-
 
         try:
 
@@ -1017,7 +1033,18 @@ class Emucorn(Emulator):
 
             idaapi.hide_wait_box()
 
-    def step_n(self,n):
+
+
+
+    def step_n(self,
+               n:int) -> None:
+
+        """ 
+        !step_n 
+
+        @param n Number of instructions to be executed. 
+
+        """
 
         if self.stop: 
 
@@ -1044,20 +1071,33 @@ class Emucorn(Emulator):
 
     def step_in(self):
 
+        """
+        !step_in executes a single instruction 
+
+        """
+
         self.step_n(1)
 
     def continuee(self):
+
+        """ 
+        !continue 
+
+        """
 
         self.step_n(0)
 
 
 
     def step_over(self):
+
         """
-            Try to detect the target using IDA API.
-            Use IDA breakpoint to notify the user that breakpoint are added (there is no wizard)
-            It will then have to remove it if he/she restarts the program.
-            It handles call, direct jump, and jump tables
+        !step_over Try to detect the target using IDA API.
+        Use IDA breakpoint to notify the user that breakpoint are added (there is no wizard)
+        It will then have to remove it if he/she restarts the program.
+        It handles call, direct jump, and jump tables
+
+
         """
 
         insn = get_insn_at(self.helper.get_pc())
@@ -1109,7 +1149,7 @@ class Emucorn(Emulator):
             logger.console(LogType.INFO,"Add write watchpoint "
                            "for [%x: %x]"%(base_addr,(base_addr+rang)))
 
-        self.conf.add_watchpoint(base_addr,size)
+        self.watchpoints[base_addr]= mode << 24 | rang 
 
     def reset_color_graph(self):
         pass
@@ -1118,24 +1158,54 @@ class Emucorn(Emulator):
 
     def patch_insn(self,
                    addr:int,
-                   asm:bytes):
+                   asm:bytes) -> None:
+
+
+        """ 
+        !patch_insn Patch instruction(s) with the bytecode
+
+        @param addr Effective Address to apply the patch from 
+        @param asm  compiled assebmly. 
+         
+        """
 
 
         bytecode = self.assembler.assemble(asm,addr)
-        # TODO: check perms, add Write Perm on Page (if required)
         self.uc.mem_write(addr,bytecode)
         logger.console(LogType.INFO,f"Instruction(s) at {addr:x} patched")
-        # TODO: remove addtionnal perm
+        self.patches[addr] = bytecode
+
+        # This handles use case where new bytecode is bigger than 
+        # the original one. Stop address might not be detected
+        # causing execution drift.
+        if addr >= self.conf.exec_saddr: 
+            if addr + len(bytecode) > self.conf.exec_eaddr: 
+                self.conf.exec_eaddr = addr + len(bytecode) 
 
 
-    def isThumb(self):
+    def isThumb(self) -> bool:
+
         """ 
         ! necessary for arm32 architecture.
         """
+
         return False
 
 
-    def extract_current_configuration(self) -> EWS.utils.configuration.Configuration:
+    def extract_current_configuration(self) -> Configuration:
+
+
+        cur_nstubs = dict()
+        cur_tagstub = dict() 
+
+        for ea,s in self.running_stubs.items(): 
+            if s.stub_type == StubType.TAG: 
+                cur_tagstub[ea] = s.name 
+            elif s.stub_type == StubType.NULL:
+                cur_nstubs[ea] = s 
+
+            
+
 
         return Configuration(
                  path=self.conf.path,
@@ -1156,13 +1226,19 @@ class Emucorn(Emulator):
                  useCapstone=self.conf.useCapstone,
                  registers=self.get_regs(),
                  showMemAccess=self.conf.showMemAccess,
-                 s_conf=self.conf.s_conf, # TODO create the object with the elements 
-                 amap_conf=self.conf.amap_conf, #TODO idem
+                 s_conf=StubConfiguration(nstubs={**self.conf.s_conf.nstubs, **cur_nstubs},
+                                            tag_func_tab = self.conf.s_conf.tag_func_tab,
+                                            activate_stub_mechanism=self.conf.s_conf.activate_stub_mechanism,
+                                            orig_filepath=self.conf.s_conf.orig_filepath,
+                                            custom_stubs_file=self.conf.s_conf.custom_stubs_file,
+                                            auto_null_stub=self.conf.s_conf.auto_null_stub,
+                                            tags={**self.conf.s_conf.tags,**cur_tagstub}),
+                 amap_conf=AdditionnalMapping({**self.conf.amap_conf.mappings ,**self.amap}),
                  memory_init=self.conf.memory_init,
                  color_graph=self.conf.color_graph,
                  breakpoints=self.user_breakpoints,
-                 watchpoints=None, #TODO
-                 patches= None, #TODO
+                 watchpoints=self.watchpoints, #TODO
+                 patches= {**self.patches, ** self.conf.patches}, #TODO
                  max_insn=0x10000)
 
 

@@ -1,5 +1,5 @@
-from EWS.utils.utils import *
 from EWS.utils.registers import *
+from EWS.utils.utils import *
 import json
 
 
@@ -8,16 +8,27 @@ class AdditionnalMapping():
 
     @staticmethod
     def create():
+
         return AdditionnalMapping(mappings={})
 
     def __init__(self,mappings):
+
+        """ 
+        !class constructor 
+
+        @param mappings is a record of {addr: bytes}
+
+        """
+
         self.mappings = mappings
 
     def __str__(self):
+
         return '\n'.join(['{}: {}'.format(x,self.__dict__[x])
                           for x in self.__dict__])
 
     def __add__(self,addm):
+
         ret = {**self.mappings, **addm.mappings}
         return AdditionnalMapping(ret)
 
@@ -43,13 +54,15 @@ class StubConfiguration():
                  auto_null_stub: bool=False,
                  tags: dict = None):
         """
-        activate_stub_mechanism: create helper for stubs
-        tag_func_tab:            stub ELF(GOT)/PE(IAT) table (when available)
-        orig_filepath:           name of the original binary
-        custom_stubs_file:       file that specify special behavior for certain function
-        autonull stub:           null stubs symbols that are not currently supported
-        tags :                   dict {ea:stub_name}
-        nstubs                   null stub dictionnary
+        !
+
+        @param activate_stub_mechanism: create helper for stubs
+        @param tag_func_tab:            stub ELF(GOT)/PE(IAT) table (when available)
+        @param orig_filepath:           name of the original binary
+        @param custom_stubs_file:       file that specify special behavior for certain function
+        @param autonull stub:           null stubs symbols that are not currently supported
+        @param tags :                   dict {ea:stub_name}
+        @param nstubs                   null stub dictionnary
         """
 
         self.tag_func_tab = tag_func_tab
@@ -194,6 +207,35 @@ class Configuration():
 
 
 
+        """
+        !generate_default_config 
+
+        @param arch:                     str             idp name 
+        @param emulator                str             emulation solution name 
+        @param stk_ba:                 int             for stack base address 
+        @param stk_size:             int             for stack size (curved with p_size)    
+        @param autoMap:                boolean     if true when a insn hit unmapped page, the page will be mapped by the engine(if available)    
+        @param showRegisters:    boolean     if true registers value will be displayed on the console and/or file 
+        @param exec_saddr:         int             start address of the execution
+        @param exec_eaddr:         int             stop address of the execution
+        @param mapping_saddr     int             offset in binary where the mapping starts 
+        @param mapping_eaddr     int             offset in binary where the mapping ends
+        @param map_with_segs     boolean     allow selecting segm. to map among list (disable two previous options)
+        @param use_seg_perms     boolean     use segment permission(s) of the file format (if available)
+        @param useCapstone         boolean     use capstone to generate insn disassembly output
+        @param registers:            [int]         init values of regsiters
+        @param s_conf:
+        @param showMemAccess     boolean     when activated display all memory accesses on logger
+        @param amap_conf:            [mapping] allow addit. mappings (not belonging to the binary) 
+                                                             usefull for arguments mapping etc... 
+        @param memory_init         [mapping] allow to store memory initialization
+        @param filepath:             str             path of the origianl executable (for stubs)
+        @param breakpoint:         list of breakpoints
+        @param watchpoints:         dict of {watchpoint_addr: size} #  it does not record fashion access (read/write)
+        @param patches:            dict of {addr: asm}
+
+        @return Configuration Object
+        """
 
         if registers == None:
             raise Exception('Registers object must be created when using generate_default_config function')
@@ -262,14 +304,31 @@ class Configuration():
 
 
     def show_nullstubs(self):
+
+        """ 
+        !show_nullstubs 
+        """
+
         for k,v in self.s_conf.nstubs.items():
             logger.console(LogType.INFO,'%s at %x'%(v,k))
 
 
-    def add_null_stub(self,ea):
+    def add_null_stub(self,
+                      ea:int) -> None:
+
+        """ 
+        !add_null_stub
+        """
+
         self.s_conf.nstubs[ea] = ida_funcs.get_func_name(ea)
 
-    def remove_null_stub(self,ea):
+    def remove_null_stub(self,
+                         ea:int)-> None:
+
+        """ 
+        !remove_null_stub
+        """
+
         if ea in self.s_conf.nstubs.keys():
                 del self.s_conf.nstubs[ea]
         else:
@@ -277,54 +336,147 @@ class Configuration():
                                "No null-stub registred at this address (%x)"%ea)
 
 
-    def add_tag(self,ea,stub_name):
+    def add_tag(self,
+                ea:int,
+                stub_name:str) -> None:
+        
+        """ 
+        !add_tag
+
+        @param ea Effective Address of the function
+        @param stub_name The name of the tag used to stub the function  
+
+
+        """
+
         if ea in self.s_conf.tags.keys():
                 logger.console(LogType.WARN,'Tag already registred at this ea (%x). Overwritting the value'%ea)
         self.s_conf.tags[ea] = stub_name
 
-    def remove_tag(self,ea):
+    def remove_tag(self,
+                   ea:int)->None:
+
+        """ 
+        !remove_tag 
+
+        @param ea Effective Address where the tag was registred
+
+        """
+
+
         if ea in self.s_conf.nstubs.keys():
+            
                 del self.s_conf.nstubs[ea]
+
         else:
                 logger.console(LogType.WARN,"Could not remove tag. No tag registred at this address (%x)"%ea)
 
-    def show_tags(self):
+    def show_tags(self)-> None:
+
+        """
+        !show_tags
+        """
+
         for k,v in self.s_conf.tags.items():
             logger.console(LogType.INFO,'%x : %s'%(k,v))
     
-    def save(self,path):
+    def save(self,
+             path:str)-> None:
+
         saveconfig(self,path)
 
-    def add_breakpoint(self,ea):
+    def add_breakpoint(self,
+                       ea:int) -> None:
+
+        """
+        !add_breakpoint
+
+        @param ea Effective Address for the breakpoint
+
+        """ 
+        
         self.breakpoints.append(ea)
 
-    def add_watchpoint(self,base_addr,size):
+    def add_watchpoint(self,
+                       base_addr:int,
+                       size:int) -> None :
+
+        """ 
+        !add_watchpoint
+
+        @param base_addr Effective Address of the data
+        @param size Size to consider.
+        """
+
         self.watchpoints[base_addr] = size
         
-    def remove_breakpoint(self,ea):
+    def remove_breakpoint(self,
+                          ea:int) -> None:
+
+        """ 
+        !remove_breakpoint 
+
+        @param ea Effective Address where the breakpoint was registred 
+        """
+
+
         self.breakpoints.remove(ea)
 
-    def show_breakpoints(self):
+    def show_breakpoints(self) -> None:
+
+        """ 
+        !show_breakpoints 
+
+
+        """
+
         for k in self.breakpoints:
             logger.console(LogType.INFO,'%x'%k)
 
     def add_patch(self,
                     addr: int,
-                    asm: str):
+                    asm: str) -> None:
+
+        """
+        !add_patch 
+
+        @param addr Effective Address for the patch 
+        @param asm Assembly text to be compiled
+
+
+        """
+
+
         self.patches[addr] = asm
 
     def remove_patch(self,
-                       addr):
+                     addr: int) -> None:
+        """
+        !remove_patch 
+
+        @param addr Effective Address where the patch was registred
+
+        """
+    
         del self.patches[addr]
 
 
 
 class ConfigSerializer(json.JSONEncoder):
 
-    def default(self,conf):
+    def default(self,
+                conf):
+       
+        """ 
+        This class is used for serialization. 
+
+        @param config Configuration Object to be serialized
+
+        """
+
         if isinstance(conf, Configuration):
+
             segs = [ seg.start_ea for seg in conf.segms ] 
-#             funcs = [ conf.s_conf.nstubs[fname].start_ea for fname in conf.s_conf.nstubs.keys() ] 
             funcs = conf.s_conf.nstubs
 
             f_amap = dict()
@@ -337,8 +489,15 @@ class ConfigSerializer(json.JSONEncoder):
                 il = [ b for b in bytearray(v) ]    
                 f_meminit[k] = il 
 
+
+
    
             
+            p = dict() 
+            for addr,bytecode in conf.patches.items():
+                p[addr] = [b for b in bytearray(bytecode)]
+
+
             
             return {'path':conf.path, 
                             'arch': conf.arch,
@@ -368,19 +527,19 @@ class ConfigSerializer(json.JSONEncoder):
                          'memory_init': f_meminit,
                          'breakpoints':conf.breakpoints,
                          'watchpoints': conf.watchpoints,
-                         'patches': conf.patches,
+                         'patches': p,
                          'max_insn': conf.max_insn}
 
 
 class ConfigDeserializer(json.JSONDecoder): #PASS ClassType for register parsing ? 
     
         def decode(self,json_txt):
+        
 
-         jdict = json.loads(json_txt)
-         nstubs = dict()
-         try : 
-#             for fstart_ea in jdict['s_conf']['nstubs']: nstubs[ida_funcs.get_func_name(fstart_ea)] = ida_funcs.get_func(fstart_ea)
-#             nstubs = jdict['s_conf']['nstubs'] 
+            jdict = json.loads(json_txt)
+            nstubs = dict()
+
+
             for ea,fname in jdict['s_conf']['nstubs'].items(): nstubs[int(ea,10)] = fname
      
                                                     
@@ -399,34 +558,25 @@ class ConfigDeserializer(json.JSONDecoder): #PASS ClassType for register parsing
             watchpoints = dict()
             for k,v in jdict['watchpoints'].items():
                 watchpoints[int(k,10)] = v
-
-            patches = dict()
-            for k,v in jdict['patches'].items():
-                try:
-                    patches[int(k,10)] = v
-                except:
-                    patches[int(k,16)] = v
-
-
         
             if jdict['arch'] == 'arm':
-#                 regs=ArmRegisters( *[ jdict['registers'][rname] for rname in jdict['registers'].keys()    ])
                 regs=ArmRegisters(**jdict['registers'])
             elif jdict['arch'] == 'mips':
                 regs=MipslRegisters(**jdict['registers'])
-#                 regs=MipslRegisters( *[ jdict['registers'][rname] for rname in jdict['registers'].keys()    ])
             elif jdict['arch'] == 'x86':
                 regs=x86Registers(**jdict['registers']) 
             elif jdict['arch'] == 'x64':
                 regs=x64Registers(**jdict['registers'])
             elif jdict['arch'] == 'aarch64':
                 regs=Aarch64Registers(**jdict['registers'])
-            else:
-                raise Exception('NotImplemented')
-                    
+
+
+            patches = dict()
+            for addr,intb in jdict['patches'].items():
+                patches[int(addr,10)] = bytes(bytearray(intb))
                 
-         
-            return Configuration(path=jdict['path'],
+
+            conf = Configuration(path=jdict['path'],
                                  arch=jdict['arch'],
                                  emulator=jdict['emulator'],
                                  p_size=jdict['p_size'],
@@ -444,11 +594,13 @@ class ConfigDeserializer(json.JSONDecoder): #PASS ClassType for register parsing
                                  useCapstone=jdict['useCapstone'],
                                  registers=regs,
                                  showMemAccess=jdict['showMemAccess'],
-                                 s_conf=StubConfiguration(nstubs,jdict['s_conf']['activate_stub_mechanism'],
-                                                                     jdict['s_conf']['orig_filepath'],
-                                                                     jdict['s_conf']['custom_stubs_file'],
-                                                                     jdict['s_conf']['auto_null_stub'],
-                                                                     tags_dict),
+                                 s_conf=StubConfiguration(nstubs=nstubs,
+                                                          tag_func_tab=jdict['s_conf']['tag_func_tab'],
+                                                          activate_stub_mechanism=jdict['s_conf']['activate_stub_mechanism'],
+                                                           orig_filepath=jdict['s_conf']['orig_filepath'],
+                                                           custom_stubs_file=jdict['s_conf']['custom_stubs_file'],
+                                                            auto_null_stub=jdict['s_conf']['auto_null_stub'],
+                                                            tags=tags_dict),
                                 amap_conf=AdditionnalMapping(amap_dict),
                                  memory_init=AdditionnalMapping(meminit_dict),
                                  color_graph=jdict['color_graph'],
@@ -456,26 +608,37 @@ class ConfigDeserializer(json.JSONDecoder): #PASS ClassType for register parsing
                                  watchpoints=watchpoints,
                                  patches=patches,
                                  max_insn=jdict['max_insn'])
-         except Exception as e: 
-                print('[!] Error deserializing JSON object: %s'%e.__str__()) 
-                return None
+
+            return conf
              
-def saveconfig(conf,conf_apath=None): 
-    if not conf_apath: 
+def saveconfig(conf,
+               conf_apath:str=''): 
+
+    """ 
+    !saveconfig 
+
+    @param conf_apath: Path of the file for Configuration serialization
+
+    """
+
+    if conf_apath == '': 
         conf_apath=conf.path
-    # TODO test and commit changes
-    """
-    out=json.dumps(conf,cls=ConfigSerializer)
-    with open(conf_apath,'w+') as fout: 
-        fout.write(out)
-    """
+   
     with open(conf_apath,'w+') as fout: 
         json.dump(conf,fp=fout,cls=ConfigSerializer)
     
 
-def loadconfig(conf_apath): 
+def loadconfig(conf_apath:str) -> Configuration : 
+
+    """ 
+    !loadconfig 
+
+    @param conf_apath: Path of the Configuration to be deserialized.
+
+    """
 
     with open(conf_apath, 'r') as fin:
+
         return json.loads(fin.read(),cls=ConfigDeserializer)
 
 

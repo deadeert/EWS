@@ -15,7 +15,7 @@ from capstone import *
 from EWS.utils import consts_x64 
 from keystone import * 
 from EWS.emu.unicorn.x86 import x86Corn
-from EWS.stubs.ELF.allocator import *
+from EWS.stubs.allocators.allocator import *
 from EWS.stubs.ELF import ELF
 from EWS.stubs.PE import PE
 from EWS.utils.configuration import *
@@ -66,9 +66,10 @@ class x64Corn(Emucorn):
 
 
         for k,v in self.conf.patches.items():
-            self.patch_insn(k,v)
+            self.patch_mem(k,v) 
 
-
+        for k,v in self.conf.watchpoints:
+            self.add_watchpoint(k, rang&0xff,mode=rang>>24)
         
         # TODO move it to the do_mapping
         for k,v in self.conf.memory_init.mappings.items():

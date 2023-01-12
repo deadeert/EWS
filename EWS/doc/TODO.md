@@ -38,6 +38,8 @@ Emulator not instancied: just edit the current conf object.
 
 ## Config Serial / Unserial (not working well)
 
+Now use extract_current_configuration if extracted when the configuration was created.
+
 
 ## libc_start_main for arm / aarch64
 

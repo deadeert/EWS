@@ -46,6 +46,8 @@ class Debug_View_Registers(idaapi.Choose):
         val = ask_str(self.items[n][1],
                                   False,
                                   self.items[n][0])
+        if val is None:
+            return
         self.items[n][1] = val
          
         #TODO update emu value with self.emu.reg_write(val)/
@@ -85,7 +87,6 @@ class Debug_View_Registers(idaapi.Choose):
 
     def test(self,extra=None):
         pass
-#        print('%s: %s'%(self.title,extra))
 
     def OnPopup(self,form, popup_handle):
         actname = "test:%s" % self.title
@@ -100,7 +101,7 @@ class Debug_View_Trace(idaapi.Choose):
     def __init__(self,
                  title,
                  emu,
-                 register_view, # print
+                 register_view, 
                  flags=CH_NO_STATUS_BAR|CH_CAN_REFRESH|CH_CAN_EDIT, # must be able to insert
                  width=None,
                  height=None,
@@ -120,9 +121,12 @@ class Debug_View_Trace(idaapi.Choose):
         
         self.emu = emu
         self.items = []
-        for k,v in self.emu.exec_trace.addr.items():
-            addr = int(k.split('_')[0],16)
-            self.items.append( [ '0x%x'%addr,
+
+        for k,v in self.emu.exec_trace.content.items():
+
+            
+            addr = int()
+            self.items.append( [ f"0x{v['addr']:x}",
                                 ''.join(v['assembly'].split(':')[1:]) ])
         self.selcount = 0
         self.n = len(self.items)
@@ -143,13 +147,14 @@ class Debug_View_Trace(idaapi.Choose):
 
         self.selcount+=1
 
-        element = list(self.emu.exec_trace.addr.values())[n]
+        element = list(self.emu.exec_trace.content.values())[n]
+        
 
         regs = element['regs']
         self.register_view.update_with_regs(regs)
 
-        # TODO: check if emu.conf.jump pc is activated ? 
-        addr = int(list(self.emu.exec_trace.addr.keys())[n].split('_')[0],16)
+        addr = self.emu.exec_trace.content[n]['addr']
+
         jumpto(addr)
 
 
@@ -169,9 +174,9 @@ class Debug_View_Trace(idaapi.Choose):
         n = 0
         last_size = len(self.items)
 
-        for k,v in self.emu.exec_trace.addr.items():
-            if n >= last_size:
-                addr = int(k.split('_')[0],16)
+        for k,v in self.emu.exec_trace.content.items():
+            if k >= last_size:
+                addr = v['addr']
                 self.items.append( [ '0x%x'%addr,
                                     ''.join(v['assembly'].split(':')[1:]) ])
             n+=1

@@ -19,5 +19,22 @@ LIBCSTARTSTUBADDR=STACK_BASEADDR-PSIZE
 
 ### END ARM SPECIFICS ####
 
+from unicorn.arm_const import *
 
-
+reg_map_unicorn = {}
+reg_map_unicorn['R0']=UC_ARM_REG_R0
+reg_map_unicorn['R1']=UC_ARM_REG_R1
+reg_map_unicorn['R2']=UC_ARM_REG_R2
+reg_map_unicorn['R3']=UC_ARM_REG_R3
+reg_map_unicorn['R4']=UC_ARM_REG_R4
+reg_map_unicorn['R5']=UC_ARM_REG_R5
+reg_map_unicorn['R6']=UC_ARM_REG_R6
+reg_map_unicorn['R7']=UC_ARM_REG_R7
+reg_map_unicorn['R8']=UC_ARM_REG_R8
+reg_map_unicorn['R9']=UC_ARM_REG_R9
+reg_map_unicorn['R10']=UC_ARM_REG_R10
+reg_map_unicorn['R11']=UC_ARM_REG_R11
+reg_map_unicorn['R12']=UC_ARM_REG_R12
+reg_map_unicorn['R13']=UC_ARM_REG_R13
+reg_map_unicorn['R14']=UC_ARM_REG_R14
+reg_map_unicorn['R15']=UC_ARM_REG_R15

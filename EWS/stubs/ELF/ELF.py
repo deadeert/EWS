@@ -1,5 +1,3 @@
-#from utils.consts_arm import SVC_INSN_ARM 
-#from utils.consts_mips import BREAK_INSN_MIPS  
 import ida_kernwin
 from EWS.stubs.ELF import conf
 from EWS.stubs.ELF.utils import *
@@ -37,6 +35,15 @@ class Stub(object):
 
   def set_helper(self,helper):
     self.helper = helper
+
+  def check_watchpoint(self,base_addr,size,mode='read'):
+    for k,v in self.helper.emu.watchpoints.items():
+            for x in range(base_addr,base_addr+size):
+                if x in range(k,k+(v&0xFF)):
+                    logger.console(LogType.INFO,
+                                   f"[watchpoint] [{mode}] [pc={self.helper.get_pc():x}] memory access at 0x{x:x}")
+         
+
 
 libc_stubs = dict()
 
@@ -82,6 +89,8 @@ class memset(Stub):
         ln = self.helper.get_arg(2)
         logger.console(LogType.INFO,' memset(%8X, %2X, %X)'%(dst,data,ln))
         self.helper.mem_write(dst,bytes(data*ln))
+        self.check_watchpoint(dst, ln,mode='write')
+        self.check_watchpoint(data, 1)
         return True
 
 
@@ -100,11 +109,6 @@ class malloc(Stub):
           self.helper.set_return(addr)
           logger.console(LogType.INFO,' malloc(%X) = %8X'%(req_size,addr))
           return True
-#         else:
-#           addr = self.helper.allocator.malloc(size)
-#           logger.console(LogType.INFO,' malloc(%X) = %8X (from stub)'%(size,addr))
-#           return addr 
-# 
 
 # -----------------------------------------------------------------------------
 @LibcStub('free')
@@ -185,6 +189,9 @@ class strncpy(Stub):
         self.helper.mem_write(dst,bytes(data))
         logger.console(LogType.INFO,'[strncpy] dst = %.8X src = %.8X ln = %d'%(dst,src,ln),
                   '\n\tCopying string : ',data)
+
+        self.check_watchpoint(dst_addr, len(data),mode='write')
+        self.check_watchpoint(src_addr, len(data))
         return True
 
 # -----------------------------------------------------------------------------
@@ -200,6 +207,8 @@ class strcpy(Stub):
         src_addr=self.helper.get_arg(1)
         src = deref_string(self.helper,src_addr)
         self.helper.mem_write(dst_addr,src)
+        self.check_watchpoint(dst_addr, len(src),mode='write')
+        self.check_watchpoint(src_addr, len(src))
         return True
 
 # -----------------------------------------------------------------------------
@@ -250,11 +259,15 @@ class memcpy(Stub):
         logger.console(LogType.INFO,'Writting from %x data:'%src,data,' at addr %x'%dst,' for len %d'%ln)
         self.helper.mem_write(dst,bytes(data))
         self.helper.set_return(ln)
+        self.check_watchpoint(dst, ln,mode='write')
+        self.check_watchpoint(src, ln)
         
         return True
 
 # -----------------------------------------------------------------------------
 @LibcStub('strlen')
+@LibcStub('_strlen')
+@LibcStub(".strlen")
 class strlen(Stub):
 
     def __init__(self):
@@ -267,6 +280,7 @@ class strlen(Stub):
         size=len(deref_until(self.helper,str_addr,b'\0'))
         logger.console(LogType.INFO,'[strlen] returns %d'%size)
         self.helper.set_return(size)
+        self.check_watchpoint(str_addr, size)
         return True
 
 # -----------------------------------------------------------------------------
@@ -279,21 +293,29 @@ class fopen(Stub):
         
 
     def do_it(self,*args):
+
         fname_addr = self.helper.get_arg(0)
         mode_addr = self.helper.get_arg(1)
+
         try:
-            #Python does not support file opening with non utf-8 / unicode string.
+
             filename = deref_until(self.helper,fname_addr,b'\0')
+
         except SyntaxError:
             raise StubPythonException('[fopen] non utf-8 filename')
+
         mode = deref_string(self.helper,mode_addr).decode('utf-8')
         logger.console(LogType.INFO,'[fopen] filename: ',filename,' mode:%s'%mode)
+
         if '+' in mode: mode=mode.split('+')[0]+'b'+mode.split('+')[1]
         else: mode +='b'
+
         fd = open(filename,mode)
         fd_list[fd.fileno()] = FILE(fd,mode)
+
         logger.console(LogType.INFO,'[fopen] returning fd %d'%fd.fileno())
         self.helper.set_return(fd.fileno())
+
         return True
 # -----------------------------------------------------------------------------
 @LibcStub('fwrite')
@@ -1135,11 +1157,6 @@ class scanf(Stub):
         logger.console(LogType.INFO,"[stub] scanf(%s) write %s at %x"%(format,
                                                                 out_chain.decode('utf-8'),
                                                                 target_addr))
-
-               
-
-
-
 
         return True
 

@@ -1,5 +1,51 @@
 # Available Features 
 
+The plugin uses basically two objects, are an emulator wrapper, which must
+implement the features exposed by Emulator interface (see `emu/emubase.py`) and
+a configuration object which specifies anything required to configure the emulator
+environment and settings.
+
+Currently, only Unicorn emulator solution is supported. 
+
+## Load Contextual Menu 
+
+To load contextual menu, available in the assembly view, 
+you can either load manually the plugin on "Edit/Plugins" or use
+the shortcut **Ctrl+Alt+E**. 
+
+## Configuration 
+
+### You first configuration
+
+The easiest way to generate a configuration object, is either to :
+
+- select on the UI disasembly view the segment you want to execute and
+  use shortcut **Ctrl+Alt+S** 
+- go on a function and use shortcut **Ctrl+Alt+F**. 
+- a ELF file benefits from the feature that allows to execute 
+  the binary from the begining.  
+
+If you want to create a configuration manually, you can use the contextual 
+menu "EWS/init/" 
+
+From here the emulator can be instancied, using shortcut **Ctrl+Alt+I**. 
+
+At the stage, emulation can be launched using shortcut **Shift+Alt+C**.
+
+### Import / Export 
+
+Configuration file can be created (exported) and imported inside
+the plugin. This will (de)serialize the configuration object. 
+
+### Edit 
+
+
+If the emulator is already instancied, editing the configuration 
+will reset it and generate a Configuration object based on the 
+**current** state of the emulator. 
+
+
+
 
 ## Debugging
 
@@ -35,8 +81,10 @@ You can export some part of the memory.
 
 ### MemoryImport:
 
-You can i#mport memory from **already** mapped area.
+You can import memory from **already** mapped area.
 To map a new memory area use the feature to add a new mapping (shortcut is `Ctrl+Alt+A`). 
+The UI is weird. You need to first select the file and click "add content file" to select the file. Then you need to click "Add Mapping" to create the mapping and add the content file.
+If you don't want to init memory, just click on "Add Mapping" button.
 
 ### Memory Display 
 
@@ -75,7 +123,7 @@ but this is not planned.
 To add a stub, the user should reach either `stubs/ELF/ELF.py` or `stubs/PE/PE.py` file 
 according to the environment. 
 
-*Note*: Even if the binary is not using a loader, the stub mechanism still available, 
+*Note*: Even if the binary is not using a loader, the stub mechanism is still available, 
 which limited features (it does not automatically patch symbols table). 
 
 The stub receive a `helper` object which primitives that allow to access the arguments. 
@@ -105,13 +153,5 @@ this function is actually `<malloc>/<realloc>`...
 ### Allocator 
 
 Yes, there is a dumb allocator available as well...
-
-## Configuration 
-
-### Import / Export 
-
-Configuration file can be created (exported) and imported inside
-the plugin. This will (de)serialize the configuration object. 
-
 
 

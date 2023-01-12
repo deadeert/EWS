@@ -45,3 +45,17 @@ LIBCSTARTSTUBCODE=b"\x8b\x5c\x24\x10\xff\x74\x24\x08\xff\x74\x24\x0c\xff\xd3\x8b
 
 initial_stack_offset=0x10 # in case of pop instructions when starting emulation. 
 
+from unicorn.x86_const import *
+
+reg_map_unicorn = {}
+reg_map_unicorn['eax']=UC_X86_REG_EAX
+reg_map_unicorn['ebx']=UC_X86_REG_EBX
+reg_map_unicorn['ecx']=UC_X86_REG_ECX
+reg_map_unicorn['edx']=UC_X86_REG_EDX
+reg_map_unicorn['edi']=UC_X86_REG_EDI
+reg_map_unicorn['esi']=UC_X86_REG_ESI
+reg_map_unicorn['esp']=UC_X86_REG_ESP
+reg_map_unicorn['ebp']=UC_X86_REG_EBP
+reg_map_unicorn['eip']=UC_X86_REG_EIP
+
+

@@ -3,7 +3,7 @@ from EWS.emu.unicorn.generic import *
 import string
 from EWS.utils.utils import * 
 from EWS.utils import consts_x86
-from EWS.stubs.ELF.allocator import *
+from EWS.stubs.allocators.allocator import *
 import ida_loader
 import idc
 import ida_ua
@@ -59,9 +59,13 @@ class x86Corn(Emucorn):
 
     self.assembler = assemblers['x86'][0]
 
-
     for k,v in self.conf.patches.items():
-            self.patch_insn(k,v)
+            self.patch_mem(k,v) 
+
+
+    for k,v in self.conf.watchpoints.items():
+            self.add_watchpoint(k, v&0xff,mode=v>>24)
+
 
 
 
@@ -116,7 +120,6 @@ class x86Corn(Emucorn):
             self.nstub_obj = ELF.NullStub()
             self.loader_type = LoaderType.ELF
             self.nstub_obj.set_helper(self.helper)
-
             if verify_valid_elf(self.conf.s_conf.orig_filepath):
               self.reloc_map = get_relocs(self.conf.s_conf.orig_filepath,
                                           lief.ELF.RELOCATION_X86_64.JUMP_SLOT)
@@ -132,9 +135,6 @@ class x86Corn(Emucorn):
             self.tag_func(k, v)
 
 
-
-
-#---------------------------------------------------------------------------------------------
   def nop_insn(self,
                insn):
 
@@ -144,7 +144,11 @@ class x86Corn(Emucorn):
     @param instruction repr by IDA
     """
     for of in range(0,insn.size):
-      self.uc.mem_write(insn.ea+of,struct.pack('B',consts_x86.nop))
+      #self.uc.mem_write(insn.ea+of,struct.pack('B',consts_x86.nop))
+      bc,sz = self.ks.asm("nop;"*size,as_bytes=True,addr=insn.ea)
+      self.uc.mem_write(insn.ea,bc)
+
+
     
 
   @staticmethod
@@ -197,7 +201,8 @@ class x86Corn(Emucorn):
       try: retn = self.ks.asm('ret %d'%n,as_bytes=True)[0]
       except: logger.console(LogType.WARN,'could not compile retn insn'); return -1
     elif n == 0: 
-      retn = struct.pack('B',consts_x86.ret)
+      retn,sz = self.ks.asm("ret;",as_bytes=True)
+      #retn = struct.pack('B',consts_x86.ret)
 
     return retn
 
@@ -216,106 +221,48 @@ class x86Corn(Emucorn):
     return stub
 
 
-  """  Register specific functions 
-  """
-#---------------------------------------------------------------------------------------------
-
-
   def get_alu_info(self):
     
     return x86EFLAGS.create(self.uc.reg_read(UC_X86_REG_EFLAGS))
 
-def setup_regs(self,regs):
+  def setup_regs(self,regs):
 
-    # Segment register might be instancied manually using console
-    self.uc.reg_write(UC_X86_REG_EAX,regs.EAX)
-    self.uc.reg_write(UC_X86_REG_EBX,regs.EBX)
-    self.uc.reg_write(UC_X86_REG_ECX,regs.ECX)
-    self.uc.reg_write(UC_X86_REG_EDX,regs.EDX)
-    self.uc.reg_write(UC_X86_REG_EDI,regs.EDI)
-    self.uc.reg_write(UC_X86_REG_ESI,regs.ESI)
-    self.uc.reg_write(UC_X86_REG_ESP,regs.ESP)
-    self.uc.reg_write(UC_X86_REG_EBP,regs.EBP)
-    self.uc.reg_write(UC_X86_REG_EIP,regs.EIP)
+    for k,v in consts_x86.reg_map_unicorn.items():
+            self.uc.reg_write(v,getattr(regs,k.upper())) 
 
   def get_regs(self):
-      return x86Registers(
-            EAX=self.uc.reg_read(UC_X86_REG_EAX),
-            EBX=self.uc.reg_read(UC_X86_REG_EBX),
-            ECX=self.uc.reg_read(UC_X86_REG_ECX),
-            EDX=self.uc.reg_read(UC_X86_REG_EDX),
-            EDI=self.uc.reg_read(UC_X86_REG_EDI),
-            ESI=self.uc.reg_read(UC_X86_REG_ESI),
-            ESP=self.uc.reg_read(UC_X86_REG_ESP),
-            EBP=self.uc.reg_read(UC_X86_REG_EBP),
-            EIP=self.uc.reg_read(UC_X86_REG_EIP))
+
+    regs =x86Registers.create() 
+
+    for k,v in consts_x86.reg_map_unicorn.items():
+        setattr(regs,k.upper(),self.uc.reg_read(v))
+    return regs
     
   def reset_regs(self):
 
-    self.uc.reg_write(UC_X86_REG_EAX,0)
-    self.uc.reg_write(UC_X86_REG_EBX,0)
-    self.uc.reg_write(UC_X86_REG_ECX,0)
-    self.uc.reg_write(UC_X86_REG_EDX,0)
-    self.uc.reg_write(UC_X86_REG_EDI,0)
-    self.uc.reg_write(UC_X86_REG_ESI,0)
-    self.uc.reg_write(UC_X86_REG_ESP,0)
-    self.uc.reg_write(UC_X86_REG_EBP,0)
-    self.uc.reg_write(UC_X86_REG_EIP,0)
-   
+        for k,v in consts_x86.reg_map_unicorn.items():
+            self.uc.reg_write(v,0)
+ 
 
   @staticmethod
-  def reg_convert(r_id):
-    if r_id.lower() == 'eax':
-      return UC_X86_REG_EAX 
-    elif r_id.lower() == 'ebx':
-      return UC_X86_REG_EBX 
-    elif r_id.lower() == 'ecx':
-      return UC_X86_REG_ECX 
-    elif r_id.lower() == 'edx':
-      return UC_X86_REG_EDX 
-    elif r_id.lower() == 'edi':
-      return UC_X86_REG_EDI
-    elif r_id.lower() == 'esi':
-      return UC_X86_REG_ESI
-    elif r_id.lower() == 'esp':
-      return UC_X86_REG_ESP
-    elif r_id.lower() == 'ebp':
-      return UC_X86_REG_EBP
-    elif r_id.lower() == 'eip':
-      return UC_X86_REG_EIP
-    
-  def reg_convert_ns(self,r_id):
-    if r_id.lower() == 'eax':
-      return UC_X86_REG_EAX 
-    elif r_id.lower() == 'ebx':
-      return UC_X86_REG_EBX 
-    elif r_id.lower() == 'ecx':
-      return UC_X86_REG_ECX 
-    elif r_id.lower() == 'edx':
-      return UC_X86_REG_EDX 
-    elif r_id.lower() == 'edi':
-      return UC_X86_REG_EDI
-    elif r_id.lower() == 'esi':
-      return UC_X86_REG_ESI
-    elif r_id.lower() == 'esp':
-      return UC_X86_REG_ESP
-    elif r_id.lower() == 'ebp':
-      return UC_X86_REG_EBP
-    elif r_id.lower() == 'eip':
-      return UC_X86_REG_EIP
+  def reg_convert(r_id:str):
+    return consts_x86.reg_map_unicorn[r_id]
    
+  def reg_convert_ns(self,r_id):
+    return consts_x86.reg_map_unicorn[r_id]
 
+    
     
   def print_registers(self):
     strout  = 'Registers:\n'
     strout +=  '[EAX=%.8X] [EBX=%.8X] [ECX=%.8X] [EDX=%.8X]\n'%(self.uc.reg_read(UC_X86_REG_EAX),
-                                                         self.uc.reg_read(UC_X86_REG_EBX),
-                                                         self.uc.reg_read(UC_X86_REG_ECX),
-                                                         self.uc.reg_read(UC_X86_REG_EDX))
+     self.uc.reg_read(UC_X86_REG_EBX),
+     self.uc.reg_read(UC_X86_REG_ECX),
+     self.uc.reg_read(UC_X86_REG_EDX))
     strout += '[EDI=%.8X] [ESI=%.8X] [EBP=%.8X] [ESP=%.8X]\n'%(self.uc.reg_read(UC_X86_REG_EDI),
-                                                         self.uc.reg_read(UC_X86_REG_ESI),
-                                                         self.uc.reg_read(UC_X86_REG_EBP),
-                                                         self.uc.reg_read(UC_X86_REG_ESP))
+     self.uc.reg_read(UC_X86_REG_ESI),
+     self.uc.reg_read(UC_X86_REG_EBP),
+     self.uc.reg_read(UC_X86_REG_ESP))
     return strout
 
 
@@ -362,14 +309,13 @@ def setup_regs(self,regs):
             EBP = ESP = consts_x86.STACK_BASEADDR+consts_x86.STACK_SIZE-\
                                  consts_x86.initial_stack_offset
         registers = x86Registers.get_default_object(EBP=EBP,ESP=ESP,EIP=exec_saddr)
-      return Configuration.generate_default_config(stk_ba=stk_ba if stk_ba\
+      return Configuration.generate_default_config(arch='x86',stk_ba=stk_ba if stk_ba\
                                                     else consts_x86.STACK_BASEADDR,
                                                     stk_size=stk_size if stk_size\
                                                     else consts_x86.STACK_SIZE,
                                                     registers=registers,
                                                     exec_saddr=exec_saddr,
-                                                    exec_eaddr=exec_eaddr,
-                                                   arch='x86')
+                                                    exec_eaddr=exec_eaddr)
 
 
 

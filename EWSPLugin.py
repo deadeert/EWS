@@ -13,6 +13,8 @@ from EWS.ui import *
 from EWS.ui.debug_view import *
 from EWS.utils.utils import logger,LogType
 from EWS.utils.consts_ida import *
+from EWS.ui.generic import FileSelector
+from EWS.utils.configuration import saveconfig
 from unicorn import UcError
 
 
@@ -67,8 +69,6 @@ class menu_action_handler_t(idaapi.action_handler_t):
             self.stepover()
         elif self.action == CONTINUE:
             self.continuee()
-#        elif self.action == RESTART:
-#            self.restart()
         elif self.action == ADDMAPPNG:
             self.add_mapping()
         elif self.action == WATCHPOINT:
@@ -88,11 +88,13 @@ class menu_action_handler_t(idaapi.action_handler_t):
 
     def reset(self):
 
-        #if self.plug.emu != idaapi.BADADDR:
         if self.plug.emulator_initialized :
             self.plug.emu.flush() ##FIXME is that necessary?
             self.plug.emu.reset_color_graph()
             self.plug.reset()
+        elif self.plug.config_initialized:
+            self.plug.config = None
+            self.plug.config_initialized = False
            
         if self.plug.view_enabled:
             self.plug.reset_view()
@@ -101,13 +103,19 @@ class menu_action_handler_t(idaapi.action_handler_t):
 
     def emul_func(self):
 
+        """
+        ! Emulate current function 
+
+        """ 
+
+
         if self.plug.config_initialized:
-            if not ida_kernwin.ask_yn(False,'A configuration is already available. It will be erased. Continue ?'):
-                return
+
+            ida_kernwin.warning("Configuration Object already exist, please reset the plugin before using this function.")
+            return 
 
         s_ea, e_ea = utils_ui.get_func_boundaries()
         self.plug.conf = utils_ui.get_conf_for_area(s_ea,e_ea) 
-        #self.emu = utils_ui.get_emul(s_ea,e_ea)
 
         logger.console(LogType.INFO, "Configuration generated for area [0x%x 0x%x] "%
                        (self.plug.conf.exec_saddr,self.plug.conf.exec_eaddr))
@@ -116,9 +124,16 @@ class menu_action_handler_t(idaapi.action_handler_t):
 
     def emul_selection(self):
 
+        """
+        ! Emulate the current selected assembly in UI_Hooks
+
+        """
+
+
         if self.plug.config_initialized:
-            if not ida_kernwin.ask_yn(False,'A configuration is already available. It will be erased. Continue ?'):
-                return
+
+            ida_kernwin.warning("Configuration Object already exist, please reset the plugin before using this function.")
+            return 
 
 
         s_ea, e_ea = utils_ui.get_user_select()
@@ -131,9 +146,14 @@ class menu_action_handler_t(idaapi.action_handler_t):
     def emul_init(self):
 
 
+        """ 
+        ! Initialise the emulator and the debug views. 
+
+        """
+
+
 
         if not self.plug.config_initialized:
-#        if self.plug.conf == idaapi.BADADDR:
             logger.console(LogType.WARN,"Please init a configuration")
             return
 
@@ -159,6 +179,12 @@ class menu_action_handler_t(idaapi.action_handler_t):
 
     def emul_launcher(self):
 
+
+        """ 
+        ! Create a configuration from scratch.
+
+        """
+
         if self.plug.config_initialized == True:
             ida_kernwin.warning("A configuration object is already instancied.\n\
                                 Please use edit feature to edit the current config")
@@ -178,8 +204,10 @@ class menu_action_handler_t(idaapi.action_handler_t):
 
     def edit_registers(self):
 
-        ## TODO : this function must edit self.plug.configuration if self.plug.config_initialized and not self.plug.emulator_initialized. 
-        ##        otherwise, it should edit self.plug.emu.registers object. 
+        """ 
+        ! Edit registers. 
+        
+        """
 
         if not self.plug.config_initialized:
             logger.console(LogType.WARN,"Please init the configuration before using this function")
@@ -193,18 +221,17 @@ class menu_action_handler_t(idaapi.action_handler_t):
             self.plug.conf.registers = new_regs
         else:
             new_regs = regedit_func(self.plug.emu.get_regs())
-            # FIXME IDT (i don't think) it's necessary to update the configuration object of the emulator. 
-            #self.plug.emu.conf= self.plug.conf
             if not new_regs is None:  
                 self.plug.emu.setup_regs(new_regs)
 
     def tag_func(self):
+
         """
-        Tag a function when cursor is on call type insn (call/br 0x...) 
+        !Tag a function when cursor is on call type insn (call/br 0x...) 
+
         """
 
         if not self.plug.emulator_initialized:
-        #if self.plug.emu == idaapi.BADADDR:
             logger.console(LogType.ERRR,
                            "Please initiate an self.plug.emulator before using this function (Alt+Ctrl+I)")
             return
@@ -221,26 +248,30 @@ class menu_action_handler_t(idaapi.action_handler_t):
             logger.console(LogType.ERRR,
                            'Could not find valid function to tag')
             return
+
         if ea != None  and ea != idaapi.BADADDR:
             self.plug.emu.tag_func(ea,tag_name)
             logger.console(LogType.INFO,
                            'Function at %x now tagger with %s'%(ea,tag_name))
 
-            # update self.plug.conf (tagging is auto updating self.plug.conf)
-            self.plug.conf = self.plug.emu.conf
-
 
     def loadconf(self):
 
-        if self.plug.emulator_initialized:
-            ida_kernwin.warning("Emulator is already initialized. Please reset it before using this feature")
+        """ 
+        ! Load configuration from file. 
+
+        """ 
+
+        if self.plug.emulator_initialized or self.plug.config_initialized:
+            ida_kernwin.warning("Please reset plugin to load new configuration")
             return
 
-        if self.plug.config_initialized:
-            if (not ida_kernwin.ask_yn(False,"A config is already disponible, continue?")):
-                return
+        try: 
+            self.plug.conf = utils_ui.loadconfig()
+        except:
+            ida_kernwin.warning('Config file does not exist')
+            return 
 
-        self.plug.conf = utils_ui.loadconfig()
 
         self.plug.config_initialized = True
 
@@ -248,18 +279,48 @@ class menu_action_handler_t(idaapi.action_handler_t):
 
 
     def saveconf(self):
+        
+        """
+        ! saveconf 
+
+
+        """
+
         if not self.plug.config_initialized:
+
             ida_kernwin.warning('No configuration object available')
             return
-        utils_ui.saveconfig(self.plug.conf)
+
+        if self.plug.emulator_initialized:
+
+            conf_path =FileSelector.fillconfig()
+            config = self.plug.emu.extract_current_configuration()
+
+
+            saveconfig(config,conf_path) 
+
+                    
+        else:
+
+            utils_ui.saveconfig(self.plug.conf)
 
 
     def editconf(self):
+
+
+        """ 
+        !editconf 
+
+        
+        """
         
         if self.plug.emulator_initialized:
-            uret = ida_kernwin.ask_yn(False,"Emulator being already instancied, editing configuration 
-            will extract current emulator state in a new configuration object and allow you to edit it. 
-                                      Is that what you want")
+            ida_kernwin.warning("Configuration cannot be edited when emulator is initalized"
+                                +"Advise: store current config (if necessary) and reset the plugin.")
+
+            uret = ida_kernwin.ask_yn(False,"Emulator being already instancied,"
+            +"editing configuration will extract current emulator state in a new"
+            +"configuration object and allow you to edit it. Is that what you want")
             
             if uret == ida_kernwin.ASKBTN_YES: 
                 conf = self.plug.emu.extract_current_configuration() 
@@ -275,73 +336,88 @@ class menu_action_handler_t(idaapi.action_handler_t):
                                          conf=self.plug.conf)
             self.plug.conf = new_conf
         except Exception as e:
-            print('%s'%str(e))
-             # case user clicked nope/nevermind
-            pass
+            ida_kernwin("Something wrong happened while loading the config, please reset the plug and retry")
             
 
        
     def patchmem(self):
+
+        """ 
+        ! Patch memory
+
+        """
         
-      if not self.plug.emulator_initialized: 
+        if not self.plug.emulator_initialized: 
+            ida_kernwin.warning("Please init the emulator before using this function")
 
-            logger.console(LogType.ERRR,
-                           "Please initiate an self.plug.emulator before using this function (Alt+Ctrl+I)")
-            return
+        if not utils_ui.patch_mem(self.plug.emu):
+            pass
 
-      if not utils_ui.patch_mem(self.plug.emu):
-            logger.console(LogType.WARN,
-                           "An error occuring while patching memory")
 
     def displaymem(self):
         
+        """ 
+        ! Display memory 
+        """
 
         if not self.plug.emulator_initialized: 
-            logger.console(LogType.ERRR,
-                           "Please initiate an self.plug.emulator before using this function (Alt+Ctrl+I)")
+            ida_kernwin.warning("Nothing to display, init the emulator before using this function.")
             return
 
         utils_ui.display_section(self.plug.emu)
 
     def displaystack(self):
+
+        """ 
+        !Display the stack
+
+        """
         
         if not self.plug.emulator_initialized: 
-
-            logger.console(LogType.ERRR,
-                           "Please initiate an self.plug.emulator before using this function (Alt+Ctrl+I)")
+            ida_kernwin.warning("Nothing to display, init the emulator before using this function.")
             return
+
 
         utils_ui.display_stack(self.plug.emu)
 
     def displayaddr(self):
-        
+
+        """
+        ! Display a specific address.
+
+        """
+
         if not self.plug.emulator_initialized: 
-            logger.console(LogType.ERRR,
-                           "Please initiate an self.plug.emulator before using this function (Alt+Ctrl+I)")
+            ida_kernwin.warning("Nothing to display, init the emulator before using this function.")
             return
+        
         utils_ui.display_addr(self.plug.emu) 
 
 
     def mem_import(self):
+
+        """ 
+        ! Import memory to emulator
+        """
         
 
         if not self.plug.emulator_initialized: 
-            logger.console(LogType.ERRR,
-                           "Please initiate an self.plug.emulator before using this function (Alt+Ctrl+I)")
+            ida_kernwin.warning("Init an emulator before using this function")
             return
 
         utils_ui.import_mem(self.plug.emu)
 
-        #TODO modifiy self.plug.configuration to track memory init
-        self.plug.conf.memory_init += self.plug.emu.conf.memory_init
         
 
     def mem_export(self):
         
 
+        """ 
+        ! Dump emulator memory in a file. 
+        """
+
         if not self.plug.emulator_initialized: 
-            logger.console(LogType.ERRR,
-                           "Please initiate an self.plug.emulator before using this function (Alt+Ctrl+I)")
+            ida_kernwin.warning("Init an emulator before using this function")
             return
 
         utils_ui.export_mem(self.plug.emu)
@@ -349,6 +425,10 @@ class menu_action_handler_t(idaapi.action_handler_t):
 
 
     def stepin(self):
+
+        """
+        ! Step in function
+        """
         
         if not self.plug.emulator_initialized: 
             ida_kernwin.warning("Please initiate an self.plug.emulator before using this function")
@@ -364,6 +444,10 @@ class menu_action_handler_t(idaapi.action_handler_t):
 
     def stepover(self):
         
+        """ 
+        ! Step over function
+        """
+        
         if not self.plug.emulator_initialized: 
             logger.console(LogType.ERRR,
                            "Please initiate an self.plug.emulator before using this function (Alt+Ctrl+I)")
@@ -374,6 +458,10 @@ class menu_action_handler_t(idaapi.action_handler_t):
             self.refresh_view()
        
     def continuee(self):
+
+        """ 
+        ! Run / Continue
+        """
 
         
         if not self.plug.emulator_initialized: 
@@ -405,28 +493,38 @@ class menu_action_handler_t(idaapi.action_handler_t):
                 self.plug.refresh_view()
 
 
+
     def add_mapping(self):
+
+        """ 
+        ! Add a mapping and optionally init memory
+
+        """
         
 
         if not self.plug.emulator_initialized: 
-            logger.console(LogType.ERRR,
-                           "Please initiate an self.plug.emulator before using this function (Alt+Ctrl+I)")
+
+            ida_kernwin.warning("Require the emulator to be init")
             return 
 
         new_mappings = utils_ui.get_add_mappings()
         self.plug.conf.amap_conf+= new_mappings
+
         if self.plug.emu != idaapi.BADADDR:
+
             idaapi.show_wait_box("Adding mapping, could take time")
             utils_ui.add_mapping(self.plug.emu,new_mappings)
             idaapi.hide_wait_box()
 
     def watchpoint(self):
-        
 
-        #if self.plug.emu == idaapi.BADADDR:
+        """
+        ! Add read/write watchpoint.
+        
+        """
+        
         if not self.plug.emulator_initialized: 
-            logger.console(LogType.ERRR,
-                           "Please initiate an self.plug.emulator before using this function (Alt+Ctrl+I)")
+            ida_kernwin.warning("Could not set breakpoint. Require the emulator to be init")
             return
 
 
@@ -434,14 +532,17 @@ class menu_action_handler_t(idaapi.action_handler_t):
 
     def add_nstub(self):
 
+        """ 
+        ! Add a null stub.
+
+        """
+
         if not self.plug.emulator_initialized: 
-            logger.console(LogType.ERRR,
-                           "Please initiate an self.plug.emulator before using this function (Alt+Ctrl+I)")
+            ida_kernwin.warning("Stubing require emulator init")
             return
 
         if not self.plug.emu.conf.s_conf.activate_stub_mechanism:
-            logger.console(LogType.ERRR,
-                           "Stub mechanism is not activated in current conf.")
+            ida_kernwin.warning("Current config does not allow stubbing.")
             return
 
         cur_ea = ida_kernwin.get_screen_ea()
@@ -452,6 +553,11 @@ class menu_action_handler_t(idaapi.action_handler_t):
 
     def patch_insn(self):
 
+        """ 
+        ! Patch instructions 
+
+        """
+
         if not self.plug.emulator_initialized:
             ida_kernwin.warning('Please init the emulator before using this function')
             return
@@ -461,7 +567,10 @@ class menu_action_handler_t(idaapi.action_handler_t):
 
     def patch_file(self):
 
-        print('suce')
+        """ 
+        ! Patch file
+
+        """
 
         if not self.plug.emulator_initialized:
             ida_kernwin.warning('Please init the emulator before using this function')
@@ -474,8 +583,10 @@ class menu_action_handler_t(idaapi.action_handler_t):
 
 
 class EWS_Plugin(idaapi.plugin_t, idaapi.UI_Hooks):
+
     """
     Load EWS Plugin
+
     """
     comment="Emulator Wrapper System"
     help="Emulate code using your favorite emulator"
@@ -542,7 +653,7 @@ class EWS_Plugin(idaapi.plugin_t, idaapi.UI_Hooks):
             idaapi.action_desc_t(PATCHFILE, "Add Patch File",
                                  menu_action_handler_t(PATCHFILE,self), '',
                                  "T", 12),
-            idaapi.action_desc_t(DISPLAYMEM, "Display Mem",
+            idaapi.action_desc_t(DISPLAYMEM, "Display Segment",
                                  menu_action_handler_t(DISPLAYMEM,self), 'Alt+Ctrl+D',
                                  "T", 12),
             idaapi.action_desc_t(DISPLAYSTK, "Display Stack",
@@ -600,12 +711,6 @@ class EWS_Plugin(idaapi.plugin_t, idaapi.UI_Hooks):
         """
         ida_kernwin.UI_Hooks.unhook(self)
         
-#        self.terminate()
-#        
-#    def terminate(self):
-#        self.emu.reset_color_graph()
-
-
     def finish_populating_widget_popup(self, form, popup):
 
         form_type = idaapi.get_widget_type(form)
@@ -691,7 +796,6 @@ class EWS_Plugin(idaapi.plugin_t, idaapi.UI_Hooks):
 
 
     def reset(self):
-        print('reset from plugin')
         self.emu = None
         self.conf = None
         self.emulator_initialized = False

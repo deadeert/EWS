@@ -195,9 +195,6 @@ def space(chain):
 
 if __name__ == '__main__':
 
-#    lol = SelectSegment.fillconfig()
-#    print(lol.start_ea)
-#
     
     addr,nbpages = AddrNBPages.fillconfig()
 

@@ -1,4 +1,5 @@
-from EWS.stubs.emu.generic import StubEngineAbstractor  
+from EWS.stubs.generic import StubEngineAbstractor  
+#from EWS.stubs.emu.generic import StubEngineAbstractor  
 from EWS.emu.unicorn.generic import Emucorn
 import EWS.emu.unicorn.arm32 
 import EWS.emu.unicorn.mipsl32
@@ -9,26 +10,61 @@ import struct
 class UnicornSEA(StubEngineAbstractor):
   
   def __init__(self,emu,allocator,wsize):
+
     super().__init__(emu,allocator,wsize)
-  def mem_read(self,addr,size):
+
+  def mem_read(self,
+               addr:int,
+               size:int)->bytes:
+
     return self.emu.mem_read(addr,size)
-  def mem_write(self,addr,data):
+
+  def mem_write(self,addr:int,
+              data:bytes):
+
     self.emu.mem_write(addr,data)
-  def reg_read(self,reg_id):
+
+  def reg_read(self,
+               reg_id) -> int:
+
     return self.emu.reg_read(self.reg_conv(reg_id))
-  def reg_write(self,reg_id,data):
+
+
+  def reg_write(self,
+                reg_id,
+                data:int):
+
     self.emu.reg_write(self.reg_conv(reg_id),data)
-  def reg_conv(self,reg_id):
+
+
+  def reg_conv(self,
+               reg_id):
+
     raise NotImplemented
-  def get_arg(self,arg_num):
+
+  def get_arg(self,
+              arg_num:int) -> int:
+
     #NOTE: must return an integer, not bytes   
+
     raise NotImplemented 
-  def push(self,sp_id,value,endianness='little'):
+
+  def push(self,
+           sp_id,
+           value:int,
+           endianness='little'):
+      
     sp = self.reg_read(sp_id)
     sp -= self.wsize
     self.mem_write(sp,int.to_bytes(value,self.wsize,endianness,signed=False))
     self.reg_write(sp_id,sp)
-  def pop(self,sp_id,reg_return,endianness='little'):
+
+  def pop(self,
+          sp_id,
+          reg_return,
+          endianness='little'):
+
+
     # use reg_return == -1 to not pop value to a register  
     sp = self.reg_read(self.reg_conv(sp_id))
     value = self.mem_read(sp,self.wsize)
