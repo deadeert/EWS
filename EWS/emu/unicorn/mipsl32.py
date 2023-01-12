@@ -2,7 +2,7 @@ from EWS.emu.unicorn.generic import *
 import string
 from EWS.utils.utils import * 
 # from unicorn.mips_const import * 
-from EWS.stubs.ELF.allocator import *
+from EWS.stubs.allocators.allocator import *
 from EWS.stubs.ELF import ELF
 import EWS.stubs.emu.unicorn.sea 
 import ida_ua

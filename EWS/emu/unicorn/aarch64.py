@@ -3,7 +3,7 @@ from EWS.emu.unicorn.generic import *
 import string
 from EWS.utils.utils import * 
 from EWS.utils import consts_aarch64
-from EWS.stubs.ELF.allocator import *
+from EWS.stubs.allocators.allocator import *
 from EWS.stubs.ELF import ELF
 from EWS.stubs.emu.unicorn.sea import UnicornAarch64SEA
 import struct
@@ -55,13 +55,14 @@ class Aarch64Corn(Emucorn):
 
 
         for k,v in self.conf.patches.items():
-            self.patch_insn(k,v,update_conf=False)
+            self.patch_mem(k,v)
 
-    
-
+        for k,v in self.conf.watchpoints.items():
+            self.add_watchpoint(k, v&0xff,mode=v>>24)
 
 
     def install_hooks(self):
+
         self.uc.hook_add(UC_HOOK_CODE,
                          self.hook_code,
                          user_data=self.conf)
@@ -72,16 +73,18 @@ class Aarch64Corn(Emucorn):
         self.uc.hook_add(UC_HOOK_MEM_WRITE_UNMAPPED,
                          Emucorn.unmp_write,
                          user_data=self)
+
         if self.conf.showMemAccess:
           self.uc.hook_add(UC_HOOK_MEM_WRITE,
                     Emucorn.hk_write,
                     self)
+
           self.uc.hook_add(UC_HOOK_MEM_READ,
                            Emucorn.hk_read,
                            self)
 
-
     def setup_stub_mechanism(self):
+
         self.uc.mem_map(consts_aarch64.ALLOC_BA,
                           self.conf.p_size*consts_aarch64.ALLOC_PAGES,
                           UC_PROT_READ | UC_PROT_WRITE)
@@ -98,35 +101,36 @@ class Aarch64Corn(Emucorn):
                                       lief.ELF.RELOCATION_AARCH64.JUMP_SLOT)
           self.stubs = ELF.libc_stubs 
           self.libc_start_main_trampoline = consts_aarch64.LIBCSTARTSTUBADDR
-          self.stubbit()
+          self.stub_PLT()
 
 
-    def start(self,cnt=0,saddr=None): 
-        """ Need to overload because of thumb mode
-        """ 
-        if not saddr:
-          saddr = self.conf.exec_saddr 
+        for k,v in self.conf.s_conf.tags.items():
+            self.tag_func(k,v)
 
-        try:
-          self.uc.emu_start(saddr,self.conf.exec_eaddr,timeout=0,count=cnt)
-        except UcError as e:  
-          logger.console(LogType.ERRR,'Error in unicorn engine')
-          raise e 
-        except Exception as e:
-          logger.console(LogType.WARN,'[!] Exception in program : %s' % e.__str__())
-          raise e
-#        if self.conf.color_graph:
-#          colorate_graph(self.color_map)
 
+    
 
     def nop_insn(self,insn):
-        self.uc.mem_write(insn.ea,struct.pack('<I',consts_aarch64.nop))
+
+        # use self.assembler() now we added an assembler :) TODO
+        self.uc.mem_write(insn.ea,
+                          struct.pack('<I',consts_aarch64.nop))
+    
 
     def get_retn_insn(self,ea):
-        return struct.pack('>I',consts_aarch64.ret)
 
-    def get_new_stub(self,stub_func,stub_type):
-        stub = ELF.Stub(self.helper,stub_type=stub_type)
+        # same
+        return struct.pack('>I',
+                           consts_aarch64.ret)
+
+    def get_new_stub(self,
+                     stub_func,
+                     stub_type:StubType,
+                     name:str=''):
+
+        stub = ELF.Stub(self.helper,
+                        stub_type=stub_type,
+                        name=name)
         stub.do_it = stub_func
         return stub
 
@@ -135,141 +139,74 @@ class Aarch64Corn(Emucorn):
     """  Register specific functions 
     """
 
-#-------------------------------------------------------------------------------------------
 
     def setup_regs(self,regs):
 
-        self.uc.reg_write(UC_ARM64_REG_X0,regs.X0)
-        self.uc.reg_write(UC_ARM64_REG_X1,regs.X1)
-        self.uc.reg_write(UC_ARM64_REG_X2,regs.X2)
-        self.uc.reg_write(UC_ARM64_REG_X3,regs.X3)
-        self.uc.reg_write(UC_ARM64_REG_X4,regs.X4)
-        self.uc.reg_write(UC_ARM64_REG_X5,regs.X5)
-        self.uc.reg_write(UC_ARM64_REG_X6,regs.X6)
-        self.uc.reg_write(UC_ARM64_REG_X7,regs.X7)
-        self.uc.reg_write(UC_ARM64_REG_X8,regs.X8)
+        """ 
+        Setup Emulator's registers using Register object. 
 
-        self.uc.reg_write(UC_ARM64_REG_X9,regs.X9)
-        self.uc.reg_write(UC_ARM64_REG_X10,regs.X10)
-        self.uc.reg_write(UC_ARM64_REG_X11,regs.X11)
-        self.uc.reg_write(UC_ARM64_REG_X12,regs.X12)
-        self.uc.reg_write(UC_ARM64_REG_X13,regs.X13)
-        self.uc.reg_write(UC_ARM64_REG_X14,regs.X14)
-        self.uc.reg_write(UC_ARM64_REG_X15,regs.X15)
-        self.uc.reg_write(UC_ARM64_REG_X16,regs.X16)
-        self.uc.reg_write(UC_ARM64_REG_X17,regs.X17)
-        self.uc.reg_write(UC_ARM64_REG_X18,regs.X18)
+        @param regs: Register object.
 
-        self.uc.reg_write(UC_ARM64_REG_X19,regs.X19)
-        self.uc.reg_write(UC_ARM64_REG_X20,regs.X20)
-        self.uc.reg_write(UC_ARM64_REG_X21,regs.X21)
-        self.uc.reg_write(UC_ARM64_REG_X22,regs.X22)
-        self.uc.reg_write(UC_ARM64_REG_X23,regs.X23)
-        self.uc.reg_write(UC_ARM64_REG_X24,regs.X24)
-        self.uc.reg_write(UC_ARM64_REG_X25,regs.X25)
-        self.uc.reg_write(UC_ARM64_REG_X26,regs.X26)
-        self.uc.reg_write(UC_ARM64_REG_X27,regs.X27)
-        self.uc.reg_write(UC_ARM64_REG_X28,regs.X28)
-        self.uc.reg_write(UC_ARM64_REG_FP,regs.FP)
-        self.uc.reg_write(UC_ARM64_REG_LR,regs.LR)
-        self.uc.reg_write(UC_ARM64_REG_SP,regs.SP)
-        self.uc.reg_write(UC_ARM64_REG_PC,regs.PC)
+        """
+
+
+
+
+
+        for k,v in consts_aarch64.reg_map_unicorn.items():
+
+            self.uc.reg_write(v,getattr(regs,k)) 
 
     def get_regs(self):
-        return Aarch64Registers(
-                X0=self.uc.reg_read(UC_ARM64_REG_X0),
-                X1=self.uc.reg_read(UC_ARM64_REG_X1),
-                X2=self.uc.reg_read(UC_ARM64_REG_X2),
-                X3=self.uc.reg_read(UC_ARM64_REG_X3),
-                X4=self.uc.reg_read(UC_ARM64_REG_X4),
-                X5=self.uc.reg_read(UC_ARM64_REG_X5),
-                X6=self.uc.reg_read(UC_ARM64_REG_X6),
-                X7=self.uc.reg_read(UC_ARM64_REG_X7),
-                X8=self.uc.reg_read(UC_ARM64_REG_X8),
 
-                X9=self.uc.reg_read(UC_ARM64_REG_X9),
-                X10=self.uc.reg_read(UC_ARM64_REG_X10),
-                X11=self.uc.reg_read(UC_ARM64_REG_X11),
-                X12=self.uc.reg_read(UC_ARM64_REG_X12),
-                X13=self.uc.reg_read(UC_ARM64_REG_X13),
-                X14=self.uc.reg_read(UC_ARM64_REG_X14),
-                X15=self.uc.reg_read(UC_ARM64_REG_X15),
-                X16=self.uc.reg_read(UC_ARM64_REG_X16),
-                X17=self.uc.reg_read(UC_ARM64_REG_X17),
-                X18=self.uc.reg_read(UC_ARM64_REG_X18),
 
-                X19=self.uc.reg_read(UC_ARM64_REG_X19),
-                X20=self.uc.reg_read(UC_ARM64_REG_X20),
-                X21=self.uc.reg_read(UC_ARM64_REG_X21),
-                X22=self.uc.reg_read(UC_ARM64_REG_X22),
-                X23=self.uc.reg_read(UC_ARM64_REG_X23),
-                X24=self.uc.reg_read(UC_ARM64_REG_X24),
-                X25=self.uc.reg_read(UC_ARM64_REG_X25),
-                X26=self.uc.reg_read(UC_ARM64_REG_X26),
-                X27=self.uc.reg_read(UC_ARM64_REG_X27),
-                X28=self.uc.reg_read(UC_ARM64_REG_X28),
-                FP=self.uc.reg_read(UC_ARM64_REG_FP),
-                LR=self.uc.reg_read(UC_ARM64_REG_LR),
-                SP=self.uc.reg_read(UC_ARM64_REG_SP),
-                PC=self.uc.reg_read(UC_ARM64_REG_PC)
-        ) 
+            """ 
+            Returns a Register object instancied with 
+            the current emulator register values. 
+
+            @return Register Object.
+            """
+
+            regs = Aarch64Registers.create() 
+            for k,v in consts_aarch64.reg_map_unicorn.items():
+                setattr(regs,k,self.uc.reg_read(v))
+            return regs
+
+
+
 
     def reset_regs(self):
 
-        # Function Arguments
-        self.uc.reg_write(UC_ARM64_REG_X0,0)
-        self.uc.reg_write(UC_ARM64_REG_X1,0)
-        self.uc.reg_write(UC_ARM64_REG_X2,0)
-        self.uc.reg_write(UC_ARM64_REG_X3,0)
-        self.uc.reg_write(UC_ARM64_REG_X4,0)
-        self.uc.reg_write(UC_ARM64_REG_X5,0)
-        self.uc.reg_write(UC_ARM64_REG_X6,0)
-        self.uc.reg_write(UC_ARM64_REG_X7,0)
-        self.uc.reg_write(UC_ARM64_REG_X8,0)
+        """ 
+        Reset the Emulator' registers.
+        """
 
-        # General Purpose
-        self.uc.reg_write(UC_ARM64_REG_X9,0)
-        self.uc.reg_write(UC_ARM64_REG_X10,0)
-        self.uc.reg_write(UC_ARM64_REG_X11,0)
-        self.uc.reg_write(UC_ARM64_REG_X12,0)
-        self.uc.reg_write(UC_ARM64_REG_X13,0)
-        self.uc.reg_write(UC_ARM64_REG_X14,0)
-        self.uc.reg_write(UC_ARM64_REG_X15,0)
-        self.uc.reg_write(UC_ARM64_REG_X16,0)
-        self.uc.reg_write(UC_ARM64_REG_X17,0)
-        self.uc.reg_write(UC_ARM64_REG_X18,0)
 
-        # stored / restored by functions accross call
-        self.uc.reg_write(UC_ARM64_REG_X19,0)
-        self.uc.reg_write(UC_ARM64_REG_X20,0)
-        self.uc.reg_write(UC_ARM64_REG_X21,0)
-        self.uc.reg_write(UC_ARM64_REG_X22,0)
-        self.uc.reg_write(UC_ARM64_REG_X23,0)
-        self.uc.reg_write(UC_ARM64_REG_X24,0)
-        self.uc.reg_write(UC_ARM64_REG_X25,0)
-        self.uc.reg_write(UC_ARM64_REG_X26,0)
-        self.uc.reg_write(UC_ARM64_REG_X27,0)
-        self.uc.reg_write(UC_ARM64_REG_X28,0)
-
-        self.uc.reg_write(UC_ARM64_REG_FP,0)
-        self.uc.reg_write(UC_ARM64_REG_LR,0)
-        self.uc.reg_write(UC_ARM64_REG_SP,0)
-        self.uc.reg_write(UC_ARM64_REG_PC,0)
+        for k,v in consts_aarch64.reg_map_unicorn.items():
+            self.uc.reg_write(v,0)
+        
 
     @staticmethod
     def reg_convert(reg_id):
+
         if type(reg_id) == type(str()):
+
           return Aarch64Corn.str2reg(reg_id)
+
         elif type(reg_id) == type(int()):
+
           return Aarch64Corn.int2reg(reg_id)
+
         else:
+
           raise Exception('[reg_convert] unhandled conversion for type %s'%type(reg_id))
 
     def reg_convert_ns(self,reg_id):
+
         if type(reg_id) == type(str()):
+
           return Aarch64Corn.str2reg(reg_id)
-#        elif type(reg_id) == type(int()):
-#          return self.int2reg(reg_id)
+
         else:
           raise Exception('[reg_convert] unhandled conversion for type %s'%type(reg_id))
 
@@ -290,118 +227,24 @@ class Aarch64Corn(Emucorn):
 
     @staticmethod           
     def str2reg(r_str):
-        if r_str.upper() == 'X0':
-          return UC_ARM64_REG_X0
-        elif r_str.upper() == 'X1':
-          return UC_ARM64_REG_X1
-        elif r_str.upper() == 'X2':
-          return UC_ARM64_REG_X2
-        elif r_str.upper() == 'X3':
-          return UC_ARM64_REG_X3
-        elif r_str.upper() == 'X4':
-          return UC_ARM64_REG_X4
-        elif r_str.upper() == 'X5':
-          return UC_ARM64_REG_X5
-        elif r_str.upper() == 'X6':
-          return UC_ARM64_REG_X6
-        elif r_str.upper() == 'X7':
-          return UC_ARM64_REG_X7
-        elif r_str.upper() == 'X8':
-          return UC_ARM64_REG_X8
-        elif r_str.upper() == 'X9':
-          return UC_ARM64_REG_X9
-        elif r_str.upper() == 'X10':
-          return UC_ARM64_REG_X10
-        elif r_str.upper() == 'X11':
-          return UC_ARM64_REG_X11
-        elif r_str.upper() == 'X12':
-          return UC_ARM64_REG_X12
-        elif r_str.upper() == 'X13':
-          return UC_ARM64_REG_X13
-        elif r_str.upper() == 'X14':
-          return UC_ARM64_REG_X14
-        elif r_str.upper() == 'X15':
-          return UC_ARM64_REG_X15
-        elif r_str.upper() == 'X16':
-          return UC_ARM64_REG_X16
-        elif r_str.upper() == 'X17':
-          return UC_ARM64_REG_X17
-        elif r_str.upper() == 'X18':
-          return UC_ARM64_REG_X18
-        elif r_str.upper() == 'X19':
-          return UC_ARM64_REG_X19
-        elif r_str.upper() == 'X20':
-          return UC_ARM64_REG_X20
-        elif r_str.upper() == 'X21':
-          return UC_ARM64_REG_X21
-        elif r_str.upper() == 'X22':
-          return UC_ARM64_REG_X22
-        elif r_str.upper() == 'X23':
-          return UC_ARM64_REG_X23
-        elif r_str.upper() == 'X24':
-          return UC_ARM64_REG_X24
-        elif r_str.upper() == 'X25':
-          return UC_ARM64_REG_X25
-        elif r_str.upper() == 'X26':
-          return UC_ARM64_REG_X26
-        elif r_str.upper() == 'X27':
-          return UC_ARM64_REG_X27
-        elif r_str.upper() == 'X28':
-          return UC_ARM64_REG_X28
-        elif r_str.upper() == 'X29' or  r_str.upper() == 'FP':
-          return UC_ARM64_REG_FP
-        elif r_str.upper() == 'X30' or r_str.upper() == 'LR':
-            return  UC_ARM64_REG_LR
-        elif r_str.upper() == 'X31' or r_str.upper() == 'SP':
-            return UC_ARM64_REG_SP
-        elif r_str.upper() == 'PC':
-            return UC_ARM64_REG_PC
 
+        return consts_aarch64.reg_map_unicorn[r_str] 
+        
     def get_alu_info(self): 
         return aarch64CPSR.create(self.uc.reg_read(UC_ARM_REG_CPSR))
 
 
 
     def print_registers(self):
-        strout  = 'Registers:\n'
-        strout +=  '[X0=%.8X] [X1=%.8X] [X2=%.8X] [X3=%.8X]\n'%(self.uc.reg_read(UC_ARM64_REG_X0),
-                                                             self.uc.reg_read(UC_ARM64_REG_X1),
-                                                             self.uc.reg_read(UC_ARM64_REG_X2),
-                                                             self.uc.reg_read(UC_ARM64_REG_X3))
-        strout += '[X4=%.8X] [X5=%.8X] [X6=%.8X] [X7=%.8X]\n'%(self.uc.reg_read(UC_ARM64_REG_X4),
-                                                             self.uc.reg_read(UC_ARM64_REG_X5),
-                                                             self.uc.reg_read(UC_ARM64_REG_X6),
-                                                             self.uc.reg_read(UC_ARM64_REG_X7))
-        strout += '[X8=%.8X] [X9=%.8X] [X10=%.8X] [X11=%.8X]\n'%(self.uc.reg_read(UC_ARM64_REG_X8),
-                                                               self.uc.reg_read(UC_ARM64_REG_X9),
-                                                               self.uc.reg_read(UC_ARM64_REG_X10),
-                                                               self.uc.reg_read(UC_ARM64_REG_X11))
-        strout += '[X12=%.8X] [X13=%.8X] [X14=%.8X] [X15=%.8X]\n' % (self.uc.reg_read(UC_ARM64_REG_X12), 
-                                                                     self.uc.reg_read(UC_ARM64_REG_X13), 
-                                                                     self.uc.reg_read(UC_ARM64_REG_X14), 
-                                                                     self.uc.reg_read(UC_ARM64_REG_X15))
 
-        strout += '[X16=%.8X] [X17=%.8X] [X18=%.8X] [X19=%.8X]\n' % (self.uc.reg_read(UC_ARM64_REG_X16), 
-                                                                     self.uc.reg_read(UC_ARM64_REG_X17),
-                                                                     self.uc.reg_read(UC_ARM64_REG_X18),
-                                                                     self.uc.reg_read(UC_ARM64_REG_X19))
-
-        strout +=  '[X20=%.8X] [X21=%.8X] [X22=%.8X] [X23=%.8X]\n'%(self.uc.reg_read(UC_ARM64_REG_X20),
-                                                             self.uc.reg_read(UC_ARM64_REG_X21),
-                                                             self.uc.reg_read(UC_ARM64_REG_X22),
-                                                             self.uc.reg_read(UC_ARM64_REG_X23))
-        strout += '[X24=%.8X] [X25=%.8X] [X26=%.8X] [X27=%.8X]\n'%(self.uc.reg_read(UC_ARM64_REG_X24),
-                                                             self.uc.reg_read(UC_ARM64_REG_X25),
-                                                             self.uc.reg_read(UC_ARM64_REG_X26),
-                                                             self.uc.reg_read(UC_ARM64_REG_X27))
-
-        strout += '[X28=%.8X] [FP=%.8X] [LR =%.8X] [SP =%.8X]\n'%(self.uc.reg_read(UC_ARM64_REG_X28),
-                                                               self.uc.reg_read(UC_ARM64_REG_FP),
-                                                               self.uc.reg_read(UC_ARM64_REG_LR),
-                                                               self.uc.reg_read(UC_ARM64_REG_SP))
+        strout = 'Registers:\n'
+        for k,v in consts_aarch64.reg_map_unicorn.items():
+            strout += f"{k}={self.uc.reg_read(v):x}" 
+         
         return strout
 
 
+        
     @staticmethod
     def generate_default_config(
                                  path: str = None,
@@ -444,9 +287,9 @@ class Aarch64Corn(Emucorn):
         else:
             x31 = consts_aarch64.STACK_BASEADDR+consts_aarch64.STACK_SIZE-\
                                  consts_aarch64.initial_stack_offset
-        registers = x64Registers.get_default_object(exec_eaddr, # LR
-                                         x31,
-                                         exec_saddr)
+        registers = Aarch64Registers.get_default_object(X30=exec_eaddr, # LR
+                                         X31=x31,
+                                         PC=exec_saddr)
       return Configuration.generate_default_config(stk_ba=stk_ba if stk_ba\
                                                     else consts_aarch64.STACK_BASEADDR,
                                                     stk_size=stk_size if stk_size\
@@ -455,124 +298,4 @@ class Aarch64Corn(Emucorn):
                                                     exec_saddr=exec_saddr,
                                                     exec_eaddr=exec_eaddr, 
                                                    arch='aarch64')
-
-
-
-
-
-
-
-
-
-#    @staticmethod
-#    def generate_default_config(path=None,
-#                       arch=None,
-#                       emulator=None,
-#                       p_size=None,
-#                       stk_ba=None,
-#                       stk_size=None,
-#                       autoMap=None,
-#                       showRegisters=None,
-#                       exec_saddr=None,
-#                       exec_eaddr=None,
-#                       mapping_saddr=None,
-#                       mapping_eaddr=None,
-#                       segms=None,
-#                       map_with_segs=None,
-#                       use_seg_perms=None,
-#                       useCapstone=None,
-#                       registers=None,
-#                       showMemAccess=None,
-#                       s_conf=None,
-#                       amap_conf=None,
-#                       memory_init=None,
-#                       color_graph=None,
-#                        breakpoints=None):
-#
-#      if registers == None:
-#            registers = Aarch64Registers(0,
-#                                         1,
-#                                         2,
-#                                         3,
-#                                         4,
-#                                         5,
-#                                         6,
-#                                         7,
-#                                         8,
-#                                         9,
-#                                         10,
-#                                         11,
-#                                         12,
-#                                         13,
-#                                         14,
-#                                         15,
-#                                         16,
-#                                         17,
-#                                         18,
-#                                         19,
-#                                         20,
-#                                         21,
-#                                         22,
-#                                         23,
-#                                         24,
-#                                         25,
-#                                         26,
-#                                         27,
-#                                         28,
-#                                         29,
-#                                         e_ea, # LR
-#                                         consts_aarch64.STACK_BASEADDR+consts_aarch64.STACK_SIZE-consts_aarch64.initial_stack_offset,
-#                                         exec_saddr # PC
-#                                         )
-#      else:
-#        registers = regs
-#
-#      if s_conf == None:
-#        exec_path = search_executable() 
-#        stub_conf = StubConfiguration(nstubs=dict(),
-#                                        stub_dynamic_func_tab=True, #True if exec_path != "" else False,
-#                                        orig_filepath=exec_path,
-#                                        custom_stubs_file=None,
-#                                        auto_null_stub=True if exec_path != "" else False,
-#                                        tags=dict())
-#      else:
-#        stub_conf = s_conf
-#
-#      if amap_conf == None:
-#        addmap_conf = AdditionnalMapping.create()
-#      else:
-#        addmap_conf = amap_conf
-#      if memory_init == None:
-#        meminit = AdditionnalMapping.create()
-#      else:
-#        meminit = memory_init
-#
-#
-#
-#      return Configuration(     path=path if path else '',
-#                              arch='aarch64',
-#                              emulator='unicorn',
-#                              p_size=p_size if p_size else consts_aarch64.PSIZE,
-#                              stk_ba=stk_ba if stk_ba else consts_aarch64.STACK_BASEADDR,
-#                              stk_size=stk_size if stk_size else consts_aarch64.STACK_SIZE,
-#                              autoMap=autoMap if autoMap else False,
-#                              showRegisters=showRegisters if showRegisters else True,
-#                              exec_saddr=exec_saddr if exec_saddr else 0,
-#                              exec_eaddr=exec_eaddr if exec_eaddr else 0xFFFFFFFF,
-#                              mapping_saddr=get_min_ea_idb() if not mapping_saddr else mapping_saddr,
-#                              mapping_eaddr=get_max_ea_idb() if not mapping_eaddr else mapping_eaddr,
-#                              segms=segms if segms else [],
-#                              map_with_segs=map_with_segs if map_with_segs else False,
-#                              use_seg_perms=use_seg_perms if use_seg_perms else False,
-#                              useCapstone=useCapstone if useCapstone else True,
-#                              registers=registers,
-#                              showMemAccess=showMemAccess if showMemAccess else True,
-#                              s_conf=stub_conf,
-#                              amap_conf=addmap_conf,
-#                              memory_init=meminit,
-#                              color_graph=False,
-#                              breakpoints=breakpoints if breakpoints else [])
-#
-#
-#
 

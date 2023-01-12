@@ -6,34 +6,30 @@ import json
 class Exec_Trace(object):
 
     arch = ''
-    addr = dict()
+    content = dict()
 
-    def __init__(self,arch,addr=None):
+    def __init__(self,arch,content=None):
         self.arch = arch
-        if addr:
-            self.addr=addr
+        self.count = 0
+        if content:
+            self.content=content
+
 
     def add_instruction(self,
                         addr:int,
                         assembly:str,
                         regs:Registers,
                         color:int,
-                        tainted:bool,
-                        count:int):
+                        tainted:bool):
 
-        # TODO the current key for **addr** dict 
-        # is crapy. The data set should be moved. 
-        # add a count variable that will be used 
-        # to reference all inst and their addresses. 
-        # this change should be done in a new branch. 
- 
-        addr_str = '%x_%d'%(addr,count)
 
-        self.addr[addr_str] = { 'assembly': assembly,
+        self.content[self.count] = { 'addr': addr,
+                                 'assembly': assembly,
                             'regs': regs,
                             'color': color,
                             'tainted': tainted
                            }
+        self.count += 1
 
     def get_color_map(self) -> dict:
 
@@ -43,7 +39,7 @@ class Exec_Trace(object):
         
         color_map = dict()
 
-        for k,v in self.addr.items():
+        for k,v in self.content.items():
             color_map[k]=v['color']
 
         return color_map
@@ -59,7 +55,7 @@ class Exec_Trace(object):
 
         color_map = dict()
 
-        for k in self.addr.keys():
+        for k in self.content.keys():
             color_map[k] = color
 
         return color_map
@@ -71,11 +67,11 @@ class Exec_Trace_Serializer(json.JSONEncoder):
     def default(self,exec_trace:Exec_Trace):
         out = dict()
         out['arch'] =  exec_trace.arch,
-        out['addr'] = dict()
-        for k,v in exec_trace.addr.items():
-            out['addr'][k]=dict()
+        out['count'] = dict()
+        for k,v in exec_trace.content.items():
+            out['count'][k]=dict()
 
-            out['addr'][k] = { 'assembly':v['assembly'], 
+            out['count'][k] = { 'addr':v['addr'], 'assembly':v['assembly'], 
                                   'regs': v['regs'].__dict__,
                                   'color':v['color'],
                                  'tainted':v['tainted']

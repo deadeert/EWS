@@ -9,6 +9,13 @@ from various emulators (currently unicorn, but you can add more).
 # WIP 
 
 **Code is currently in refactoring, please stay tuned for a stable release**. 
+Code refactoring is okay for: 
+
+- x86
+- arm32
+- aarch64
+
+
 
 # Help Wanted
 
@@ -18,6 +25,18 @@ Testing such a IDA plugin for each supported architecture is is
 quite difficult to achieve alone. 
 
 **Please open issue or make better PR :)**
+x64 has not be refactored neither tested, so use it at your own risk.
+
+# Help Wanted
+
+Testing such plugin is a tedious (and boring) task. 
+
+Although unit tests are conducted for (currently) arm32, aarch64 & x86, 
+bugs still exist. These tests cases are not publicy released, but I can send them 
+if required (send DM). 
+
+**Please open issue or make better PR :)**
+Please refer to "Submit an Issue".
 
 # An example 
 
@@ -63,3 +82,9 @@ Otherwise, check the console, something mysterious might have happened...
 
 [Features](EWS/doc/features.md)
 
+# Submit an Issue (bug) 
+
+Before submitting an issue, keep in mind that: 
+
+- I'm not actively working on the project, according the bug you could be faster than me to find the solution :]
+- I need to reproduce the bug, so be kind an provide a configuration file and the binary that you was working on when finding out the bug (if possible). Otherwise, it will be a nightmare. 

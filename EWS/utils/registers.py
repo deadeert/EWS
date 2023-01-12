@@ -42,6 +42,11 @@ class ArmRegisters(Registers):
     self.R14=R14
     self.R15=R15
 
+
+  @classmethod
+  def create(cls):
+      return ArmRegisters(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+
   def get_program_counter(self):
       return self.R15
 
@@ -123,7 +128,7 @@ class Aarch64Registers(Registers):
  
   def __init__(self,X0,X1,X2,X3,X4,X5,X6,X7,X8,X9,
                     X10,X11,X12,X13,X14,X15,X16,X17,X18,X19,
-                    X20,X21,X22,X23,X24,X25,X26,X27,X28,FP,LR,SP,PC):
+                    X20,X21,X22,X23,X24,X25,X26,X27,X28,X29,X30,X31,PC):
     self.X0=X0
     self.X1=X1
     self.X2=X2
@@ -153,20 +158,24 @@ class Aarch64Registers(Registers):
     self.X26=X26
     self.X27=X27
     self.X28=X28
-    self.FP=FP
-    self.LR=LR
-    self.SP=SP
+    self.X29=X29
+    self.X30=X30
+    self.X31=X31
     self.PC=PC
 
   def get_program_counter(self):
       return self.PC
 
+  @classmethod
+  def create(cls):
+      return Aarch64Registers(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                          0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
 
   @classmethod
   def get_default_object(cls,X0=0,X1=0,X2=0,X3=0,X4=0,X5=0,X6=0,X7=0,X8=0,X9=0,
                     X10=0,X11=0,X12=0,X13=0,X14=0,X15=0,X16=0,X17=0,X18=0,X19=0,
-                    X20=0,X21=0,X22=0,X23=0,X24=0,X25=0,X26=0,X27=0,X28=0,FP=0,
-                         LR=0,SP=0,PC=0):
+                    X20=0,X21=0,X22=0,X23=0,X24=0,X25=0,X26=0,X27=0,X28=0,X29=0,
+                         X30=0,X31=0,PC=0):
       return Aarch64Registers(   X0,
                                  X1,
                                  X2,
@@ -196,12 +205,54 @@ class Aarch64Registers(Registers):
                                  X26,
                                  X27,
                                  X28,
-                                 FP,
-                                 LR, # LR
+                                 X29,
+                                 X30, # X30
                                  consts_aarch64.STACK_BASEADDR+\
                                  consts_aarch64.STACK_SIZE-\
-                                 consts_aarch64.initial_stack_offset if SP==0 else SP,
+                                 consts_aarch64.initial_stack_offset if X31==0 else X31,
                                  PC)
+
+
+  def get_register_values_l(self) -> list:
+
+      out = list()
+
+      out.append(['X0', hex(self.X0)])
+      out.append(['X1', hex(self.X1)])
+      out.append(['X2', hex(self.X2)])
+      out.append(['X3', hex(self.X3)])
+      out.append(['X4', hex(self.X4)])
+      out.append(['X5', hex(self.X5)])
+      out.append(['X6', hex(self.X6)])
+      out.append(['X7', hex(self.X7)])
+      out.append(['X8', hex(self.X8)])
+      out.append(['X9', hex(self.X9)])
+      out.append(['X10', hex(self.X10)])
+      out.append(['X11', hex(self.X11)])
+      out.append(['X12', hex(self.X12)])
+      out.append(['X13', hex(self.X13)])
+      out.append(['X14', hex(self.X14)])
+      out.append(['X15', hex(self.X15)])
+      out.append(['X16', hex(self.X16)])
+      out.append(['X17', hex(self.X17)])
+      out.append(['X18', hex(self.X18)])
+      out.append(['X19', hex(self.X19)])
+      out.append(['X20', hex(self.X20)])
+      out.append(['X21', hex(self.X21)])
+      out.append(['X22', hex(self.X22)])
+      out.append(['X23', hex(self.X23)])
+      out.append(['X24', hex(self.X24)])
+      out.append(['X25', hex(self.X25)])
+      out.append(['X26', hex(self.X26)])
+      out.append(['X27', hex(self.X27)])
+      out.append(['X28', hex(self.X28)])
+      out.append(['SP', hex(self.X31)])
+      out.append(['LR', hex(self.X30)])
+      out.append(['FP', hex(self.X29)])
+      out.append(['PC', hex(self.PC)])
+
+      return out
+
 
 
 class aarch64CPSR(Registers):
@@ -285,6 +336,7 @@ class MipslRegisters(Registers):
 class x86Registers(Registers):
 
   def __init__(self,EAX,EBX,ECX,EDX,EDI,ESI,EBP,ESP,EIP):
+
     self.EAX = EAX
     self.EBX = EBX 
     self.ECX = ECX
@@ -295,6 +347,10 @@ class x86Registers(Registers):
     self.EBP = EBP
     self.EIP = EIP
 
+  @classmethod
+  def create(cls):
+
+      return x86Registers(0,0,0,0,0,0,0,0,0)
 
   def get_program_counter(self):
       return self.EIP
