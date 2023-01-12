@@ -9,23 +9,15 @@ from various emulators (currently unicorn, but you can add more).
 # WIP 
 
 **Code is currently in refactoring, please stay tuned for a stable release**. 
+
 Code refactoring is okay for: 
 
 - x86
 - arm32
 - aarch64
 
-
-
-# Help Wanted
-
-**There is loooot of bugs**
-
-Testing such a IDA plugin for each supported architecture is is
-quite difficult to achieve alone. 
-
-**Please open issue or make better PR :)**
 x64 has not be refactored neither tested, so use it at your own risk.
+
 
 # Help Wanted
 
