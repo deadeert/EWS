@@ -11,6 +11,58 @@ from various emulators (currently unicorn, but you can add more).
 
 https://user-images.githubusercontent.com/6783156/212289883-31b8a3b5-0c7d-451d-9569-d661a64a5f25.mp4
 
+# Features & Documentation
+
+## Stubs Mechanisms   
+
+https://user-images.githubusercontent.com/6783156/212301041-0a86ba45-4e25-4389-8d49-f190f6a8c4a7.mp4
+
+`strlen` stub is invocated by the plugin. 
+
+https://user-images.githubusercontent.com/6783156/212301210-c9a8b7df-7ebd-4fce-aced-4b7cfced0744.mp4
+
+This example shows how to attribute a tag to a function. `strlen` is applied to the example function. 
+
+## Debug
+
+https://user-images.githubusercontent.com/6783156/212301420-5dc397ca-dc65-4408-ad77-82e035386622.mp4
+
+This example shows how to recover original strings from encrypted payload using emulator. 
+
+https://user-images.githubusercontent.com/6783156/212301575-b6e1c417-75cf-4fc7-a825-078fad76ecb0.mp4
+
+This example demonstrates watchpoint feature. The feature is also available when data is manipulated inside 
+a stub.
+
+https://user-images.githubusercontent.com/6783156/212301728-fc99f02a-eef8-40e8-a1dd-4c0601519f60.mp4
+
+IDA Pro breakpoint marker is directly integrated in the plugin.
+
+https://user-images.githubusercontent.com/6783156/212303397-af887b75-6555-489c-aca0-b502b2644974.mp4
+
+Memory can be imported and exported. In this example memory range corresponding to the string is exported. 
+
+## Configuration 
+
+## More
+
+You can find an exhaustive list of features. 
+[Features](EWS/doc/features.md) 
+
+
+# Shortcut 
+
+1. Load Context Menu `Ctrl+Alt+E`
+2. Reset Plugin `Alt+Shift+R`
+3. Generate Configuration from Selection `Ctrl+Alt+S`
+4. Generate Configuration for current Function `Ctrl+Alt+F`
+5. Edit Configuration `Ctrl+Alt+C`
+6. Load Configuration `Shift+Alt+L`
+7. Store Configuration `Shift+Alt+D`
+8. Run / Continue `Alt+Shift+C`
+9. Step-In `Alt+Shift+I`
+10. Step-Over `Alt+Shift+O`
+
 # Installation 
 
 ## Dependencies
@@ -43,17 +95,6 @@ In the default graph view, execute the key combination `CTRL+ALT+E` to get the `
 rigth click. 
 You should be ready to go. 
 Otherwise, check the console, something mysterious might have happened...
-
-
-# Features & Documentation
-
-[Features](EWS/doc/features.md) 
-
-**stub mechanism**  
-
-You can null stub, use a ready or own defined stub or even "tag" a function. 
-
-
 
 
 # WIP 
