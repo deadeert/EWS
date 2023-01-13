@@ -1,3 +1,6 @@
+
+
+
 ![c](EWS/doc/img/Logo_EWS.png) 
 
  
@@ -18,23 +21,9 @@ Code refactoring is okay for:
 
 x64 has not be refactored neither tested, so use it at your own risk.
 
-
-# Help Wanted
-
-Testing such plugin is a tedious (and boring) task. 
-
-Although unit tests are conducted for (currently) arm32, aarch64 & x86, 
-bugs still exist. These tests cases are not publicy released, but I can send them 
-if required (send DM). 
-
-**Please open issue or make better PR :)**
-Please refer to "Submit an Issue".
-
 # An example 
 
-https://user-images.githubusercontent.com/6783156/198288491-7e9b3059-7ab0-4c1f-9e08-7a645a8799e8.mov
-
-![Working Video](EWS/doc/img/EWS_basic_usage.mov) Github failed to import correctly the video. 
+https://user-images.githubusercontent.com/6783156/212289883-31b8a3b5-0c7d-451d-9569-d661a64a5f25.mp4
 
 # Installation 
 
