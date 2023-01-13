@@ -1,53 +1,71 @@
 
 
-
-![c](EWS/doc/img/Logo_EWS.png) 
-
- 
- 
+<p align="center" >
+     <br><br>
+<img width="60%" src="EWS/doc/img/Logo_EWS.png"/> <br>
+ </p>
  
 EWS (*Emulator Wrapper Solution*)  is a IDA PRO plugin that aims to integrate emulation features (such as debugger) 
-from various emulators (currently unicorn, but you can add more).  
+from various emulators (currently unicorn, but you can add more). 
+
+Key features are: 
+
+1. Automatically loads binary inside the emulator based on IDB information.  
+2. Debugger view with registers' values for each executed instruction. 
+3. Debugger capacities such as watchpoints, run / steps the code. 
+4. Stub mechanism to emulate imported functions. 
+
+# Getting Started
+
+- [Demonstration](#demo)
+- [Features](#features)
+- [Installation](#installation)
+- [Shortcuts](#shortcuts)
+- [Documentation](EWS/doc/features.md) 
+
+# Demo  
 
 https://user-images.githubusercontent.com/6783156/212289883-31b8a3b5-0c7d-451d-9569-d661a64a5f25.mp4
 
-# Features & Documentation
+
+# Features
 
 ## Debug
 
-https://user-images.githubusercontent.com/6783156/212301420-5dc397ca-dc65-4408-ad77-82e035386622.mp4
-
 This example shows how to recover original strings from encrypted payload using emulator. 
 
-https://user-images.githubusercontent.com/6783156/212301575-b6e1c417-75cf-4fc7-a825-078fad76ecb0.mp4
+https://user-images.githubusercontent.com/6783156/212301420-5dc397ca-dc65-4408-ad77-82e035386622.mp4
 
 This example demonstrates watchpoint feature. The feature is also available when data is manipulated inside 
 a stub.
 
-https://user-images.githubusercontent.com/6783156/212301728-fc99f02a-eef8-40e8-a1dd-4c0601519f60.mp4
+https://user-images.githubusercontent.com/6783156/212301575-b6e1c417-75cf-4fc7-a825-078fad76ecb0.mp4
 
 IDA Pro breakpoint marker is directly integrated in the plugin.
 
-https://user-images.githubusercontent.com/6783156/212303397-af887b75-6555-489c-aca0-b502b2644974.mp4
+https://user-images.githubusercontent.com/6783156/212301728-fc99f02a-eef8-40e8-a1dd-4c0601519f60.mp4
 
 Memory can be imported and exported. In this example memory range corresponding to the string is exported. 
 
+https://user-images.githubusercontent.com/6783156/212303397-af887b75-6555-489c-aca0-b502b2644974.mp4
+
 ## Stubs Mechanisms   
+
+Some functions from the libc are directly emulated by the stub mechanisms. Stub can be added by using decorator `@LibcStub` 
+in files `stubs/ELF/ELF.py`.
 
 https://user-images.githubusercontent.com/6783156/212301041-0a86ba45-4e25-4389-8d49-f190f6a8c4a7.mp4
 
-`strlen` stub is invocated by the plugin. 
+This example shows how to attribute a tag to a function. `strlen` is applied to the example function. 
 
 https://user-images.githubusercontent.com/6783156/212301210-c9a8b7df-7ebd-4fce-aced-4b7cfced0744.mp4
-
-This example shows how to attribute a tag to a function. `strlen` is applied to the example function. 
 
 
 ## Configuration 
 
-https://user-images.githubusercontent.com/6783156/212310072-520313d1-667a-401b-b26b-cff97838512e.mp4
+Configuration can be edited, stored, loaded. This allows to share with other reversers findings. 
 
-Config can be edited, stored, loaded. 
+https://user-images.githubusercontent.com/6783156/212310072-520313d1-667a-401b-b26b-cff97838512e.mp4
 
 ## More
 
@@ -87,7 +105,7 @@ Please install the following python bindings:
 If you are lazy, you can directly install them: 
 
 ```sh 
-pip install -r requirements.txt
+pip install -r doc/install/requirements.txt
 ```
 
 ## IDA Plugin
