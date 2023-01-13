@@ -57,5 +57,15 @@ reg_map_unicorn['esi']=UC_X86_REG_ESI
 reg_map_unicorn['esp']=UC_X86_REG_ESP
 reg_map_unicorn['ebp']=UC_X86_REG_EBP
 reg_map_unicorn['eip']=UC_X86_REG_EIP
+reg_map_unicorn['EAX']=UC_X86_REG_EAX
+reg_map_unicorn['EBX']=UC_X86_REG_EBX
+reg_map_unicorn['ECX']=UC_X86_REG_ECX
+reg_map_unicorn['EDX']=UC_X86_REG_EDX
+reg_map_unicorn['EDI']=UC_X86_REG_EDI
+reg_map_unicorn['ESI']=UC_X86_REG_ESI
+reg_map_unicorn['ESP']=UC_X86_REG_ESP
+reg_map_unicorn['EBP']=UC_X86_REG_EBP
+reg_map_unicorn['EIP']=UC_X86_REG_EIP
+
 
 
