@@ -7,21 +7,7 @@
  
  
 EWS (*Emulator Wrapper Solution*)  is a IDA PRO plugin that aims to integrate emulation features (such as debugger) 
-from various emulators (currently unicorn, but you can add more). 
-
-# WIP 
-
-**Code is currently in refactoring, please stay tuned for a stable release**. 
-
-Code refactoring is okay for: 
-
-- x86
-- arm32
-- aarch64
-
-x64 has not be refactored neither tested, so use it at your own risk.
-
-# An example 
+from various emulators (currently unicorn, but you can add more).  
 
 https://user-images.githubusercontent.com/6783156/212289883-31b8a3b5-0c7d-451d-9569-d661a64a5f25.mp4
 
@@ -59,9 +45,29 @@ You should be ready to go.
 Otherwise, check the console, something mysterious might have happened...
 
 
-# Doc
+# Features & Documentation
 
-[Features](EWS/doc/features.md)
+[Features](EWS/doc/features.md) 
+
+**stub mechanism**  
+
+You can null stub, use a ready or own defined stub or even "tag" a function. 
+
+
+
+
+# WIP 
+
+**Code is currently in refactoring, please stay tuned for a stable release**. 
+
+Code refactoring is okay for: 
+
+- x86
+- arm32
+- aarch64
+
+x64 has not be refactored neither tested, so use it at your own risk.
+
 
 # Submit an Issue (bug) 
 
