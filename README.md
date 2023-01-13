@@ -44,13 +44,17 @@ Memory can be imported and exported. In this example memory range corresponding 
 
 ## Configuration 
 
+https://user-images.githubusercontent.com/6783156/212310072-520313d1-667a-401b-b26b-cff97838512e.mp4
+
+Config can be edited, stored, loaded. 
+
 ## More
 
 You can find an exhaustive list of features. 
 [Features](EWS/doc/features.md) 
 
 
-# Shortcut 
+# Shortcuts 
 
 1. Load Context Menu `Ctrl+Alt+E`
 2. Reset Plugin `Alt+Shift+R`
