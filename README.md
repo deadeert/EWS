@@ -5,6 +5,8 @@
 <img width="60%" src="EWS/doc/img/Logo_EWS.png"/> <br>
  </p>
  
+ # About
+ 
 EWS (*Emulator Wrapper Solution*)  is a IDA PRO plugin that aims to integrate emulation features (such as debugger) 
 from various emulators (currently unicorn, but you can add more). 
 
