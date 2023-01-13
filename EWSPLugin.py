@@ -269,8 +269,8 @@ class menu_action_handler_t(idaapi.action_handler_t):
         try: 
             self.plug.conf = utils_ui.loadconfig()
         except:
-            ida_kernwin.warning('Config file does not exist')
-            return 
+             ida_kernwin.warning('Config file does not exist')
+             return 
 
 
         self.plug.config_initialized = True

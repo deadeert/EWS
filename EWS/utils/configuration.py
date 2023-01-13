@@ -563,7 +563,7 @@ class ConfigDeserializer(json.JSONDecoder): #PASS ClassType for register parsing
                 regs=ArmRegisters(**jdict['registers'])
             elif jdict['arch'] == 'mips':
                 regs=MipslRegisters(**jdict['registers'])
-            elif jdict['arch'] == 'x86':
+            elif jdict['arch'] == 'x86' or (jdict['arch'] == 'pc' and not idc.__EA64__):
                 regs=x86Registers(**jdict['registers']) 
             elif jdict['arch'] == 'x64':
                 regs=x64Registers(**jdict['registers'])
