@@ -13,16 +13,6 @@ https://user-images.githubusercontent.com/6783156/212289883-31b8a3b5-0c7d-451d-9
 
 # Features & Documentation
 
-## Stubs Mechanisms   
-
-https://user-images.githubusercontent.com/6783156/212301041-0a86ba45-4e25-4389-8d49-f190f6a8c4a7.mp4
-
-`strlen` stub is invocated by the plugin. 
-
-https://user-images.githubusercontent.com/6783156/212301210-c9a8b7df-7ebd-4fce-aced-4b7cfced0744.mp4
-
-This example shows how to attribute a tag to a function. `strlen` is applied to the example function. 
-
 ## Debug
 
 https://user-images.githubusercontent.com/6783156/212301420-5dc397ca-dc65-4408-ad77-82e035386622.mp4
@@ -41,6 +31,17 @@ IDA Pro breakpoint marker is directly integrated in the plugin.
 https://user-images.githubusercontent.com/6783156/212303397-af887b75-6555-489c-aca0-b502b2644974.mp4
 
 Memory can be imported and exported. In this example memory range corresponding to the string is exported. 
+
+## Stubs Mechanisms   
+
+https://user-images.githubusercontent.com/6783156/212301041-0a86ba45-4e25-4389-8d49-f190f6a8c4a7.mp4
+
+`strlen` stub is invocated by the plugin. 
+
+https://user-images.githubusercontent.com/6783156/212301210-c9a8b7df-7ebd-4fce-aced-4b7cfced0744.mp4
+
+This example shows how to attribute a tag to a function. `strlen` is applied to the example function. 
+
 
 ## Configuration 
 
