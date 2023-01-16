@@ -10,12 +10,16 @@
 EWS (*Emulator Wrapper Solution*)  is a IDA PRO plugin that aims to integrate emulation features (such as debugger) 
 from various emulators (currently unicorn, but you can add more). 
 
+Writting such plugin was motivated by reversing on x64 machine various embedded binaries from Android native libs to
+automotive firmwares. "Click ready" trace generator and basic explorer is a gain of time.  
+
 Key features are: 
 
-1. Automatically loads binary inside the emulator based on IDB information.  
-2. Debugger view with registers' values for each executed instruction. 
-3. Debugger capacities such as watchpoints, run / steps the code. 
-4. Stub mechanism to emulate imported functions. 
+1. Support Raw and ELF file. PE is experimental, no support for Mach-O. 
+2. Automatically loads binary inside the emulator based on IDB information.  
+3. Debugger view with registers' values for each executed instruction. 
+4. Debugger capacities such as watchpoints, run / steps the code. 
+5. Stub mechanism to emulate imported functions. 
 
 # Getting Started
 
@@ -24,6 +28,8 @@ Key features are:
 - [Installation](#installation)
 - [Shortcuts](#shortcuts)
 - [Documentation](EWS/doc/features.md) 
+- [Extend-me](#extendme) 
+- [Contact](#contact)
 
 # Demo  
 
@@ -141,3 +147,13 @@ Before submitting an issue, keep in mind that:
 
 - I'm not actively working on the project, according the bug you could be faster than me to find the solution :]
 - I need to reproduce the bug, so be kind an provide a configuration file and the binary that you was working on when finding out the bug (if possible). Otherwise, it will be a nightmare. 
+
+# Extend Me
+
+- **Offline trace explorer**: Allow to load trace generated outside the plugin. Support is currently planned. 
+- ![Avatar2](https://github.com/avatartwo/avatar2): Integrate new emulator Qemu wrapper would help in supporting new architecture.  
+- Integrate offline ghidra debugger when it will be available to extend supported architectures.
+
+# Contact 
+
+![@deadeert](https://twitter.com/DeadEert)
