@@ -146,7 +146,7 @@ class Configuration():
                  breakpoints: list =None,
                  watchpoints: dict =None,
                  patches: dict = None,
-                 max_insn: int = 0x10000):
+                 max_insn: int = 0x100000):
 
         self.path = path 
         self.arch = arch
@@ -203,7 +203,7 @@ class Configuration():
                                  breakpoints: list =None,
                                 watchpoints: dict =None,
                                 patches: dict = None,
-                                max_insn: int = 0x10000):
+                                max_insn: int = 0x100000):
 
 
 

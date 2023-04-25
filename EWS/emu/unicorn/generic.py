@@ -20,6 +20,7 @@ from unicorn.mips_const import *
 from unicorn.arm64_const import * 
 import struct
 import hexdump
+import math
 
 from EWS.utils.utils import *
 from EWS.utils.configuration import Configuration, StubConfiguration
@@ -228,7 +229,18 @@ class Emucorn(Emulator):
                                                                          seg.end_ea))
                 try:
 
-                    uc.mem_write(seg.start_ea,ida_bytes.get_bytes(seg.start_ea,seg.size()))
+                    size = seg.size()
+
+
+                    # get_bytes API does not allow to get more than 0xffffffff bytes. 
+                    # nonetheless such mapping should be discarded ?
+
+                    if seg.size() > (math.pow(2,32) -1):     
+                        logger.console(LogType.WARN,f"Segment size is too big: {size:x}, restraining to 4GB")
+                        size =  int(math.pow(2,32) - 1) & 0xffffffff
+                        print(f'size:{size:x}')
+
+                    uc.mem_write(seg.start_ea,ida_bytes.get_bytes(seg.start_ea,size))
                     
                 except Exception as e:
 
