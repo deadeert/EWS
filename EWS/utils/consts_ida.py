@@ -26,3 +26,6 @@ ADDMAPPNG=PLUGNAME+":addmapping"
 WATCHPOINT=PLUGNAME+":watchpoint"
 PATCH=PLUGNAME+":patchinsn"
 PATCHFILE=PLUGNAME+":patchfile"
+LOADTRACE=PLUGNAME+":loadtrace"
+
+   

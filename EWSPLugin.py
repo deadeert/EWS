@@ -7,16 +7,27 @@ import idautils
 import ida_idaapi
 import ida_name
 from EWS.utils import utils_ui 
-from EWS.utils.utils import * 
 from EWS.utils.configuration import *
 from EWS.ui import *
 from EWS.ui.debug_view import *
-from EWS.utils.utils import logger,LogType
+from EWS.utils.utils import *
+from EWS.utils.utils import logger,LogType, plug_mode
 from EWS.utils.consts_ida import *
 from EWS.ui.generic import FileSelector
 from EWS.utils.configuration import saveconfig
 from unicorn import UcError
 
+
+def mode_default(func):
+
+    def check_mode(_s): 
+        if _s.plug.mode == plug_mode.DEFAULT:
+            return func(_s)
+        ida_kernwin.warning("Feature not available in trace viewer mode.")
+        return 
+
+    return check_mode
+      
 
 class menu_action_handler_t(idaapi.action_handler_t):
     """
@@ -77,6 +88,8 @@ class menu_action_handler_t(idaapi.action_handler_t):
             self.add_nstub()
         elif self.action == PATCH:
             self.patch_insn()
+        elif self.action == LOADTRACE:
+            self.load_trace()
         else:
             logger.console(LogType.ERRR,"Function not yet implemented")
             return 0
@@ -99,8 +112,11 @@ class menu_action_handler_t(idaapi.action_handler_t):
         if self.plug.view_enabled:
             self.plug.reset_view()
 
+        self.plug.mode = plug_mode.DEFAULT
+
         logger.console(LogType.INFO,"Plugin was properly reset")
 
+    @mode_default
     def emul_func(self):
 
         """
@@ -122,6 +138,7 @@ class menu_action_handler_t(idaapi.action_handler_t):
 
         self.plug.config_initialized = True
 
+    @mode_default
     def emul_selection(self):
 
         """
@@ -143,6 +160,7 @@ class menu_action_handler_t(idaapi.action_handler_t):
 
         self.plug.config_initialized = True
 
+    @mode_default
     def emul_init(self):
 
 
@@ -176,7 +194,8 @@ class menu_action_handler_t(idaapi.action_handler_t):
             self.plug.enable_view()
 
         logger.console(LogType.INFO,"Emulator ready to run (Alt+Shift+{C,I})")
-
+    
+    @mode_default
     def emul_launcher(self):
 
 
@@ -201,7 +220,7 @@ class menu_action_handler_t(idaapi.action_handler_t):
         except:
             logger.console(LogType.ERRR,"Error occured while creating configuration object")
 
-
+    @mode_default
     def edit_registers(self):
 
         """ 
@@ -224,6 +243,7 @@ class menu_action_handler_t(idaapi.action_handler_t):
             if not new_regs is None:  
                 self.plug.emu.setup_regs(new_regs)
 
+    @mode_default
     def tag_func(self):
 
         """
@@ -254,7 +274,7 @@ class menu_action_handler_t(idaapi.action_handler_t):
             logger.console(LogType.INFO,
                            'Function at %x now tagger with %s'%(ea,tag_name))
 
-
+    @mode_default
     def loadconf(self):
 
         """ 
@@ -277,7 +297,7 @@ class menu_action_handler_t(idaapi.action_handler_t):
 
         ida_kernwin.info("Config file has been loaded")
 
-
+    @mode_default
     def saveconf(self):
         
         """
@@ -304,7 +324,7 @@ class menu_action_handler_t(idaapi.action_handler_t):
 
             utils_ui.saveconfig(self.plug.conf)
 
-
+    @mode_default
     def editconf(self):
 
 
@@ -339,7 +359,7 @@ class menu_action_handler_t(idaapi.action_handler_t):
             ida_kernwin("Something wrong happened while loading the config, please reset the plug and retry")
             
 
-       
+    @mode_default 
     def patchmem(self):
 
         """ 
@@ -353,7 +373,7 @@ class menu_action_handler_t(idaapi.action_handler_t):
         if not utils_ui.patch_mem(self.plug.emu):
             pass
 
-
+    @mode_default
     def displaymem(self):
         
         """ 
@@ -366,6 +386,7 @@ class menu_action_handler_t(idaapi.action_handler_t):
 
         utils_ui.display_section(self.plug.emu)
 
+    @mode_default
     def displaystack(self):
 
         """ 
@@ -380,6 +401,8 @@ class menu_action_handler_t(idaapi.action_handler_t):
 
         utils_ui.display_stack(self.plug.emu)
 
+
+    @mode_default
     def displayaddr(self):
 
         """
@@ -393,7 +416,7 @@ class menu_action_handler_t(idaapi.action_handler_t):
         
         utils_ui.display_addr(self.plug.emu) 
 
-
+    @mode_default
     def mem_import(self):
 
         """ 
@@ -408,7 +431,7 @@ class menu_action_handler_t(idaapi.action_handler_t):
         utils_ui.import_mem(self.plug.emu)
 
         
-
+    @mode_default
     def mem_export(self):
         
 
@@ -423,7 +446,7 @@ class menu_action_handler_t(idaapi.action_handler_t):
         utils_ui.export_mem(self.plug.emu)
 
 
-
+    @mode_default
     def stepin(self):
 
         """
@@ -441,7 +464,7 @@ class menu_action_handler_t(idaapi.action_handler_t):
             self.plug.refresh_view()
 
         
-
+    @mode_default
     def stepover(self):
         
         """ 
@@ -456,13 +479,15 @@ class menu_action_handler_t(idaapi.action_handler_t):
         if self.plug.emu.is_running:
             self.plug.emu.step_over()
             self.refresh_view()
-       
+
+    @mode_default 
     def continuee(self):
 
         """ 
         ! Run / Continue
         """
-
+        if not self.plug.config_initialized: 
+            ida_kernwin.warning("A configuration is required to use this command")
         
         if not self.plug.emulator_initialized: 
             self.plug.emu = utils_ui.get_emul_from_conf(self.plug.conf)
@@ -474,6 +499,7 @@ class menu_action_handler_t(idaapi.action_handler_t):
             self.plug.enable_view()
 
         if self.plug.emu.is_running:
+
             logger.console(LogType.INFO,"Exec continues")
             try:
                 self.plug.emu.continuee()
@@ -493,7 +519,7 @@ class menu_action_handler_t(idaapi.action_handler_t):
                 self.plug.refresh_view()
 
 
-
+    @mode_default
     def add_mapping(self):
 
         """ 
@@ -516,6 +542,7 @@ class menu_action_handler_t(idaapi.action_handler_t):
             utils_ui.add_mapping(self.plug.emu,new_mappings)
             idaapi.hide_wait_box()
 
+    @mode_default
     def watchpoint(self):
 
         """
@@ -530,6 +557,7 @@ class menu_action_handler_t(idaapi.action_handler_t):
 
         utils_ui.watchpoint(self.plug.emu)
 
+    @mode_default
     def add_nstub(self):
 
         """ 
@@ -551,6 +579,7 @@ class menu_action_handler_t(idaapi.action_handler_t):
         logger.console(LogType.INFO,"Null stub added to function %s"%ida_name.get_name(cur_ea),
                        "at addr %x"%cur_ea)
 
+    @mode_default
     def patch_insn(self):
 
         """ 
@@ -564,7 +593,7 @@ class menu_action_handler_t(idaapi.action_handler_t):
 
         utils_ui.add_insn_patch(self.plug.emu)
 
-
+    @mode_default
     def patch_file(self):
 
         """ 
@@ -578,8 +607,42 @@ class menu_action_handler_t(idaapi.action_handler_t):
 
         utils_ui.add_patch_file(self.plug.emu)
 
+    def load_trace(self):
 
 
+        if self.plug.emulator_initialized or self.plug.config_initialized:
+            ida_kernwin.warning("Please reset the plugin before using this feature.")
+            return 
+
+
+        f_trace = ida_kernwin.ask_file(False,"/tmp","Trace File")
+
+        with open(f_trace, 'r') as fin:
+
+            exec_trace = json.loads(fin.read(),cls=Exec_Trace_Deserializer)
+
+
+        self.plug.conf = utils_ui.get_conf_for_area(exec_trace.content[0]['addr'],
+                                                    exec_trace.content[exec_trace.count-1]['addr'])
+
+        self.plug.emu = utils_ui.get_emul_from_conf(self.plug.conf)
+
+        self.plug.emu.exec_trace = exec_trace
+
+
+        if not self.plug.view_intialized:
+            self.plug.init_view()
+        if not self.plug.view_enabled:
+            self.plug.enable_view()
+
+        self.plug.mode = plug_mode.TRACEVIEWER
+
+
+
+  
+    
+
+               
 
 
 class EWS_Plugin(idaapi.plugin_t, idaapi.UI_Hooks):
@@ -606,6 +669,7 @@ class EWS_Plugin(idaapi.plugin_t, idaapi.UI_Hooks):
         self.config_initialized = False
         self.view_intialized = False
         self.view_enabled = False
+        self.mode = plug_mode.DEFAULT 
 
         idaapi.UI_Hooks.__init__(self)
 
@@ -685,6 +749,9 @@ class EWS_Plugin(idaapi.plugin_t, idaapi.UI_Hooks):
                                  "T", 12),
             idaapi.action_desc_t(PATCH, "Patch Instruction",
                                  menu_action_handler_t(PATCH,self), 'Alt+Ctrl+P',
+                                 "T", 12),
+            idaapi.action_desc_t(LOADTRACE, "Load Trace",
+                                 menu_action_handler_t(LOADTRACE,self), 'Alt+Ctrl+9',
                                  "T", 12)
             ]
 
@@ -696,8 +763,6 @@ class EWS_Plugin(idaapi.plugin_t, idaapi.UI_Hooks):
             idaapi.register_action(action)
 
         ida_kernwin.UI_Hooks.hook(self)
-
-#        ida_kernwin.warning('The plugin is still on developpment. It\'s strongly advised to backup your IDB before running it. Your are forewarned!')
 
         return ida_idaapi.PLUGIN_OK
 
@@ -730,6 +795,9 @@ class EWS_Plugin(idaapi.plugin_t, idaapi.UI_Hooks):
                 idaapi.attach_action_to_popup(form, popup, LOADCONF, '%s/config/'%PLUGNAME)
                 idaapi.attach_action_to_popup(form, popup, EDITCONF, '%s/config/'%PLUGNAME)
                 idaapi.attach_action_to_popup(form, popup, SAVECONF, '%s/config/'%PLUGNAME)
+                idaapi.attach_action_to_popup(form, popup, LOADTRACE, '%s/config/'%PLUGNAME)
+
+
 
                 # Debugging 
                 idaapi.attach_action_to_popup(form, popup, CONTINUE, '%s/debug/'%PLUGNAME)

@@ -21,6 +21,13 @@ import EWS.emu.emubase
 # based on x64
 MAX_INSN_SIZE=15
 
+
+class plug_mode(Enum):
+
+    DEFAULT=0
+    TRACEVIEWER=1
+ 
+
 def get_seg_list() -> list:
 
     """

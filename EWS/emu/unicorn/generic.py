@@ -1081,7 +1081,14 @@ class Emucorn(Emulator):
 
             idaapi.hide_wait_box()
 
+        # For testing purpose
+        """ 
         # DUMP HERE
+
+        with open("/tmp/exec_trace_serial.txt",'w+') as fout: 
+            json.dump(self.exec_trace,fp=fout,cls=Exec_Trace_Serializer)
+        """
+       
 
         
 

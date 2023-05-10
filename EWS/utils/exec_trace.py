@@ -89,9 +89,43 @@ class Exec_Trace_Serializer(json.JSONEncoder):
             print(e.__str__())
 
 
+class Exec_Trace_Deserializer(json.JSONDecoder):
 
+    def decode(self,json_txt):
 
+        jdict = json.loads(json_txt)
+        arch= jdict['arch'][0]
+        print(arch)
+        trace = jdict['count'] 
 
+        exec_trace = Exec_Trace(arch)
 
+        for k,v in trace.items():
 
+            i_cnt = int(k,10)
+
+            addr = v['addr'] 
+            asm = v['assembly']
+            registers= v['regs']
+            tainted = v['tainted']
+            color = v['color']
+
+            if jdict['arch'] == 'arm':
+                regs=ArmRegisters(**registers)
+            elif jdict['arch'] == 'mips':
+                regs=MipslRegisters(**registers)
+            elif jdict['arch'] == 'x86' or (jdict['arch'] == 'pc' and not idc.__EA64__):
+                regs=x86Registers(**registers) 
+            elif jdict['arch'] == 'x64':
+                regs=x64Registers(**registers)
+            elif jdict['arch'] == 'aarch64':
+                regs=Aarch64Registers(**registers)
+
+            exec_trace.add_instruction(addr,
+                                       asm,
+                                       regs,
+                                       color,
+                                       tainted)
+
+        return exec_trace
 
