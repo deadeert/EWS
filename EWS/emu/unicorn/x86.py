@@ -97,9 +97,15 @@ class x86Corn(Emucorn):
   def setup_stub_mechanism(self):
 
 
-        self.uc.mem_map(consts_x86.ALLOC_BA,
-                        self.conf.p_size*consts_x86.ALLOC_PAGES,
-                        UC_PROT_READ | UC_PROT_WRITE)
+        Emucorn.do_required_mappng(self.uc,
+                                   consts_x86.ALLOC_BA,
+                                   consts_x86.ALLOC_BA+self.conf.p_size*consts_x86.ALLOC_PAGES,
+                                   self.conf.p_size,
+                                   UC_PROT_READ | UC_PROT_WRITE,
+                                   True,
+                                   f"Warning map heap in already mapped area {consts_x86.ALLOC_BA:x}, edit utils/const_arm.py to modify this area")
+
+
 
         self.helper = UnicornX86SEA(emu=self,
                                       allocator=DumpAllocator(consts_x86.ALLOC_BA,

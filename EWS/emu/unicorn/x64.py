@@ -82,9 +82,16 @@ class x64Corn(Emucorn):
         """
 
         # map allocator
-        self.uc.mem_map(consts_x64.ALLOC_BA,
-                        self.conf.p_size*consts_x64.ALLOC_PAGES,
-                        UC_PROT_READ | UC_PROT_WRITE)
+        Emucorn.do_required_mappng(self.uc,
+                                   consts_x64.ALLOC_BA,
+                                   consts_x64.ALLOC_BA+self.conf.p_size*consts_x64.ALLOC_PAGES,
+                                   self.conf.p_size,
+                                   UC_PROT_READ | UC_PROT_WRITE,
+                                   True,
+                                   f"Warning map heap in already mapped area {consts_aarch64.ALLOC_BA:x}, edit utils/const_x64.py to modify this area")
+
+
+
 
     
         if '(PE)' in self.filetype:

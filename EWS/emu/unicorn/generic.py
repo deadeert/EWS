@@ -76,7 +76,9 @@ class Emucorn(Emulator):
                            s_ea: int,
                            e_ea:int,
                            p_size:int,
-                           perms:int):
+                           perms:int,
+                           warn:bool=False,
+                           warn_msg:str=''):
 
         """ !Use this function to avoid page mappings
                 that already exist. 
@@ -88,10 +90,15 @@ class Emucorn(Emulator):
             @param e_ea Effective Stop Address
             @param p_size Page Size
             @param perms Permissions on the Page 
+            @param warn Alert in case of already existing mapping
+            @param warm_msg Message to display in console
 
         """ 
 
+
         b_page = s_ea & ~(p_size -1)
+
+        finally_mem_map = False
 
         while b_page < e_ea:    
 
@@ -107,9 +114,16 @@ class Emucorn(Emulator):
             if not alrdy_map: 
 
                 logger.console(LogType.INFO,f'Map page {b_page:x}')
-                uc.mem_map(b_page,p_size,perms)
+                nb_pages, r = divmod(e_ea-b_page,p_size) 
+                if r: nb_pages+=1  
+                uc.mem_map(b_page,nb_pages*p_size,perms)
+                finally_mem_map = True
 
-            b_page += p_size
+
+            b_page += rsto +1  
+
+            if not finally_mem_map and warn:
+                logger.console(LogType.WARN,warn_msg)
 
 
     def flush(self):
@@ -188,14 +202,17 @@ class Emucorn(Emulator):
 
             for seg in get_seg_list():
 
-                if seg.end_ea - seg.start_ea > 20 * conf.p_size:
-                    idaapi.show_wait_box(f"Map segment {ida_segment.get_segm_name(seg)}")
+
 
                 vbase=seg.start_ea&~(conf.p_size-1)
 
                 if last_vb == None:
 
-                    nb_pages = ((seg.end_ea- vbase) // conf.p_size) +1
+                    nb_pages, r = divmod(seg.end_ea- vbase,conf.p_size) 
+                    if nb_pages == 0: 
+                        nb_pages = 1
+                    elif nb_pages > 0 and r > 0: 
+                        nb_pages +=1 
 
                     try:
 
@@ -205,16 +222,22 @@ class Emucorn(Emulator):
                         logger.console(LogType.ERRR,f"Map at {vbase:x}  for {nb_pages} returns : {str(e)}")
 
 
-                    last_vb = vbase + nb_pages*conf.p_size
+                    last_vb = vbase + (nb_pages)*conf.p_size
 
                 else:
 
                     if seg.end_ea > (last_vb):
 
-                        if vbase < last_vb:
+                        if vbase <= last_vb:
                             vbase = last_vb
 
-                        nb_pages = ((seg.end_ea - vbase) // conf.p_size) +1
+
+                        nb_pages, r = divmod(seg.end_ea- vbase,conf.p_size) 
+                        if nb_pages == 0: 
+                            nb_pages = 1
+                        elif nb_pages > 0 and r > 0: 
+                            nb_pages +=1 
+
 
                         try:
                             uc.mem_map(vbase,nb_pages*conf.p_size)
@@ -222,11 +245,16 @@ class Emucorn(Emulator):
                             logger.console(LogType.ERRR,"mapping at %x  for %d returns : %s"%(vbase,nb_pages,str(e)))
 
 
-                        last_vb = vbase + (nb_pages)*conf.p_size
+                        last_vb = vbase + (nb_pages)*conf.p_size 
 
                 logger.console(LogType.INFO,'Mapped segment %s [%x:%x]'%(ida_segment.get_segm_name(seg),
                                                                          seg.start_ea,
                                                                          seg.end_ea))
+                
+                # If segment is tagged as unitialized, skip it 
+                if ida_segment.segtype(seg.start_ea) == ida_segment.SEG_BSS:
+                    continue 
+
                 try:
 
                     size = seg.size()
@@ -238,7 +266,6 @@ class Emucorn(Emulator):
                     if seg.size() > (math.pow(2,32) -1):     
                         logger.console(LogType.WARN,f"Segment size is too big: {size:x}, restraining to 4GB")
                         size =  int(math.pow(2,32) - 1) & 0xffffffff
-                        print(f'size:{size:x}')
 
                     uc.mem_write(seg.start_ea,ida_bytes.get_bytes(seg.start_ea,size))
                     
@@ -246,8 +273,6 @@ class Emucorn(Emulator):
 
                     logger.console(LogType.ERRR,"writing segment %x to %x content returns : %s"%(seg.start_ea,seg.end_ea,str(e)))
 
-                if seg.end_ea - seg.start_ea > 20 * conf.p_size:
-                    idaapi.hide_wait_box()
 
         #Map user provided areas 
         for m_ea,content in conf.amap_conf.mappings.items():
@@ -261,14 +286,25 @@ class Emucorn(Emulator):
 
             idaapi.hide_wait_box()
 
-        idaapi.show_wait_box("Mapping stack") 
+        idaapi.show_wait_box("Map stack") 
         stk_p,r = divmod(conf.stk_size,conf.p_size)
 
         if r: stk_p+=1 
 
-        uc.mem_map(conf.stk_ba,stk_p*conf.p_size)
+        #uc.mem_map(conf.stk_ba,stk_p*conf.p_size)
+        Emucorn.do_required_mappng(uc,
+                                   conf.stk_ba,
+                                   conf.stk_ba+stk_p*conf.p_size,
+                                   conf.p_size,
+                                   UC_PROT_READ | UC_PROT_WRITE,
+                                   True,
+                                   f"Warning map stack in already mapped area {conf.stk_ba}, edit consts file for corresponding architecture")
+    
 
-        logger.logfile(LogType.INFO,' [%s] mapped stack at 0x%.8X '%('Emucorn',conf.stk_ba))
+
+
+
+        logger.console(LogType.INFO,' [%s] mapped stack at 0x%.8X '%('Emucorn',conf.stk_ba))
         
         idaapi.hide_wait_box()
 
@@ -1044,6 +1080,10 @@ class Emucorn(Emulator):
         finally:
 
             idaapi.hide_wait_box()
+
+        # DUMP HERE
+
+        
 
 
 
