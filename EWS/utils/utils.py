@@ -487,6 +487,40 @@ def get_max_ea_idb() -> int:
 
 
 
+def make_idb_backup(): 
+
+    ida_path = os.path.basename(ida_loader.get_path(ida_loader.PATH_TYPE_CMD))
+    ida_path = ida_path.replace(".i64","").replace("idb","")
+    from dateutil import utils as utilsdate
+
+    d=utilsdate.today()
+    dt=d.now()
+
+    from tempfile import NamedTemporaryFile
+    if not os.path.exists("/tmp/EWS"): 
+        os.mkdir("/tmp/EWS")
+    
+    suffix = '%d-%d-%d-%d-%d-%d'%(dt.year,
+                                                            dt.month,
+                                                            dt.day,
+                                                            dt.hour,
+                                                            dt.minute,
+                                                            dt.second)
+    suffix +=  '.i64' if idc.__EA64__ else '.idb'
+
+    backup_file = NamedTemporaryFile(dir="/tmp/EWS/",delete=False,mode='w+',
+                                prefix=ida_path,
+                                suffix=suffix)
+
+
+
+    ida_loader.save_database(backup_file.name,ida_loader.DBFL_BAK)
+
+
+    logger.console(f"Database backup available {backup_file.name}")
+
+
+
 
 
 

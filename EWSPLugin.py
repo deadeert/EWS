@@ -609,6 +609,7 @@ class menu_action_handler_t(idaapi.action_handler_t):
 
     def load_trace(self):
 
+        make_idb_backup()
 
         if self.plug.emulator_initialized or self.plug.config_initialized:
             ida_kernwin.warning("Please reset the plugin before using this feature.")

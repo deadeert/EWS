@@ -55,12 +55,18 @@ def get_func_boundaries() -> Tuple:
 
     @return The function boundaries.
 
-    
+    Note that this function does not handle function chunks.
+    It only determines and returns the smallest and biggest 
+    instruction addresses. 
     """
 
     ea = idc.get_screen_ea()
     f = ida_funcs.get_func(ea)
-    return (f.start_ea,f.end_ea)
+    # IDA func boundaries must be threated like [start_ea:end_ea[ 
+    # otherwise there is artifact when emulated function call underlying
+    # function (it stops on its first instruction). Dirty hack is to decrease
+    # by one the value. 
+    return (f.start_ea,f.end_ea-1)
 
 
 
