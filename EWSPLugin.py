@@ -616,11 +616,20 @@ class menu_action_handler_t(idaapi.action_handler_t):
             return 
 
 
-        f_trace = ida_kernwin.ask_file(False,"/tmp","Trace File")
+        #f_trace = ida_kernwin.ask_file(False,"/tmp","Trace File")
+        f_trace="/tmp/EWS_trace.txt"
 
         with open(f_trace, 'r') as fin:
 
             exec_trace = json.loads(fin.read(),cls=Exec_Trace_Deserializer)
+
+        #f_ct = ida_kernwin.ask_file(False,"/tmp","Call Tree")
+        f_ct = "/tmp/EWS_calltree.txt"
+
+        with open(f_ct, 'r') as fin:
+
+            call_tree = json.loads(fin.read(),cls=Call_Tree_Deserializer)
+
 
 
         self.plug.conf = utils_ui.get_conf_for_area(exec_trace.content[0]['addr'],
@@ -629,6 +638,8 @@ class menu_action_handler_t(idaapi.action_handler_t):
         self.plug.emu = utils_ui.get_emul_from_conf(self.plug.conf)
 
         self.plug.emu.exec_trace = exec_trace
+        self.plug.emu.call_tree = call_tree
+
 
 
         if not self.plug.view_intialized:
@@ -666,6 +677,7 @@ class EWS_Plugin(idaapi.plugin_t, idaapi.UI_Hooks):
         self.conf=idaapi.BADADDR
         self.debug_panel_regs = idaapi.BADADDR
         self.trace_panel = idaapi.BADADDR
+        self.ct_panel = idaapi.BADADDR
         self.emulator_initialized = False
         self.config_initialized = False
         self.view_intialized = False
@@ -833,6 +845,13 @@ class EWS_Plugin(idaapi.plugin_t, idaapi.UI_Hooks):
                                             self.debug_panel_regs, 
                                                      width=50,
                                                      height=50)
+        self.ct_panel= CallTree_View("Call Tree",
+                                            self.emu,
+                                            self.debug_panel_regs, 
+                                                     width=50,
+                                                     height=50)
+
+
         self.view_intialized = True
 
     def enable_view(self):
@@ -845,17 +864,21 @@ class EWS_Plugin(idaapi.plugin_t, idaapi.UI_Hooks):
         idaapi.set_dock_pos('Registers',view_to_dock_with,idaapi.DP_RIGHT)
         self.trace_panel.show()
         idaapi.set_dock_pos('Trace','Registers',idaapi.DP_BOTTOM)
+        self.ct_panel.show()
+        idaapi.set_dock_pos('Call Tree','Trace',idaapi.DP_RIGHT)
 
         self.view_enabled = True
 
     def refresh_view(self):
         self.debug_panel_regs.refresh()
         self.trace_panel.refresh()
+        self.ct_panel.refresh()
 
     def reset_view(self):
 
         ida_kernwin.close_widget(idaapi.find_widget('Registers'),0)
         ida_kernwin.close_widget(idaapi.find_widget('Trace'),0)
+        ida_kernwin.close_widget(idaapi.find_widget('Call Tree'),0)
         self.trace_panel.Close()
         self.trace_panel.flush() # FIXME is that necessary IDTS
         self.debug_panel_regs = None

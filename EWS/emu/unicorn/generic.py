@@ -46,6 +46,11 @@ class Emucorn(Emulator):
 
         self.exec_trace = Exec_Trace(self.conf.arch,content=None)
         self.exec_trace.content = {}
+    
+        self.call_tree = Call_Tree() 
+        self.call_tree.content = {}
+        self.call_tree_depth = 0
+
         self.debug_view = None # todo create the reference in EWS_Plugin object
 
         self.filetype = ida_loader.get_file_type_name()
@@ -619,11 +624,33 @@ class Emucorn(Emulator):
                 asm = get_captsone_repr(self,addr)
                 log = build_insn_repr(self,addr)
     
-        self.exec_trace.add_instruction(addr=addr,
+        trace_id = self.exec_trace.add_instruction(addr=addr,
                                             assembly=asm,
                                             regs=self.get_regs(),
                                             color=get_insn_color(addr),
                                             tainted=False)
+
+
+         
+        """
+        TODO: 
+
+        if is_call_insn(addr) or is_ret_addr(addr): 
+            if is_call_insn(addr):
+                self.calltree_depth +=1 
+            else:
+                self.call_tree_depth -=1 
+
+            self.calltree[self.nb_insn] = {}
+            self.calltree[self.nb_insn]['addr'] = addr
+
+
+
+
+        """
+       
+
+
         logger.logfile(LogType.INFO,log)
 
 

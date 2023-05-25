@@ -30,6 +30,7 @@ class Exec_Trace(object):
                             'tainted': tainted
                            }
         self.count += 1
+        return self.count-1
 
     def get_color_map(self) -> dict:
 
@@ -94,8 +95,13 @@ class Exec_Trace_Deserializer(json.JSONDecoder):
     def decode(self,json_txt):
 
         jdict = json.loads(json_txt)
-        arch= jdict['arch'][0]
-        print(arch)
+        arch= jdict['arch']
+
+        if type(arch) is type([]):
+            arch = arch[0]
+        elif type(arch) is type(""):
+            pass
+
         trace = jdict['count'] 
 
         exec_trace = Exec_Trace(arch)
