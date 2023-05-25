@@ -145,7 +145,7 @@ x64 has not be refactored neither tested, so use it at your own risk.
 
 Before submitting an issue, keep in mind that: 
 
-- I'm not actively working on the project, according the bug you could be faster than me to find the solution :]
+- I'm not actively working on the project, depending the bug you could be faster than me to find the solution :]
 - I need to reproduce the bug, so be kind an provide a configuration file and the binary that you was working on when finding out the bug (if possible). Otherwise, it will be a nightmare. 
 
 # Extend Me
